@@ -110,8 +110,11 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
 
                 if (isPresent(loc)) {
                     context.report({
+                        data: {
+                            message: error.message,
+                        },
                         loc,
-                        message: error.message,
+                        messageId: "validationError",
                     });
                 }
             }
@@ -214,14 +217,28 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
         };
     }),
     meta: {
-        deprecated: false,
         docs: {
             categories: ["recommended"],
             default: "warn",
             description: "validate object with JSON Schema.",
+            dialects: [
+                "JavaScript",
+                "JSON",
+                "JSON5",
+                "JSONC",
+                "TOML",
+                "Vue",
+                "YAML",
+            ],
+            frozen: false,
+            recommended: true,
+            ruleId: "json-schema-validator-2/no-invalid",
+            ruleName: "no-invalid",
+            url: "https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/no-invalid",
         },
-        hasSuggestions: false,
-        messages: {},
+        messages: {
+            validationError: "{{message}}",
+        },
         schema: [
             {
                 oneOf: [
@@ -272,7 +289,7 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
                 ],
             },
         ],
-        type: "suggestion",
+        type: "problem",
     },
 });
 

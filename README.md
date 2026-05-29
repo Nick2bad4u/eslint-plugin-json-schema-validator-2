@@ -9,6 +9,10 @@ This fork keeps the useful validation behavior from the upstream plugin while
 moving the repository onto the modern ESLint plugin tooling used across
 Nick2bad4u plugin projects.
 
+Shoutout to [ota-meshi/eslint-plugin-json-schema-validator](https://github.com/ota-meshi/eslint-plugin-json-schema-validator),
+which this fork builds on. The original plugin did the hard work of proving the
+JSON Schema validation model for JSON-like files in ESLint.
+
 ## Installation
 
 ```bash
@@ -42,8 +46,14 @@ The plugin exposes these configs:
 
 ## Advanced Configuration
 
-Use rule options when a file does not advertise a `$schema` field, when you want
-to disable SchemaStore detection, or when you need to merge multiple schema
+SchemaStore detection is on by default. If a file name matches a SchemaStore
+catalog entry, `json-schema-validator-2/no-invalid` downloads that schema and
+validates the file without extra configuration. Set
+`useSchemastoreCatalog: false` only when you want to opt out for a specific
+override.
+
+Use rule options when a file does not advertise a `$schema` field, when you need
+to add local or remote custom schemas, or when you need to merge multiple schema
 sources:
 
 ```js
@@ -67,6 +77,69 @@ export default [
   },
 ];
 ```
+
+Each custom schema entry has:
+
+- `fileMatch`: file names or glob patterns matched against the linted file.
+- `schema`: either an inline JSON Schema object, a local schema file path, or a
+  remote schema URL.
+
+For local project schemas, point `schema` at a checked-in schema file:
+
+```js
+export default [
+  ...jsonSchemaValidator.configs.base,
+  {
+    rules: {
+      "json-schema-validator-2/no-invalid": [
+        "error",
+        {
+          schemas: [
+            {
+              fileMatch: ["config/*.json", ".my-toolrc.json"],
+              schema: "./schemas/my-tool.schema.json",
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+```
+
+For one-off schemas, you can also inline the schema:
+
+```js
+export default [
+  ...jsonSchemaValidator.configs.base,
+  {
+    rules: {
+      "json-schema-validator-2/no-invalid": [
+        "error",
+        {
+          schemas: [
+            {
+              fileMatch: ["settings/*.json"],
+              schema: {
+                additionalProperties: false,
+                properties: {
+                  enabled: { type: "boolean" },
+                },
+                required: ["enabled"],
+                type: "object",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+```
+
+When a file has its own `$schema` property and you also want matching custom or
+SchemaStore schemas to apply, enable `mergeSchemas`. Use `true` to merge every
+source, or pass an ordered list such as `["$schema", "options", "catalog"]`.
 
 ## Related Packages
 

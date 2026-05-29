@@ -9,8 +9,8 @@ import { arrayIncludes, isPresent, keyIn, objectEntries } from "ts-extras";
 import * as yamlESLintParser from "yaml-eslint-parser";
 
 import type {
-    PartialRuleModule,
     RuleContext,
+    RuleDefinition,
     RuleListener,
     RuleModule,
 } from "../types.js";
@@ -44,11 +44,22 @@ const IGNORED_CUSTOM_BLOCK_ATTRIBUTES = [
  *
  * @param ruleName - RuleName
  * @param rule - Rule module
+ * @throws If the rule metadata does not match the registered rule name.
  */
 export function createRule(
     ruleName: string,
-    rule: PartialRuleModule
+    rule: RuleDefinition
 ): RuleModule {
+    const expectedRuleId = `json-schema-validator-2/${ruleName}`;
+    if (
+        rule.meta.docs.ruleName !== ruleName ||
+        rule.meta.docs.ruleId !== expectedRuleId
+    ) {
+        throw new Error(
+            `Rule metadata mismatch for ${ruleName}: expected docs.ruleName "${ruleName}" and docs.ruleId "${expectedRuleId}".`
+        );
+    }
+
     return {
         create(context: Rule.RuleContext): RuleListener {
             const sourceCode = context.sourceCode;
@@ -107,15 +118,7 @@ export function createRule(
 
             return visitor;
         },
-        meta: {
-            ...rule.meta,
-            docs: {
-                ...rule.meta.docs,
-                ruleId: `json-schema-validator-2/${ruleName}`,
-                ruleName,
-                url: `https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/${ruleName}`,
-            },
-        },
+        meta: rule.meta,
     };
 }
 
@@ -148,7 +151,7 @@ function compositingVisitors(
  * Composes a rule visitor for a Vue custom block.
  */
 function createCustomBlockRule(
-    rule: PartialRuleModule,
+    rule: RuleDefinition,
     blockContext: RuleContext,
     langFallback: string
 ): RuleListener {

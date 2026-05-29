@@ -35,31 +35,6 @@ export type Node =
 /** AST node or token accepted by SourceCode helpers. */
 export type NodeOrToken = Node | Token;
 
-/** Rule metadata shape before compatibility fields are expanded. */
-export interface PartialRuleMetaData {
-    deprecated?: boolean;
-    docs: {
-        categories: "recommended"[] | null;
-        default?: "error" | "warn";
-        description: string;
-    };
-    fixable?: "code" | "whitespace";
-    hasSuggestions?: boolean;
-    messages: Record<string, string>;
-    replacedBy?: string[];
-    schema: Arrayable<JSONSchema4>;
-    type: "layout" | "problem" | "suggestion";
-}
-
-/** Rule module shape used by the compatibility wrapper. */
-export interface PartialRuleModule {
-    create: (
-        context: RuleContext,
-        params: { customBlock: boolean; filename: string }
-    ) => RuleListener;
-    meta: PartialRuleMetaData;
-}
-
 /** Minimal ESLint rule context surface used by this plugin. */
 export interface RuleContext {
     cwd: string;
@@ -81,6 +56,18 @@ export interface RuleContext {
     sourceCode: SourceCode;
 }
 
+/**
+ * Rule definition shape used before the compatibility wrapper exposes it to
+ * ESLint.
+ */
+export interface RuleDefinition {
+    create: (
+        context: RuleContext,
+        params: { customBlock: boolean; filename: string }
+    ) => RuleListener;
+    meta: RuleMetaData;
+}
+
 /** Fixer API subset used by this plugin. */
 export interface RuleFixer {
     insertTextAfter: (nodeOrToken: NodeOrToken, text: string) => Fix;
@@ -99,27 +86,23 @@ export interface RuleFixer {
 
     replaceTextRange: (range: [number, number], text: string) => Fix;
 }
+
 /** Visitor map returned by plugin rules. */
 export type RuleListener = Record<
     string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ESLint visitors are intentionally bivariant at the rule boundary.
     ((...args: any[]) => void) | undefined
 >;
+
 /** Complete metadata exposed for a rule. */
 export interface RuleMetaData {
-    deprecated?: boolean;
-    docs: {
-        categories: "recommended"[] | null;
-        default?: "error" | "warn";
-        description: string;
-        ruleId: string;
-        ruleName: string;
-        url: string;
-    };
+    defaultOptions?: unknown[];
+    deprecated?: boolean | DeprecatedInfo;
+    docs: RuleDocs;
     fixable?: "code" | "whitespace";
     hasSuggestions?: boolean;
+    languages?: string[];
     messages: Record<string, string>;
-    replacedBy?: string[];
     schema: Arrayable<JSONSchema4>;
     type: "layout" | "problem" | "suggestion";
 }
@@ -129,7 +112,6 @@ export interface RuleModule {
     create: (context: Rule.RuleContext) => RuleListener;
     meta: RuleMetaData;
 }
-
 /** SourceCode API subset used by this plugin. */
 export interface SourceCode {
     ast: JSON.JSONProgram | TOML.TOMLProgram | YAML.YAMLProgram;
@@ -252,7 +234,6 @@ export interface SourceCode {
 
     visitorKeys: Record<string, string[]>;
 }
-
 /** Tokens supported by the configured parsers. */
 export type Token = Comment | ES.Token | TOML.Token | YAML.Token;
 
@@ -274,7 +255,13 @@ type CursorWithSkipOptions =
           skip?: number;
       };
 
+interface DeprecatedInfo {
+    replacedBy?: RuleReplacement[];
+    url?: string;
+}
+
 type FilterPredicate = (tokenOrComment: Token) => boolean;
+
 type ReportDescriptor = ReportDescriptorLocation &
     ReportDescriptorMessage &
     ReportDescriptorOptions;
@@ -282,17 +269,49 @@ type ReportDescriptor = ReportDescriptorLocation &
 type ReportDescriptorLocation =
     | { loc: SourceLocation | { column: number; line: number } }
     | { node: NodeOrToken };
-
 type ReportDescriptorMessage = { message: string } | { messageId: string };
+
 interface ReportDescriptorOptions extends ReportDescriptorOptionsBase {
     suggest?: null | SuggestionReportDescriptor[];
 }
+
 interface ReportDescriptorOptionsBase {
     data?: Record<string, string>;
 
     fix?:
         | ((fixer: RuleFixer) => Fix | Fix[] | IterableIterator<Fix> | null)
         | null;
+}
+interface RuleDocs {
+    /** Legacy plugin-doc category metadata used by generated rule docs. */
+    categories: "recommended"[] | null;
+    /** Legacy plugin-doc default severity metadata used by generated rule docs. */
+    default?: "error" | "warn";
+    /** Short rule description shown by editor and documentation tooling. */
+    description: string;
+    /** Language dialects this rule is intended to lint. */
+    dialects?: string[];
+    /** Whether this rule is frozen and no longer accepts feature requests. */
+    frozen?: boolean;
+    /** Whether this rule is enabled by the recommended config. */
+    recommended?: boolean;
+    /** Full plugin-qualified rule id. */
+    ruleId: string;
+    /** Local rule name without the plugin prefix. */
+    ruleName: string;
+    /** Canonical rule documentation URL. */
+    url: string;
+}
+interface RuleReplacement {
+    message?: string;
+    plugin?: {
+        name: string;
+        url?: string;
+    };
+    rule?: {
+        name: string;
+        url?: string;
+    };
 }
 
 interface SourceLocation {
