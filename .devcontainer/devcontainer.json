@@ -1,27 +1,27 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-  "name": "Node.js & TypeScript",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:4-20-bullseye",
+    // Configure tool-specific properties.
+    "customizations": {
+        // Configure properties specific to VS Code.
+        "vscode": {
+            "extensions": ["dbaeumer.vscode-eslint"]
+        }
+    },
 
-  // Features to add to the dev container. More info: https://containers.dev/features.
-  // "features": {},
+    // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    // "remoteUser": "root"
 
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:4-20-bullseye",
 
-  // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "npm install",
+    "name": "Node.js & TypeScript",
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    // "features": {},
 
-  // Configure tool-specific properties.
-  "customizations": {
-    // Configure properties specific to VS Code.
-    "vscode": {
-      "extensions": ["dbaeumer.vscode-eslint"]
-    }
-  }
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // "forwardPorts": [],
 
-  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "root"
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "npm install"
 }

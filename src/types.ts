@@ -1,273 +1,290 @@
-import type { AST as ES, Rule, Scope  } from "eslint";
+import type { AST as ES, Rule, Scope } from "eslint";
 import type { Comment as ESTreeComment } from "estree";
 /* eslint @typescript-eslint/naming-convention: off, @typescript-eslint/no-explicit-any: off -- for type */
 import type { JSONSchema4 } from "json-schema";
 import type { AST as JSON } from "jsonc-eslint-parser";
 import type { AST as TOML } from "toml-eslint-parser";
+import type { Arrayable } from "type-fest";
 import type { AST } from "vue-eslint-parser";
 import type { AST as YAML } from "yaml-eslint-parser";
 
 export interface JsonSchemaValidatorSettings {
-  http?: {
-    getModulePath?: string;
-    requestOptions?: any;
-  };
+    http?: {
+        getModulePath?: string;
+        requestOptions?: any;
+    };
 }
 
 export interface PartialRuleMetaData {
-  deprecated?: boolean;
-  docs: {
-    categories: "recommended"[] | null;
-    default?: "error" | "warn";
-    description: string;
-  };
-  fixable?: "code" | "whitespace";
-  hasSuggestions?: boolean;
-  messages: Record<string, string>;
-  replacedBy?: string[];
-  schema: JSONSchema4 | JSONSchema4[];
-  type: "layout" | "problem" | "suggestion";
+    deprecated?: boolean;
+    docs: {
+        categories: "recommended"[] | null;
+        default?: "error" | "warn";
+        description: string;
+    };
+    fixable?: "code" | "whitespace";
+    hasSuggestions?: boolean;
+    messages: Record<string, string>;
+    replacedBy?: string[];
+    schema: Arrayable<JSONSchema4>;
+    type: "layout" | "problem" | "suggestion";
 }
 
 export interface PartialRuleModule {
-  create: (
-    context: RuleContext,
-    params: { customBlock: boolean; filename: string },
-  ) => RuleListener;
-  meta: PartialRuleMetaData;
+    create: (
+        context: RuleContext,
+        params: { customBlock: boolean; filename: string }
+    ) => RuleListener;
+    meta: PartialRuleMetaData;
 }
 
 export interface RuleContext {
-  cwd: string;
-  filename: string;
-  getAncestors: () => Node[];
-  getPhysicalFilename?: () => string;
-  id: string;
-  options: any[];
-  parserPath: string;
-  parserServices: {
-    customBlock?: AST.VElement;
-    isJSON?: true;
-    isTOML?: true;
-    isYAML?: true;
-  };
-  physicalFilename: string;
-  report: (descriptor: ReportDescriptor) => void;
-  settings: { "json-schema-validator-2"?: JsonSchemaValidatorSettings };
-  sourceCode: SourceCode;
+    cwd: string;
+    filename: string;
+    getAncestors: () => Node[];
+    getPhysicalFilename?: () => string;
+    id: string;
+    options: any[];
+    parserPath: string;
+    parserServices: {
+        customBlock?: AST.VElement;
+        isJSON?: true;
+        isTOML?: true;
+        isYAML?: true;
+    };
+    physicalFilename: string;
+    report: (descriptor: ReportDescriptor) => void;
+    settings: { "json-schema-validator-2"?: JsonSchemaValidatorSettings };
+    sourceCode: SourceCode;
 }
 
 export type RuleListener = Record<string, ((node: never) => void) | undefined>;
 
 export interface RuleMetaData {
-  deprecated?: boolean;
-  docs: {
-    categories: "recommended"[] | null;
-    default?: "error" | "warn";
-    description: string;
-    ruleId: string;
-    ruleName: string;
-    url: string;
-  };
-  fixable?: "code" | "whitespace";
-  hasSuggestions?: boolean;
-  messages: Record<string, string>;
-  replacedBy?: string[];
-  schema: JSONSchema4 | JSONSchema4[];
-  type: "layout" | "problem" | "suggestion";
+    deprecated?: boolean;
+    docs: {
+        categories: "recommended"[] | null;
+        default?: "error" | "warn";
+        description: string;
+        ruleId: string;
+        ruleName: string;
+        url: string;
+    };
+    fixable?: "code" | "whitespace";
+    hasSuggestions?: boolean;
+    messages: Record<string, string>;
+    replacedBy?: string[];
+    schema: Arrayable<JSONSchema4>;
+    type: "layout" | "problem" | "suggestion";
 }
 
 export interface RuleModule {
-  create: (context: Rule.RuleContext) => RuleListener;
-  meta: RuleMetaData;
+    create: (context: Rule.RuleContext) => RuleListener;
+    meta: RuleMetaData;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace -- for type
 export declare namespace SourceCode {
-  export function splitLines(text: string): string[];
+    export function splitLines(text: string): string[];
 }
 export type Comment = ESTreeComment | TOML.Comment | YAML.Comment;
 export interface Fix {
-  range: [number, number];
-  text: string;
+    range: [number, number];
+    text: string;
 }
 export type Node =
-  | AST.ESLintNode
-  | JSON.JSONNode
-  | TOML.TOMLNode
-  | YAML.YAMLNode;
+    | AST.ESLintNode
+    | JSON.JSONNode
+    | TOML.TOMLNode
+    | YAML.YAMLNode;
 export type NodeOrToken = Node | Token;
 export interface RuleFixer {
-  insertTextAfter: (nodeOrToken: NodeOrToken, text: string) => Fix;
+    insertTextAfter: (nodeOrToken: NodeOrToken, text: string) => Fix;
 
-  insertTextAfterRange: (range: [number, number], text: string) => Fix;
+    insertTextAfterRange: (range: [number, number], text: string) => Fix;
 
-  insertTextBefore: (nodeOrToken: NodeOrToken, text: string) => Fix;
+    insertTextBefore: (nodeOrToken: NodeOrToken, text: string) => Fix;
 
-  insertTextBeforeRange: (range: [number, number], text: string) => Fix;
+    insertTextBeforeRange: (range: [number, number], text: string) => Fix;
 
-  remove: (nodeOrToken: NodeOrToken) => Fix;
+    remove: (nodeOrToken: NodeOrToken) => Fix;
 
-  removeRange: (range: [number, number]) => Fix;
+    removeRange: (range: [number, number]) => Fix;
 
-  replaceText: (nodeOrToken: NodeOrToken, text: string) => Fix;
+    replaceText: (nodeOrToken: NodeOrToken, text: string) => Fix;
 
-  replaceTextRange: (range: [number, number], text: string) => Fix;
+    replaceTextRange: (range: [number, number], text: string) => Fix;
 }
 
 export interface SourceCode {
-  ast: JSON.JSONProgram | TOML.TOMLProgram | YAML.YAMLProgram;
-  commentsExistBetween: (left: NodeOrToken, right: NodeOrToken) => boolean;
-  getAllComments: () => Comment[];
-  getComments: (node: NodeOrToken) => { leading: Comment[]; trailing: Comment[] };
-  getCommentsAfter: (nodeOrToken: NodeOrToken) => Comment[];
-  getCommentsBefore: (nodeOrToken: NodeOrToken) => Comment[];
-  getCommentsInside: (node: Node) => Comment[];
+    ast: JSON.JSONProgram | TOML.TOMLProgram | YAML.YAMLProgram;
+    commentsExistBetween: (left: NodeOrToken, right: NodeOrToken) => boolean;
+    getAllComments: () => Comment[];
+    getComments: (node: NodeOrToken) => {
+        leading: Comment[];
+        trailing: Comment[];
+    };
+    getCommentsAfter: (nodeOrToken: NodeOrToken) => Comment[];
+    getCommentsBefore: (nodeOrToken: NodeOrToken) => Comment[];
+    getCommentsInside: (node: Node) => Comment[];
 
-  getFirstToken: ((node: Node) => Token) & ((node: Node, options?: CursorWithSkipOptions) => null | Token);
+    getFirstToken: ((node: Node) => Token) &
+        ((node: Node, options?: CursorWithSkipOptions) => null | Token);
 
-  getFirstTokenBetween: (
-    left: NodeOrToken,
-    right: NodeOrToken,
-    options?: CursorWithSkipOptions,
-  ) => null | Token;
+    getFirstTokenBetween: (
+        left: NodeOrToken,
+        right: NodeOrToken,
+        options?: CursorWithSkipOptions
+    ) => null | Token;
 
-  getFirstTokens: (node: Node, options?: CursorWithCountOptions) => Token[];
+    getFirstTokens: (node: Node, options?: CursorWithCountOptions) => Token[];
 
-  getFirstTokensBetween: (
-    left: NodeOrToken,
-    right: NodeOrToken,
-    options?: CursorWithCountOptions,
-  ) => Token[];
+    getFirstTokensBetween: (
+        left: NodeOrToken,
+        right: NodeOrToken,
+        options?: CursorWithCountOptions
+    ) => Token[];
 
-  getIndexFromLoc: (loc: JSON.Position) => number;
+    getIndexFromLoc: (loc: JSON.Position) => number;
 
-  getLastToken: ((node: Node) => Token) & ((node: Node, options?: CursorWithSkipOptions) => null | Token);
+    getLastToken: ((node: Node) => Token) &
+        ((node: Node, options?: CursorWithSkipOptions) => null | Token);
 
-  // Inherited methods from TokenStore
-  // ---------------------------------
+    // Inherited methods from TokenStore
+    // ---------------------------------
 
-  getLastTokenBetween: (
-    left: NodeOrToken,
-    right: NodeOrToken,
-    options?: CursorWithSkipOptions,
-  ) => null | Token;
+    getLastTokenBetween: (
+        left: NodeOrToken,
+        right: NodeOrToken,
+        options?: CursorWithSkipOptions
+    ) => null | Token;
 
-  getLastTokens: (node: Node, options?: CursorWithCountOptions) => Token[];
-  getLastTokensBetween: (
-    left: NodeOrToken,
-    right: NodeOrToken,
-    options?: CursorWithCountOptions,
-  ) => Token[];
+    getLastTokens: (node: Node, options?: CursorWithCountOptions) => Token[];
+    getLastTokensBetween: (
+        left: NodeOrToken,
+        right: NodeOrToken,
+        options?: CursorWithCountOptions
+    ) => Token[];
 
-  getLines: () => string[];
+    getLines: () => string[];
 
-  getLocFromIndex: (index: number) => JSON.Position;
-  getNodeByRangeIndex: (index: number) => Node | null;
+    getLocFromIndex: (index: number) => JSON.Position;
+    getNodeByRangeIndex: (index: number) => Node | null;
 
-  getText: (
-    node?: NodeOrToken,
-    beforeCount?: number,
-    afterCount?: number,
-  ) => string;
+    getText: (
+        node?: NodeOrToken,
+        beforeCount?: number,
+        afterCount?: number
+    ) => string;
 
-  // GetTokenAfter(node: NodeOrToken): Token | null
-  getTokenAfter: (
-    node: NodeOrToken,
-    options?: CursorWithSkipOptions,
-  ) => null | Token;
+    // GetTokenAfter(node: NodeOrToken): Token | null
+    getTokenAfter: (
+        node: NodeOrToken,
+        options?: CursorWithSkipOptions
+    ) => null | Token;
 
-  // GetTokenBefore(node: NodeOrToken): Token | null
-  getTokenBefore: (
-    node: NodeOrToken,
-    options?: CursorWithSkipOptions,
-  ) => null | Token;
+    // GetTokenBefore(node: NodeOrToken): Token | null
+    getTokenBefore: (
+        node: NodeOrToken,
+        options?: CursorWithSkipOptions
+    ) => null | Token;
 
-  getTokenByRangeStart: (
-    offset: number,
-    options?: { includeComments?: boolean },
-  ) => null | Token;
+    getTokenByRangeStart: (
+        offset: number,
+        options?: { includeComments?: boolean }
+    ) => null | Token;
 
-  getTokens: ((node: Node, beforeCount?: number, afterCount?: number) => Token[]) & ((
-    node: Node,
-    options: CursorWithCountOptions | FilterPredicate,
-  ) => Token[]);
+    getTokens: ((
+        node: Node,
+        beforeCount?: number,
+        afterCount?: number
+    ) => Token[]) &
+        ((
+            node: Node,
+            options: CursorWithCountOptions | FilterPredicate
+        ) => Token[]);
 
-  getTokensAfter: (node: NodeOrToken, options?: CursorWithCountOptions) => Token[];
+    getTokensAfter: (
+        node: NodeOrToken,
+        options?: CursorWithCountOptions
+    ) => Token[];
 
-  getTokensBefore: (node: NodeOrToken, options?: CursorWithCountOptions) => Token[];
+    getTokensBefore: (
+        node: NodeOrToken,
+        options?: CursorWithCountOptions
+    ) => Token[];
 
-  getTokensBetween: (
-    left: NodeOrToken,
-    right: NodeOrToken,
-    padding?: CursorWithCountOptions | FilterPredicate | number,
-  ) => Token[];
+    getTokensBetween: (
+        left: NodeOrToken,
+        right: NodeOrToken,
+        padding?: CursorWithCountOptions | FilterPredicate | number
+    ) => Token[];
 
-  hasBOM: boolean;
+    hasBOM: boolean;
 
-  isSpaceBetweenTokens: (first: Token, second: Token) => boolean;
-  lines: string[];
+    isSpaceBetweenTokens: (first: Token, second: Token) => boolean;
+    lines: string[];
 
-  parserServices: {
-    isJSON?: true;
-    isTOML?: true;
-    isYAML?: true;
-  };
+    parserServices: {
+        isJSON?: true;
+        isTOML?: true;
+        isYAML?: true;
+    };
 
-  scopeManager: Scope.ScopeManager;
+    scopeManager: Scope.ScopeManager;
 
-  text: string;
+    text: string;
 
-  visitorKeys: Record<string, string[]>;
+    visitorKeys: Record<string, string[]>;
 }
 
 export type Token = Comment | ES.Token | TOML.Token | YAML.Token;
 
 type CursorWithCountOptions =
-  | FilterPredicate
-  | number
-  | {
-      count?: number;
-      filter?: FilterPredicate;
-      includeComments?: boolean;
-    };
+    | FilterPredicate
+    | number
+    | {
+          count?: number;
+          filter?: FilterPredicate;
+          includeComments?: boolean;
+      };
 
 type CursorWithSkipOptions =
-  | FilterPredicate
-  | number
-  | {
-      filter?: FilterPredicate;
-      includeComments?: boolean;
-      skip?: number;
-    };
+    | FilterPredicate
+    | number
+    | {
+          filter?: FilterPredicate;
+          includeComments?: boolean;
+          skip?: number;
+      };
 
 type FilterPredicate = (tokenOrComment: Token) => boolean;
 type ReportDescriptor = ReportDescriptorLocation &
-  ReportDescriptorMessage &
-  ReportDescriptorOptions;
+    ReportDescriptorMessage &
+    ReportDescriptorOptions;
 
 type ReportDescriptorLocation =
-  | { loc: SourceLocation | { column: number; line: number; } }
-  | { node: NodeOrToken };
+    | { loc: SourceLocation | { column: number; line: number } }
+    | { node: NodeOrToken };
 
 type ReportDescriptorMessage = { message: string } | { messageId: string };
 interface ReportDescriptorOptions extends ReportDescriptorOptionsBase {
-  suggest?: null | SuggestionReportDescriptor[];
+    suggest?: null | SuggestionReportDescriptor[];
 }
 interface ReportDescriptorOptionsBase {
-  data?: Record<string, string>;
+    data?: Record<string, string>;
 
-  fix?:
-    | ((fixer: RuleFixer) => Fix | Fix[] | IterableIterator<Fix> | null)
-    | null;
+    fix?:
+        | ((fixer: RuleFixer) => Fix | Fix[] | IterableIterator<Fix> | null)
+        | null;
 }
 
 interface SourceLocation {
-  end: JSON.Position;
-  start: JSON.Position;
+    end: JSON.Position;
+    start: JSON.Position;
 }
 
 type SuggestionDescriptorMessage = { desc: string } | { messageId: string };
 
 type SuggestionReportDescriptor = ReportDescriptorOptionsBase &
-  SuggestionDescriptorMessage;
+    SuggestionDescriptorMessage;

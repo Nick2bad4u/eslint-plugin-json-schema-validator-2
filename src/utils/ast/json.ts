@@ -1,112 +1,131 @@
 import type { AST as JSON } from "jsonc-eslint-parser";
 
+import {
+    arrayFirst,
+    arrayJoin,
+    isPresent,
+    safeCastTo,
+    setHas,
+} from "ts-extras";
+
 import type { GetNodeFromPath, NodeData } from "./common.ts";
 
 type TraverseTarget =
-  | JSON.JSONArrayExpression
-  | JSON.JSONExpressionStatement
-  | JSON.JSONObjectExpression
-  | JSON.JSONProgram;
+    | JSON.JSONArrayExpression
+    | JSON.JSONExpressionStatement
+    | JSON.JSONObjectExpression
+    | JSON.JSONProgram;
 
-const TRAVERSE_TARGET_TYPE = new Set<string>([
-  "JSONArrayExpression",
-  "JSONExpressionStatement",
-  "JSONObjectExpression",
-  "Program",
-] as TraverseTarget["type"][]);
+const TRAVERSE_TARGET_TYPE = new Set<string>(
+    safeCastTo<TraverseTarget["type"][]>([
+        "JSONArrayExpression",
+        "JSONExpressionStatement",
+        "JSONObjectExpression",
+        "Program",
+    ])
+);
 
 const GET_JSON_NODES: Record<
-  TraverseTarget["type"],
-  GetNodeFromPath<JSON.JSONNode>
+    TraverseTarget["type"],
+    GetNodeFromPath<JSON.JSONNode>
 > = {
-  JSONArrayExpression(node: JSON.JSONArrayExpression, paths: string[]) {
-    const path = String(paths.shift());
-    for (let index = 0; index < node.elements.length; index++) {
-      if (String(index) !== path) {
-        continue;
-      }
-      const element = node.elements[index];
+    JSONArrayExpression(node: JSON.JSONArrayExpression, paths: string[]) {
+        const path = String(paths.shift());
+        for (let index = 0; index < node.elements.length; index++) {
+            if (String(index) !== path) {
+                continue;
+            }
+            const element = node.elements[index];
 
-      if (element) {
-        return { value: element };
-      }
-      return {
-        key: (sourceCode) => {
-          const before = node.elements
-            .slice(0, index)
-            .reverse()
-            .find((n) => n != null);
-          let tokenIndex = before ? node.elements.indexOf(before) : -1;
-          let token = before
-            ? sourceCode.getTokenAfter(before)!
-            : sourceCode.getFirstToken(node);
-          while (tokenIndex < index) {
-            tokenIndex++;
-            token = sourceCode.getTokenAfter(token)!;
-          }
+            if (element) {
+                return { value: element };
+            }
+            return {
+                key: (sourceCode) => {
+                    const before = node.elements
+                        .slice(0, index)
+                        .reverse()
+                        .find((n) => isPresent(n));
+                    let tokenIndex = before
+                        ? node.elements.indexOf(before)
+                        : -1;
+                    let token = before
+                        ? sourceCode.getTokenAfter(before)!
+                        : sourceCode.getFirstToken(node);
+                    while (tokenIndex < index) {
+                        tokenIndex++;
+                        token = sourceCode.getTokenAfter(token)!;
+                    }
 
-          return [sourceCode.getTokenBefore(token)!.range![1], token.range![0]];
-        },
-        value: null,
-      };
-    }
-    throw new Error(`Unexpected state: [${[path, ...paths].join(", ")}]`);
-  },
-  JSONExpressionStatement(
-    node: JSON.JSONExpressionStatement,
-    _paths: string[],
-  ) {
-    return { value: node.expression };
-  },
-  JSONObjectExpression(node: JSON.JSONObjectExpression, paths: string[]) {
-    const path = String(paths.shift());
-    for (const prop of node.properties) {
-      if (prop.key.type === "JSONIdentifier") {
-        if (prop.key.name === path) {
-          return { key: () => prop.key.range, value: prop.value };
+                    return [
+                        sourceCode.getTokenBefore(token)!.range![1],
+                        arrayFirst(token.range!),
+                    ];
+                },
+                value: null,
+            };
         }
-      } else if (String(prop.key.value) === path) {
-          return { key: () => prop.key.range, value: prop.value };
+        throw new Error(
+            `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
+        );
+    },
+    JSONExpressionStatement(
+        node: JSON.JSONExpressionStatement,
+        _paths: string[]
+    ) {
+        return { value: node.expression };
+    },
+    JSONObjectExpression(node: JSON.JSONObjectExpression, paths: string[]) {
+        const path = String(paths.shift());
+        for (const prop of node.properties) {
+            if (prop.key.type === "JSONIdentifier") {
+                if (prop.key.name === path) {
+                    return { key: () => prop.key.range, value: prop.value };
+                }
+            } else if (String(prop.key.value) === path) {
+                return { key: () => prop.key.range, value: prop.value };
+            }
         }
-    }
-    throw new Error(`Unexpected state: [${[path, ...paths].join(", ")}]`);
-  },
-  Program(node: JSON.JSONProgram, _paths: string[]) {
-    return { value: node.body[0] };
-  },
+        throw new Error(
+            `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
+        );
+    },
+    Program(node: JSON.JSONProgram, _paths: string[]) {
+        return { value: arrayFirst(node.body) };
+    },
 };
 /**
  * Get node from path
  */
 export function getJSONNodeFromPath(
-  node: JSON.JSONProgram,
-  [...paths]: string[],
+    node: JSON.JSONProgram,
+    [...paths]: string[]
 ): NodeData<JSON.JSONNode> {
-  let data: NodeData<JSON.JSONNode> = {
-    key: (sourceCode) => {
-      const dataNode = node.body[0].expression;
-      if (
-        dataNode.type === "JSONObjectExpression" ||
-        dataNode.type === "JSONArrayExpression"
-      ) {
-        return sourceCode.getFirstToken(dataNode).range!;
-      }
-      return dataNode.range;
-    },
-    value: node,
-  };
-  while (paths.length > 0 && data.value) {
-    if (!isTraverseTarget(data.value)) {
-      throw new Error(`Unexpected node type: ${data.value.type}`);
+    let data: NodeData<JSON.JSONNode> = {
+        key: (sourceCode) => {
+            const dataNode = arrayFirst(node.body).expression;
+            if (
+                dataNode.type === "JSONObjectExpression" ||
+                dataNode.type === "JSONArrayExpression"
+            ) {
+                return sourceCode.getFirstToken(dataNode).range!;
+            }
+            return dataNode.range;
+        },
+        value: node,
+    };
+    while (paths.length > 0 && data.value) {
+        if (!isTraverseTarget(data.value)) {
+            throw new Error(`Unexpected node type: ${data.value.type}`);
+        }
+        data = GET_JSON_NODES[data.value.type](data.value as never, paths);
     }
-    data = GET_JSON_NODES[data.value.type](data.value as never, paths);
-  }
-  return data;
+    return data;
 }
 
 /**
  * Checks whether given node is traverse target.
  */
 function isTraverseTarget(node: JSON.JSONNode): node is TraverseTarget {
-  return TRAVERSE_TARGET_TYPE.has(node.type);
+    return setHas(TRAVERSE_TARGET_TYPE, node.type);
 }

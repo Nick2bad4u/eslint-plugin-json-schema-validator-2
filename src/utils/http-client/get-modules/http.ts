@@ -11,112 +11,111 @@ const TIMEOUT = 60_000;
  * GET Method using http modules.
  */
 export default async function get(
-  url: string,
-  options?: RequestOptions,
+    url: string,
+    options?: RequestOptions
 ): Promise<string> {
-  return get0(url, options, 0);
+    return get0(url, options, 0);
 }
 
 /** Implementation of HTTP GET method */
 async function get0(
-  url: string,
-  options: RequestOptions | undefined,
-  redirectCount: number,
+    url: string,
+    options: RequestOptions | undefined,
+    redirectCount: number
 ): Promise<string> {
-  const client = url.startsWith("https") ? https : http;
-  const parsedOptions = parseUrlAndOptions(url, options || {});
+    const client = url.startsWith("https") ? https : http;
+    const parsedOptions = parseUrlAndOptions(url, options || {});
 
-  return new Promise((resolve, reject) => {
-    let result = "";
-    const req = client.get(parsedOptions, (res) => {
-      res.on("data", (chunk) => {
-        result += chunk;
-      });
-      res.on("end", () => {
-        if (
-          res.statusCode &&
-          res.statusCode >= 300 &&
-          res.statusCode < 400 &&
-          redirectCount < 3 // Max redirect
-        ) {
-          const location = res.headers.location!;
-          try {
-            const redirectUrl = new URL(location, url).toString();
-            resolve(get0(redirectUrl, options, redirectCount + 1));
-          } catch (error) {
-            reject(error);
-          }
-          return;
-        }
-        resolve(result);
-      });
+    return new Promise((resolve, reject) => {
+        let result = "";
+        const req = client.get(parsedOptions, (res) => {
+            res.on("data", (chunk) => {
+                result += chunk;
+            });
+            res.on("end", () => {
+                if (
+                    res.statusCode &&
+                    res.statusCode >= 300 &&
+                    res.statusCode < 400 &&
+                    redirectCount < 3 // Max redirect
+                ) {
+                    const location = res.headers.location!;
+                    try {
+                        const redirectUrl = new URL(location, url).toString();
+                        resolve(get0(redirectUrl, options, redirectCount + 1));
+                    } catch (error) {
+                        reject(error);
+                    }
+                    return;
+                }
+                resolve(result);
+            });
+        });
+        req.on("error", (e) => {
+            reject(e);
+        });
+        req.setTimeout(TIMEOUT, function handleRequestTimeout() {
+            if (req.destroy) {
+                req.destroy();
+            } else {
+                req.abort();
+            }
+            reject(new Error(`Timeout of ${TIMEOUT}ms exceeded`));
+        });
     });
-    req.on("error", (e) => {
-      reject(e);
-    });
-    req.setTimeout(TIMEOUT, function handleRequestTimeout() {
-      if (req.destroy) {
-        req.destroy();
-      } else {
-        req.abort();
-      }
-      reject(new Error(`Timeout of ${TIMEOUT}ms exceeded`));
-    });
-  });
 }
 
 /** Parse URL and options */
 function parseUrlAndOptions(urlStr: string, baseOptions: RequestOptions) {
-  const url = new URL(urlStr);
-  const hostname =
-    typeof url.hostname === "string" && url.hostname.startsWith("[")
-      ? url.hostname.slice(1, -1)
-      : url.hostname;
-  const options: RequestOptions = {
-    agent: false,
-    ...baseOptions,
-    hostname,
-    path: `${url.pathname || ""}${url.search || ""}`,
-    protocol: url.protocol,
-  };
-  if (url.port !== "") {
-    options.port = Number(url.port);
-  }
-  if (url.username || url.password) {
-    options.auth = `${url.username}:${url.password}`;
-  }
+    const url = new URL(urlStr);
+    const hostname =
+        typeof url.hostname === "string" && url.hostname.startsWith("[")
+            ? url.hostname.slice(1, -1)
+            : url.hostname;
+    const options: RequestOptions = {
+        agent: false,
+        ...baseOptions,
+        hostname,
+        path: `${url.pathname || ""}${url.search || ""}`,
+        protocol: url.protocol,
+    };
+    if (url.port !== "") {
+        options.port = Number(url.port);
+    }
+    if (url.username || url.password) {
+        options.auth = `${url.username}:${url.password}`;
+    }
 
-  const PROXY_ENV = [
-    "https_proxy",
-    "HTTPS_PROXY",
-    "http_proxy",
-    "HTTP_PROXY",
-    "npm_config_https_proxy",
-    "npm_config_http_proxy",
-  ];
+    const PROXY_ENV = [
+        "https_proxy",
+        "HTTPS_PROXY",
+        "http_proxy",
+        "HTTP_PROXY",
+        "npm_config_https_proxy",
+        "npm_config_http_proxy",
+    ];
 
-  const proxyStr: string =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
-    (options as any)?.proxy ||
+    const proxyStr: string =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
+        (options as any)?.proxy ||
+        PROXY_ENV.map((k) => process.env[k]).find(Boolean);
+    if (proxyStr) {
+        const proxyUrl = new URL(proxyStr);
 
-    PROXY_ENV.map((k) => process.env[k]).find(Boolean);
-  if (proxyStr) {
-    const proxyUrl = new URL(proxyStr);
-
-    options.agent = tunnel[
-      `http${url.protocol === "https:" ? "s" : ""}OverHttp${
-        proxyUrl.protocol === "https:" ? "s" : ""
-      }`
-    ]({
-      proxy: {
-        host: proxyUrl.hostname,
-        port: Number(proxyUrl.port),
-        proxyAuth:
-          proxyUrl.username || proxyUrl.password
-            ? `${proxyUrl.username}:${proxyUrl.password}`
-            : undefined,
-      },
-    });
-  }
-  return options;
+        options.agent = tunnel[
+            `http${url.protocol === "https:" ? "s" : ""}OverHttp${
+                proxyUrl.protocol === "https:" ? "s" : ""
+            }`
+        ]({
+            proxy: {
+                host: proxyUrl.hostname,
+                port: Number(proxyUrl.port),
+                proxyAuth:
+                    proxyUrl.username || proxyUrl.password
+                        ? `${proxyUrl.username}:${proxyUrl.password}`
+                        : undefined,
+            },
+        });
+    }
+    return options;
 }
