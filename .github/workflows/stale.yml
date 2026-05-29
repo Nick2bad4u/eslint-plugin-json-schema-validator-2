@@ -1,37 +1,49 @@
-name: Close stale issues and PRs
-on:
-  schedule:
-    - cron: "30 1 * * *"
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+name: Mark Stale Issues And Pull Requests
 
-permissions:
-  issues: write
-  pull-requests: write
+run-name: Stale Sweep • ${{ github.ref_name }} @${{ github.actor }}
 
-# Allow one concurrent deployment
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    group: stale-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+on:
+    schedule:
+        - cron: "38 7 * * *"
+    pull_request_target:
+        branches:
+            - main
+        types:
+            - opened
+            - reopened
+            - synchronize
+    issues:
+        types:
+            - opened
+            - reopened
+            - edited
+    workflow_dispatch:
 
 jobs:
-  stale:
-    if: github.repository == 'ota-meshi/eslint-plugin-json-schema-validator'
-    name: Close stale issues with missing information
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/stale@v10
-        with:
-          any-of-labels: "needs repro,needs info,needs more info"
-          days-before-stale: 60
-          days-before-close: 14
-          stale-issue-message: This issue is is stale because it missing information and has been open for 60 days with no activity.
-          stale-pr-message: This PR is is stale because it missing information and has been open for 60 days with no activity.
-          close-issue-message: >
-            This issue has been automatically closed because we haven't received a
-            response from the original author 🙈. This automation helps keep the issue
-            tracker clean from issues that aren't actionable. Please reach out if you
-            have more information for us! 🙂
-          close-pr-message: >
-            This PR has been automatically closed because we haven't received a
-            response from the original author 🙈. This automation helps keep the issue
-            tracker clean from PRs that aren't actionable. Please reach out if you
-            have more information for us! 🙂
+    stale:
+        name: Mark Stale Issues And Pull Requests
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        permissions:
+            contents: read
+            issues: write
+            pull-requests: write
+        steps:
+            - name: Harden Runner
+              uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+              with:
+                  egress-policy: audit
+
+            - name: Mark stale issues and pull requests
+              uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
+              with:
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  stale-issue-message: "Stale issue"
+                  stale-pr-message: "Stale pull request"
+                  stale-issue-label: "no-issue-activity"
+                  stale-pr-label: "no-pr-activity"

@@ -88,13 +88,6 @@ dist
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
 
-# vuepress build output
-.vuepress/dist
-
-# vitepress build output
-docs/.vitepress/dist
-docs/.vitepress/cache
-
 # Serverless directories
 .serverless/
 
@@ -114,10 +107,28 @@ docs/.vitepress/cache
 # docs
 /docs/assets
 /docs/**/*.html
+/docs/docusaurus/.docusaurus
+/docs/docusaurus/build
+/docs/docusaurus/docs/.nojekyll
+/docs/docusaurus/docs/assets
+/docs/docusaurus/docs/coverage.svg
+/docs/docusaurus/docs/documents
+/docs/docusaurus/docs/electron
+/docs/docusaurus/docs/index.md
+/docs/docusaurus/docs/modules.md
+/docs/docusaurus/docs/src
+/docs/docusaurus/docs/typedoc.json
+/docs/docusaurus/docs/typedoc-sidebar.cjs
+/docs/docusaurus/docs/_media
+/docs/docusaurus/static/*-inspector/
+/docs/docusaurus/static/eslint-inspector/
+/docs/docusaurus/static/stylelint-inspector/
+/docs/docusaurus/static/storybook/
+/docs/docusaurus/stylelintcache
+**/site-docs/developer/api/
 
 # cache
 .cached_schemastore
+temp/
 
 /yarn.lock
-
-/docs/.vitepress/build-system/shim

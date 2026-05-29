@@ -1,30 +1,56 @@
 // eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair -- ignore
 /* eslint-disable @typescript-eslint/no-explicit-any -- ignore */
 import type { AST } from "vue-eslint-parser";
-import type { RuleContext, SourceCode } from "../../../types.ts";
-import { findInitNode, getStaticValue } from "./utils.ts";
-import { getStaticPropertyName } from "./utils.ts";
 
-const UNKNOWN = Symbol("unknown value");
+import type { RuleContext, SourceCode } from "../../../types.ts";
+
+import { findInitNode, getStaticPropertyName, getStaticValue  } from "./utils.ts";
+
+const UNKNOWN: unique symbol = Symbol("unknown value");
 type TUnknown = typeof UNKNOWN;
 const EMPTY_MAP = Object.freeze(new Map());
-const UNKNOWN_PATH_DATA: SubPathData = { data: UNKNOWN, children: EMPTY_MAP };
+const UNKNOWN_PATH_DATA: SubPathData = { children: EMPTY_MAP, data: UNKNOWN };
 const UNKNOWN_STRING_PATH_DATA: SubPathData = {
-  data: "UNKNOWN",
   children: EMPTY_MAP,
+  data: "UNKNOWN",
 };
-export type PathData = {
-  key:
-    | [number, number]
-    | null
-    | ((sourceCode: SourceCode) => [number, number] | null);
-  data: unknown;
+export interface AnalyzedJsAST { object: unknown; pathData: PathData }
+
+export interface PathData {
   children: Readonly<Map<string, PathData | TUnknown>>;
-};
+  data: unknown;
+  key:
+    | ((sourceCode: SourceCode) => [number, number] | null)
+    | [number, number]
+    | null;
+}
+type BinaryOperator =
+  | "!="
+  | "!=="
+  | "%"
+  | "&"
+  | "*"
+  | "**"
+  | "+"
+  | "-"
+  | "/"
+  | "<"
+  | "<<"
+  | "<="
+  | "=="
+  | "==="
+  | ">"
+  | ">="
+  | ">>"
+  | ">>>"
+  | "^"
+  | "in"
+  | "instanceof"
+  | "|";
 
-type SubPathData = Pick<PathData, "data" | "children">;
-export type AnalyzedJsAST = { object: unknown; pathData: PathData };
+type SubPathData = Pick<PathData, "children" | "data">;
 
+type UnaryOperator = "!" | "+" | "-" | "delete" | "typeof" | "void" | "~";
 /**
  * Analyze JavaScript AST
  */
@@ -48,110 +74,46 @@ export function analyzeJsAST(
 
   return result;
 }
-
-type UnaryOperator = "-" | "+" | "!" | "~" | "typeof" | "void" | "delete";
-type BinaryOperator =
-  | "=="
-  | "!="
-  | "==="
-  | "!=="
-  | "<"
-  | "<="
-  | ">"
-  | ">="
-  | "<<"
-  | ">>"
-  | ">>>"
-  | "+"
-  | "-"
-  | "*"
-  | "/"
-  | "%"
-  | "|"
-  | "^"
-  | "&"
-  | "in"
-  | "instanceof"
-  | "**";
-const CALC_UNARY: Record<UnaryOperator, null | ((v: any) => unknown)> = {
-  "+": (v) => Number(v),
-  "-": (v) => -v,
+const CALC_UNARY: Record<UnaryOperator, ((v: any) => unknown) | null> = {
   "!": (v) => !v,
-  "~": (v) => ~v,
+  "+": Number,
+  "-": (v) => -v,
+  delete: null,
   typeof: (v) => typeof v,
   void: () => undefined,
-  delete: null,
+  "~": (v) => ~v,
 };
 const CALC_BINARY: Record<
   BinaryOperator,
-  null | ((v1: any, v2: any) => unknown)
+  ((v1: any, v2: any) => unknown) | null
 > = {
-  // eslint-disable-next-line eqeqeq -- ignore
-  "==": (v1, v2) => v1 == v2,
-  // eslint-disable-next-line eqeqeq -- ignore
+
   "!=": (v1, v2) => v1 != v2,
-  "===": (v1, v2) => v1 === v2,
+
   "!==": (v1, v2) => v1 !== v2,
-  "<": (v1, v2) => v1 < v2,
-  "<=": (v1, v2) => v1 <= v2,
-  ">": (v1, v2) => v1 > v2,
-  ">=": (v1, v2) => v1 >= v2,
-  "<<": (v1, v2) => v1 << v2,
-  ">>": (v1, v2) => v1 >> v2,
-  ">>>": (v1, v2) => v1 >>> v2,
+  "%": (v1, v2) => v1 % v2,
+  "&": (v1, v2) => v1 & v2,
+  "*": (v1, v2) => v1 * v2,
+  "**": (v1, v2) => v1 ** v2,
   "+": (v1, v2) => v1 + v2,
   "-": (v1, v2) => v1 - v2,
-  "*": (v1, v2) => v1 * v2,
   "/": (v1, v2) => v1 / v2,
-  "%": (v1, v2) => v1 % v2,
-  "|": (v1, v2) => v1 | v2,
+  "<": (v1, v2) => v1 < v2,
+  "<<": (v1, v2) => v1 << v2,
+  "<=": (v1, v2) => v1 <= v2,
+  "==": (v1, v2) => v1 == v2,
+  "===": (v1, v2) => v1 === v2,
+  ">": (v1, v2) => v1 > v2,
+  ">=": (v1, v2) => v1 >= v2,
+  ">>": (v1, v2) => v1 >> v2,
+  ">>>": (v1, v2) => v1 >>> v2,
   "^": (v1, v2) => v1 ^ v2,
-  "&": (v1, v2) => v1 & v2,
   in: (v1, v2) => v1 in v2,
   instanceof: (v1, v2) => v1 instanceof v2,
-  "**": (v1, v2) => v1 ** v2,
+  "|": (v1, v2) => v1 | v2,
 };
 
 const VISITORS = {
-  ObjectExpression(
-    node: AST.ESLintObjectExpression,
-    context: RuleContext,
-  ): SubPathData {
-    const data: Record<string, any> = {};
-    const children: SubPathData["children"] = new Map();
-    for (const prop of node.properties) {
-      if (prop.type === "Property") {
-        const keyName = getStaticPropertyName(prop, context);
-        if (keyName != null) {
-          const propData = getPathData(
-            prop.value as AST.ESLintExpression,
-            context,
-          );
-          if (propData.data !== UNKNOWN) {
-            data[keyName] = propData.data;
-            children.set(keyName, {
-              key: prop.key.range,
-              ...propData,
-            });
-          } else {
-            data[keyName] = UNKNOWN;
-            children.set(keyName, UNKNOWN);
-          }
-        }
-      } else if (prop.type === "SpreadElement") {
-        const propData = getPathData(prop.argument, context);
-        propData.children.forEach((val, key) => {
-          data[key] = (propData.data as any)[key];
-          children.set(key, val);
-        });
-      }
-    }
-
-    return {
-      data,
-      children,
-    };
-  },
   ArrayExpression(
     node: AST.ESLintArrayExpression,
     context: RuleContext,
@@ -163,20 +125,22 @@ const VISITORS = {
       if (element) {
         if (element.type !== "SpreadElement") {
           const propData = getPathData(element, context);
-          if (propData.data !== UNKNOWN) {
+          if (propData.data === UNKNOWN) {
+            data[index] = UNKNOWN;
+            children.set(String(index), UNKNOWN);
+          } else {
             data[index] = propData.data;
             children.set(String(index), {
               key: element.range,
               ...propData,
             });
-          } else {
-            data[index] = UNKNOWN;
-            children.set(String(index), UNKNOWN);
           }
         }
       } else {
         data[index] = undefined;
         children.set(String(index), {
+          children: EMPTY_MAP,
+          data: undefined,
           key: (sourceCode) => {
             const before = node.elements
               .slice(0, index)
@@ -196,121 +160,27 @@ const VISITORS = {
               token.range![0],
             ];
           },
-          data: undefined as any,
-          children: EMPTY_MAP,
         });
       }
     }
 
     return {
-      data,
       children,
+      data,
     };
   },
-  Identifier(node: AST.ESLintIdentifier, context: RuleContext): SubPathData {
-    const init = findInitNode(context, node);
-    if (init == null) {
-      const evalData = getStaticValue(context, node);
-      if (evalData != null) {
-        return {
-          data: evalData.value,
-          children: EMPTY_MAP,
-        };
-      }
-
-      return UNKNOWN_PATH_DATA;
-    }
-    const data = getPathData(init.node, context);
-    if (typeof data.data === "object" && data.data != null) {
-      for (const readId of init.reads) {
-        const props = getWriteProps(readId);
-        if (props == null) {
-          continue;
-        }
-        let objData = data;
-        let obj: Record<string, any> = data.data;
-        while (props.length) {
-          const prop = props.shift()!;
-          const child = objData.children.get(prop);
-          if (child) {
-            if (child === UNKNOWN) {
-              break;
-            }
-            const nextObj = obj[prop];
-            if (typeof nextObj === "object" && nextObj != null) {
-              objData = child;
-              obj = obj[prop];
-            } else {
-              break;
-            }
-          } else {
-            obj[prop] = UNKNOWN;
-            objData.children.set(prop, UNKNOWN);
-            break;
-          }
-        }
-      }
-    }
-    return data;
-
-    /**
-     * Get write properties from given Identifier
-     */
-    function getWriteProps(id: AST.ESLintIdentifier) {
-      if (
-        !id.parent ||
-        id.parent.type !== "MemberExpression" ||
-        id.parent.object !== id
-      ) {
-        return null;
-      }
-      const results: string[] = [];
-      let mem = id.parent;
-      while (mem) {
-        const name = getStaticPropertyName(mem, context);
-        if (name == null) {
-          break;
-        }
-        results.push(name);
-        if (
-          !mem.parent ||
-          mem.parent.type !== "MemberExpression" ||
-          mem.parent.object !== mem
-        ) {
-          break;
-        }
-        mem = mem.parent;
-      }
-      if (!mem.parent || mem.parent.type !== "AssignmentExpression") {
-        return null;
-      }
-      return results;
-    }
+  ArrowFunctionExpression() {
+    return UNKNOWN_PATH_DATA;
   },
-  Literal(node: AST.ESLintLiteral, _context: RuleContext): SubPathData {
-    return {
-      data: node.value,
-      children: EMPTY_MAP,
-    };
-  },
-  UnaryExpression(
-    node: AST.ESLintUnaryExpression,
+  AssignmentExpression(
+    node: AST.ESLintAssignmentExpression,
     context: RuleContext,
   ): SubPathData {
-    const argData = getPathData(node.argument, context);
-    if (argData.data === UNKNOWN) {
-      return UNKNOWN_PATH_DATA;
-    }
-    const calc = CALC_UNARY[node.operator];
-    if (!calc) {
-      return UNKNOWN_PATH_DATA;
-    }
-    const data: unknown = calc(argData.data);
-
-    return {
-      data,
-      children: EMPTY_MAP,
-    };
+    const rightData = getPathData(node.right, context);
+    return rightData;
+  },
+  AwaitExpression() {
+    return UNKNOWN_PATH_DATA;
   },
   BinaryExpression(
     node: AST.ESLintBinaryExpression,
@@ -334,8 +204,135 @@ const VISITORS = {
     const data: unknown = calc(leftData.data, rightData.data);
 
     return {
-      data,
       children: EMPTY_MAP,
+      data,
+    };
+  },
+  CallExpression(
+    node: AST.ESLintCallExpression,
+    context: RuleContext,
+  ): SubPathData {
+    const evalData = getStaticValue(context, node);
+    if (!evalData) {
+      if (
+        node.callee.type === "MemberExpression" &&
+        node.callee.object.type === "Identifier" &&
+        node.callee.object.name === "require" &&
+        getStaticPropertyName(node.callee, context) === "resolve"
+      ) {
+        return UNKNOWN_STRING_PATH_DATA;
+      }
+      return UNKNOWN_PATH_DATA;
+    }
+    return {
+      children: EMPTY_MAP,
+      data: evalData.value,
+    };
+  },
+  ChainExpression() {
+    return UNKNOWN_PATH_DATA;
+  },
+  ClassExpression() {
+    return UNKNOWN_PATH_DATA;
+  },
+  ConditionalExpression(
+    node: AST.ESLintConditionalExpression,
+    context: RuleContext,
+  ): SubPathData {
+    const testData = getPathData(node.test, context);
+    if (testData.data === UNKNOWN) {
+      return UNKNOWN_PATH_DATA;
+    }
+    if (testData.data) {
+      return getPathData(node.consequent, context);
+    }
+    return getPathData(node.alternate, context);
+  },
+  FunctionExpression() {
+    return UNKNOWN_PATH_DATA;
+  },
+  Identifier(node: AST.ESLintIdentifier, context: RuleContext): SubPathData {
+    const init = findInitNode(context, node);
+    if (init == null) {
+      const evalData = getStaticValue(context, node);
+      if (evalData != null) {
+        return {
+          children: EMPTY_MAP,
+          data: evalData.value,
+        };
+      }
+
+      return UNKNOWN_PATH_DATA;
+    }
+    const data = getPathData(init.node, context);
+    if (typeof data.data === "object" && data.data != null) {
+      for (const readId of init.reads) {
+        const props = getWriteProps(readId);
+        if (props == null) {
+          continue;
+        }
+        let objData = data;
+        let obj: Record<string, any> = data.data;
+        while (props.length > 0) {
+          const prop = props.shift()!;
+          const child = objData.children.get(prop);
+          if (child) {
+            if (child === UNKNOWN) {
+              break;
+            }
+            const nextObj = obj[prop];
+            if (typeof nextObj === "object" && nextObj != null) {
+              objData = child;
+              obj = obj[prop];
+            } else {
+              break;
+            }
+          } else {
+            obj[prop] = UNKNOWN;
+            objData.children.set(prop, UNKNOWN);
+            break;
+          }
+        }
+      }
+    }
+    /**
+     * Get write properties from given Identifier
+     */
+    function getWriteProps(id: AST.ESLintIdentifier) {
+      if (
+        id.parent?.type !== "MemberExpression" ||
+        id.parent.object !== id
+      ) {
+        return null;
+      }
+      const results: string[] = [];
+      let mem = id.parent;
+      while (mem) {
+        const name = getStaticPropertyName(mem, context);
+        if (name == null) {
+          break;
+        }
+        results.push(name);
+        if (
+          mem.parent?.type !== "MemberExpression" ||
+          mem.parent.object !== mem
+        ) {
+          break;
+        }
+        mem = mem.parent;
+      }
+      if (mem.parent?.type !== "AssignmentExpression") {
+        return null;
+      }
+      return results;
+    }
+    return data;
+
+  },
+  Literal(node: AST.ESLintLiteral, _context: RuleContext): SubPathData {
+    return {
+      children: EMPTY_MAP,
+      data: node.value,
     };
   },
   LogicalExpression(
@@ -346,29 +343,33 @@ const VISITORS = {
     if (leftData.data === UNKNOWN) {
       return UNKNOWN_PATH_DATA;
     }
-    const operator: "||" | "&&" | "??" = node.operator;
-    if (operator === "||") {
-      if (leftData.data) {
-        return leftData;
-      }
-    } else if (operator === "&&") {
+    const operator: "&&" | "??" | "||" = node.operator;
+    switch (operator) {
+    case "&&": {
       if (!leftData.data) {
         return leftData;
       }
-    } else if (operator === "??") {
+
+    break;
+    }
+    case "??": {
       if (leftData.data != null) {
         return leftData;
       }
-    } else {
+
+    break;
+    }
+    case "||": {
+      if (leftData.data) {
+        return leftData;
+      }
+
+    break;
+    }
+    default: {
       return UNKNOWN_PATH_DATA;
     }
-    const rightData = getPathData(node.right, context);
-    return rightData;
-  },
-  AssignmentExpression(
-    node: AST.ESLintAssignmentExpression,
-    context: RuleContext,
-  ): SubPathData {
+    }
     const rightData = getPathData(node.right, context);
     return rightData;
   },
@@ -395,46 +396,15 @@ const VISITORS = {
     }
     if (objectData.data != null) {
       return {
-        data: (objectData.data as any)[propName],
         children: EMPTY_MAP,
+        data: (objectData.data as any)[propName],
       };
     }
 
     return UNKNOWN_PATH_DATA;
   },
-  ConditionalExpression(
-    node: AST.ESLintConditionalExpression,
-    context: RuleContext,
-  ): SubPathData {
-    const testData = getPathData(node.test, context);
-    if (testData.data === UNKNOWN) {
-      return UNKNOWN_PATH_DATA;
-    }
-    if (testData.data) {
-      return getPathData(node.consequent, context);
-    }
-    return getPathData(node.alternate, context);
-  },
-  CallExpression(
-    node: AST.ESLintCallExpression,
-    context: RuleContext,
-  ): SubPathData {
-    const evalData = getStaticValue(context, node);
-    if (!evalData) {
-      if (
-        node.callee.type === "MemberExpression" &&
-        node.callee.object.type === "Identifier" &&
-        node.callee.object.name === "require" &&
-        getStaticPropertyName(node.callee, context) === "resolve"
-      ) {
-        return UNKNOWN_STRING_PATH_DATA;
-      }
-      return UNKNOWN_PATH_DATA;
-    }
-    return {
-      data: evalData.value,
-      children: EMPTY_MAP,
-    };
+  MetaProperty() {
+    return UNKNOWN_PATH_DATA;
   },
   NewExpression(
     node: AST.ESLintNewExpression,
@@ -445,35 +415,58 @@ const VISITORS = {
       return UNKNOWN_PATH_DATA;
     }
     return {
-      data: evalData.value,
       children: EMPTY_MAP,
+      data: evalData.value,
+    };
+  },
+  ObjectExpression(
+    node: AST.ESLintObjectExpression,
+    context: RuleContext,
+  ): SubPathData {
+    const data: Record<string, any> = {};
+    const children: SubPathData["children"] = new Map();
+    for (const prop of node.properties) {
+      if (prop.type === "Property") {
+        const keyName = getStaticPropertyName(prop, context);
+        if (keyName != null) {
+          const propData = getPathData(
+            prop.value as AST.ESLintExpression,
+            context,
+          );
+          if (propData.data === UNKNOWN) {
+            data[keyName] = UNKNOWN;
+            children.set(keyName, UNKNOWN);
+          } else {
+            data[keyName] = propData.data;
+            children.set(keyName, {
+              key: prop.key.range,
+              ...propData,
+            });
+          }
+        }
+      } else if (prop.type === "SpreadElement") {
+        const propData = getPathData(prop.argument, context);
+        for (const [key, val] of propData.children.entries()) {
+          data[key] = (propData.data as any)[key];
+          children.set(key, val);
+        }
+      }
+    }
+
+    return {
+      children,
+      data,
     };
   },
   SequenceExpression(
     node: AST.ESLintSequenceExpression,
     context: RuleContext,
   ): SubPathData {
-    const last = node.expressions[node.expressions.length - 1];
+    const last = node.expressions.at(-1);
+    if (!last) {
+      return UNKNOWN_PATH_DATA;
+    }
     return getPathData(last, context);
-  },
-  TemplateLiteral(
-    node: AST.ESLintTemplateLiteral,
-    context: RuleContext,
-  ): SubPathData {
-    const expressions = [];
-    for (const e of node.expressions) {
-      const data = getPathData(e, context);
-      if (data.data === UNKNOWN) {
-        return UNKNOWN_STRING_PATH_DATA;
-      }
-      expressions.push(data.data);
-    }
-    let data = node.quasis[0].value.cooked ?? node.quasis[0].value.raw;
-    for (let i = 0; i < expressions.length; ++i) {
-      data += String(expressions[i]);
-      data += node.quasis[i + 1].value.cooked ?? node.quasis[i + 1].value.raw;
-    }
-    return { data, children: EMPTY_MAP };
   },
   TaggedTemplateExpression(
     node: AST.ESLintTaggedTemplateExpression,
@@ -501,35 +494,63 @@ const VISITORS = {
     const data = String.raw(strings as never, ...expressions);
 
     return {
-      data,
       children: EMPTY_MAP,
+      data,
+    };
+  },
+  TemplateLiteral(
+    node: AST.ESLintTemplateLiteral,
+    context: RuleContext,
+  ): SubPathData {
+    const expressions = [];
+    for (const e of node.expressions) {
+      const data = getPathData(e, context);
+      if (data.data === UNKNOWN) {
+        return UNKNOWN_STRING_PATH_DATA;
+      }
+      expressions.push(data.data);
+    }
+    const firstQuasi = node.quasis[0];
+    if (!firstQuasi) {
+      return UNKNOWN_STRING_PATH_DATA;
+    }
+    let data = firstQuasi.value.cooked ?? firstQuasi.value.raw;
+    for (const [i, expression] of expressions.entries()) {
+      const quasi = node.quasis[i + 1];
+      if (!quasi) {
+        return UNKNOWN_STRING_PATH_DATA;
+      }
+      data += String(expression);
+      data += quasi.value.cooked ?? quasi.value.raw;
+    }
+    return { children: EMPTY_MAP, data };
+  },
+  ThisExpression() {
+    return UNKNOWN_PATH_DATA;
+  },
+  UnaryExpression(
+    node: AST.ESLintUnaryExpression,
+    context: RuleContext,
+  ): SubPathData {
+    const argData = getPathData(node.argument, context);
+    if (argData.data === UNKNOWN) {
+      return UNKNOWN_PATH_DATA;
+    }
+    const calc = CALC_UNARY[node.operator];
+    if (!calc) {
+      return UNKNOWN_PATH_DATA;
+    }
+    const data: unknown = calc(argData.data);
+
+    return {
+      children: EMPTY_MAP,
+      data,
     };
   },
   UpdateExpression() {
     return UNKNOWN_PATH_DATA;
   },
-  ThisExpression() {
-    return UNKNOWN_PATH_DATA;
-  },
-  FunctionExpression() {
-    return UNKNOWN_PATH_DATA;
-  },
-  ArrowFunctionExpression() {
-    return UNKNOWN_PATH_DATA;
-  },
   YieldExpression() {
-    return UNKNOWN_PATH_DATA;
-  },
-  ClassExpression() {
-    return UNKNOWN_PATH_DATA;
-  },
-  MetaProperty() {
-    return UNKNOWN_PATH_DATA;
-  },
-  AwaitExpression() {
-    return UNKNOWN_PATH_DATA;
-  },
-  ChainExpression() {
     return UNKNOWN_PATH_DATA;
   },
 };

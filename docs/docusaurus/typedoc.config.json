@@ -1,0 +1,36 @@
+{
+    "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+    "cleanOutputDir": true,
+    "entryPointStrategy": "expand",
+    "entryPoints": [
+        "../../src/plugin.ts"
+    ],
+    "exclude": [
+        "**/dist/**",
+        "**/node_modules/**",
+        "**/coverage/**"
+    ],
+    "gitRemote": "origin",
+    "gitRevision": "main",
+    "hostedBaseUrl": "https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/",
+    "json": "docs/typedoc.json",
+    "name": "eslint-plugin-json-schema-validator Documentation",
+    "out": "site-docs/developer/api",
+    "plugin": [
+        "typedoc-plugin-markdown",
+        "typedoc-plugin-mdn-links",
+        "typedoc-plugin-dt-links",
+        "typedoc-plugin-external-package-links",
+        "typedoc-plugin-missing-exports",
+        "typedoc-docusaurus-theme"
+    ],
+    "readme": "none",
+    "theme": "markdown",
+    "tsconfig": "tsconfig.typedoc.json",
+    "validation": {
+        "invalidLink": true,
+        "invalidPath": true,
+        "notDocumented": false,
+        "notExported": false
+    }
+}

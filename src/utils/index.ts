@@ -1,16 +1,18 @@
-/* eslint @typescript-eslint/no-explicit-any: off -- util */
-import type {
-  RuleListener,
-  RuleModule,
-  PartialRuleModule,
-  RuleContext,
-} from "../types.ts";
 import type { Rule } from "eslint";
 import type { AST as VueAST } from "vue-eslint-parser";
+
 import * as jsoncESLintParser from "jsonc-eslint-parser";
-import * as yamlESLintParser from "yaml-eslint-parser";
+import path from "node:path";
 import * as tomlESLintParser from "toml-eslint-parser";
-import path from "path";
+import * as yamlESLintParser from "yaml-eslint-parser";
+
+/* eslint @typescript-eslint/no-explicit-any: off -- util */
+import type {
+  PartialRuleModule,
+  RuleContext,
+  RuleListener,
+  RuleModule,
+} from "../types.ts";
 
 /**
  * Define the rule.
@@ -22,15 +24,6 @@ export function createRule(
   rule: PartialRuleModule,
 ): RuleModule {
   return {
-    meta: {
-      ...rule.meta,
-      docs: {
-        ...rule.meta.docs,
-        url: `https://ota-meshi.github.io/eslint-plugin-json-schema-validator/rules/${ruleName}.html`,
-        ruleId: `json-schema-validator/${ruleName}`,
-        ruleName,
-      },
-    },
     create(context: Rule.RuleContext): any {
       const sourceCode = context.sourceCode;
       const filename = context.filename;
@@ -47,12 +40,6 @@ export function createRule(
           context,
           jsoncESLintParser,
           {
-            target(lang: string | null, block: VueAST.VElement) {
-              if (lang) {
-                return /^json[5c]?$/i.test(lang);
-              }
-              return block.name === "i18n";
-            },
             create(blockContext: RuleContext) {
               return rule.create(blockContext, {
                 customBlock: true,
@@ -62,13 +49,18 @@ export function createRule(
                 ),
               });
             },
+            target(lang: null | string, block: VueAST.VElement) {
+              if (lang) {
+                return /^json[5c]?$/i.test(lang);
+              }
+              return block.name === "i18n";
+            },
           },
         );
         const yamlVisitor = sourceCode.parserServices.defineCustomBlocksVisitor(
           context,
           yamlESLintParser,
           {
-            target: ["yaml", "yml"],
             create(blockContext: RuleContext) {
               return rule.create(blockContext, {
                 customBlock: true,
@@ -78,13 +70,13 @@ export function createRule(
                 ),
               });
             },
+            target: ["yaml", "yml"],
           },
         );
         const tomlVisitor = sourceCode.parserServices.defineCustomBlocksVisitor(
           context,
           tomlESLintParser,
           {
-            target: ["toml"],
             create(blockContext: RuleContext) {
               return rule.create(blockContext, {
                 customBlock: true,
@@ -94,6 +86,7 @@ export function createRule(
                 ),
               });
             },
+            target: ["toml"],
           },
         );
 
@@ -105,20 +98,18 @@ export function createRule(
         );
       }
 
-      return visitor;
-
       /** Get file name of block */
       function getBlockFileName(
         customBlock: VueAST.VElement,
         langFallback: string,
       ): string {
-        const attrs: Record<string, string | null> = {};
+        const attrs: Record<string, null | string> = {};
         for (const attr of customBlock.startTag.attributes) {
           if (!attr.directive) {
             attrs[attr.key.name] = attr.value?.value ?? null;
           }
         }
-        const ext = attrs.lang || langFallback;
+        const ext = attrs["lang"] || langFallback;
 
         let attrQuery = "";
         for (const [key, val] of Object.entries(attrs)) {
@@ -131,6 +122,17 @@ export function createRule(
         const result = `${customBlock.name}.${ext}`;
         return `${filename}/${result}?vue&type=custom&blockType=${customBlock.name}${attrQuery}`;
       }
+      return visitor;
+
+    },
+    meta: {
+      ...rule.meta,
+      docs: {
+        ...rule.meta.docs,
+        ruleId: `json-schema-validator/${ruleName}`,
+        ruleName,
+        url: `https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/${ruleName}`,
+      },
     },
   };
 }

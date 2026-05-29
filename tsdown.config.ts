@@ -2,16 +2,21 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: {
-    index: "./src/index.ts",
-    worker: "./src/utils/http-client/worker.ts",
+    plugin: "./src/plugin.ts",
+    "utils/http-client/worker": "./src/utils/http-client/worker.ts",
   },
-  format: ["esm"],
+  format: ["esm", "cjs"],
   platform: "node",
   dts: true,
   clean: true,
-  outDir: "lib",
+  outDir: "dist",
+  outputOptions(options, format) {
+    return format === "cjs" ? { ...options, exports: "named" } : options;
+  },
   treeshake: {
     moduleSideEffects: false,
   },
-  external: ["@eslint/core"],
+  deps: {
+    neverBundle: ["@eslint/core"],
+  },
 });

@@ -1,22 +1,24 @@
 import type { AST as YAML } from "yaml-eslint-parser";
+
 import { getStaticYAMLValue } from "yaml-eslint-parser";
-import type { Token } from "../../types";
-import type { GetNodeFromPath, NodeData } from "./common";
+
+import type { Token } from "../../types.ts";
+import type { GetNodeFromPath, NodeData } from "./common.ts";
 
 type TraverseTarget =
-  | YAML.YAMLProgram
+  | YAML.YAMLAlias
   | YAML.YAMLDocument
   | YAML.YAMLMapping
+  | YAML.YAMLProgram
   | YAML.YAMLSequence
-  | YAML.YAMLAlias
   | YAML.YAMLWithMeta;
 
-const TRAVERSE_TARGET_TYPE: Set<string> = new Set([
+const TRAVERSE_TARGET_TYPE = new Set<string>([
   "Program",
+  "YAMLAlias",
   "YAMLDocument",
   "YAMLMapping",
   "YAMLSequence",
-  "YAMLAlias",
   "YAMLWithMeta",
 ] as TraverseTarget["type"][]);
 
@@ -26,25 +28,35 @@ const GET_YAML_NODES: Record<
 > = {
   Program(node: YAML.YAMLProgram, paths: string[]) {
     if (node.body.length <= 1) {
-      return { value: node.body[0] };
+      const document = node.body[0];
+      if (document) {
+        return { value: document };
+      }
+      throw new Error("Unexpected state: empty YAML program");
     }
     const path = String(paths.shift());
     for (let index = 0; index < node.body.length; index++) {
       if (String(index) !== path) {
         continue;
       }
-      return { value: node.body[index] };
+      const document = node.body[index];
+      if (document) {
+        return { value: document };
+      }
+      break;
     }
-    throw new Error(`${"Unexpected state: ["}${[path, ...paths].join(", ")}]`);
+    throw new Error(`Unexpected state: [${[path, ...paths].join(", ")}]`);
+  },
+  YAMLAlias(node: YAML.YAMLAlias, paths: string[]) {
+    paths.length = 0; // Consume all
+    return { value: node };
   },
   YAMLDocument(node: YAML.YAMLDocument, _paths: string[]) {
     if (node.content) {
       return { value: node.content };
     }
     return {
-      key: () => {
-        return node.range;
-      },
+      key: () => node.range,
       value: null,
     };
   },
@@ -65,7 +77,7 @@ const GET_YAML_NODES: Record<
         };
       }
     }
-    throw new Error(`${"Unexpected state: ["}${[path, ...paths].join(", ")}]`);
+    throw new Error(`Unexpected state: [${[path, ...paths].join(", ")}]`);
   },
   YAMLSequence(node: YAML.YAMLSequence, paths: string[]) {
     const path = String(paths.shift());
@@ -86,12 +98,12 @@ const GET_YAML_NODES: Record<
             .find((n) => n != null);
           let hyphenTokenElementIndex: number;
           let hyphenToken: Token;
-          if (!before) {
-            hyphenTokenElementIndex = 0;
-            hyphenToken = sourceCode.getFirstToken(node);
-          } else {
+          if (before) {
             hyphenTokenElementIndex = node.entries.indexOf(before) + 1;
             hyphenToken = sourceCode.getTokenAfter(before)!;
+          } else {
+            hyphenTokenElementIndex = 0;
+            hyphenToken = sourceCode.getFirstToken(node);
           }
           // If it is preceded by consecutive blank elements, it must be moved to the target.
           while (hyphenTokenElementIndex < index) {
@@ -103,17 +115,13 @@ const GET_YAML_NODES: Record<
         value: null,
       };
     }
-    throw new Error(`${"Unexpected state: ["}${[path, ...paths].join(", ")}]`);
-  },
-  YAMLAlias(node: YAML.YAMLAlias, paths: string[]) {
-    paths.length = 0; // consume all
-    return { value: node };
+    throw new Error(`Unexpected state: [${[path, ...paths].join(", ")}]`);
   },
   YAMLWithMeta(node: YAML.YAMLWithMeta, paths: string[]) {
     if (node.value) {
       return { value: node.value };
     }
-    throw new Error(`${"Unexpected state: ["}${paths.join(", ")}]`);
+    throw new Error(`Unexpected state: [${paths.join(", ")}]`);
   },
 };
 
@@ -127,6 +135,9 @@ export function getYAMLNodeFromPath(
   let data: NodeData<YAML.YAMLNode> = {
     key: (sourceCode) => {
       const doc = node.body[0];
+      if (!doc) {
+        return (sourceCode.getFirstToken(node) || node).range!;
+      }
       if (node.body.length > 1) {
         return (sourceCode.getFirstToken(doc) || doc).range!;
       }
@@ -141,7 +152,7 @@ export function getYAMLNodeFromPath(
     },
     value: node,
   };
-  while (paths.length && data.value) {
+  while (paths.length > 0 && data.value) {
     if (!isTraverseTarget(data.value)) {
       throw new Error(`Unexpected node type: ${data.value.type}`);
     }

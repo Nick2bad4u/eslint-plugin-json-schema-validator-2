@@ -1,12 +1,15 @@
 import type { ESLint, Linter } from "eslint";
+
 import * as jsoncParser from "jsonc-eslint-parser";
-import * as yamlParser from "yaml-eslint-parser";
 import * as tomlParser from "toml-eslint-parser";
-import plugin from "../../index.ts";
-export default [
+import * as yamlParser from "yaml-eslint-parser";
+
+import plugin from "../../plugin.ts";
+
+const base: Linter.Config[] = [
   {
     plugins: {
-      // eslint-disable-next-line @typescript-eslint/naming-convention -- plugin name
+
       get "json-schema-validator"(): ESLint.Plugin {
         return plugin;
       },
@@ -25,10 +28,10 @@ export default [
       parser: jsoncParser,
     },
     rules: {
-      // ESLint core rules known to cause problems with JSON.
-      strict: "off",
       "no-unused-expressions": "off",
       "no-unused-vars": "off",
+      // ESLint core rules known to cause problems with JSON.
+      strict: "off",
     },
   },
   {
@@ -54,4 +57,6 @@ export default [
       "spaced-comment": "off",
     },
   },
-] satisfies Linter.Config[];
+];
+
+export default base;

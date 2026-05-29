@@ -1,15 +1,16 @@
-import type { RequestOptions } from "https";
-import https from "https";
-import http from "http";
+import type { RequestOptions } from "node:https";
+
+import http from "node:http";
+import https from "node:https";
 // @ts-expect-error -- no types
 import tunnel from "tunnel-agent";
 
-const TIMEOUT = 60000;
+const TIMEOUT = 60_000;
 
 /**
  * GET Method using http modules.
  */
-export default function get(
+export default async function get(
   url: string,
   options?: RequestOptions,
 ): Promise<string> {
@@ -17,7 +18,7 @@ export default function get(
 }
 
 /** Implementation of HTTP GET method */
-function get0(
+async function get0(
   url: string,
   options: RequestOptions | undefined,
   redirectCount: number,
@@ -36,14 +37,14 @@ function get0(
           res.statusCode &&
           res.statusCode >= 300 &&
           res.statusCode < 400 &&
-          redirectCount < 3 // max redirect
+          redirectCount < 3 // Max redirect
         ) {
           const location = res.headers.location!;
           try {
             const redirectUrl = new URL(location, url).toString();
             resolve(get0(redirectUrl, options, redirectCount + 1));
-          } catch (e) {
-            reject(e);
+          } catch (error) {
+            reject(error);
           }
           return;
         }
@@ -74,9 +75,9 @@ function parseUrlAndOptions(urlStr: string, baseOptions: RequestOptions) {
   const options: RequestOptions = {
     agent: false,
     ...baseOptions,
-    protocol: url.protocol,
     hostname,
     path: `${url.pathname || ""}${url.search || ""}`,
+    protocol: url.protocol,
   };
   if (url.port !== "") {
     options.port = Number(url.port);
@@ -97,8 +98,8 @@ function parseUrlAndOptions(urlStr: string, baseOptions: RequestOptions) {
   const proxyStr: string =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
     (options as any)?.proxy ||
-    // eslint-disable-next-line no-process-env -- ignore
-    PROXY_ENV.map((k) => process.env[k]).find((v) => v);
+
+    PROXY_ENV.map((k) => process.env[k]).find(Boolean);
   if (proxyStr) {
     const proxyUrl = new URL(proxyStr);
 

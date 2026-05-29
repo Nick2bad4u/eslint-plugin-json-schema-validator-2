@@ -1,6 +1,6 @@
-export type SchemaObject = {
+export interface SchemaObject {
+  $async?: false;
   $id?: string;
   $schema?: string;
-  $async?: false;
   [x: string]: unknown;
-};
+}

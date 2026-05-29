@@ -1,47 +1,24 @@
 import type { AST as JSON } from "jsonc-eslint-parser";
-import type { GetNodeFromPath, NodeData } from "./common";
+
+import type { GetNodeFromPath, NodeData } from "./common.ts";
 
 type TraverseTarget =
-  | JSON.JSONProgram
+  | JSON.JSONArrayExpression
   | JSON.JSONExpressionStatement
   | JSON.JSONObjectExpression
-  | JSON.JSONArrayExpression;
+  | JSON.JSONProgram;
 
-const TRAVERSE_TARGET_TYPE: Set<string> = new Set([
-  "Program",
+const TRAVERSE_TARGET_TYPE = new Set<string>([
+  "JSONArrayExpression",
   "JSONExpressionStatement",
   "JSONObjectExpression",
-  "JSONArrayExpression",
+  "Program",
 ] as TraverseTarget["type"][]);
 
 const GET_JSON_NODES: Record<
   TraverseTarget["type"],
   GetNodeFromPath<JSON.JSONNode>
 > = {
-  Program(node: JSON.JSONProgram, _paths: string[]) {
-    return { value: node.body[0] };
-  },
-  JSONExpressionStatement(
-    node: JSON.JSONExpressionStatement,
-    _paths: string[],
-  ) {
-    return { value: node.expression };
-  },
-  JSONObjectExpression(node: JSON.JSONObjectExpression, paths: string[]) {
-    const path = String(paths.shift());
-    for (const prop of node.properties) {
-      if (prop.key.type === "JSONIdentifier") {
-        if (prop.key.name === path) {
-          return { key: () => prop.key.range, value: prop.value };
-        }
-      } else {
-        if (String(prop.key.value) === path) {
-          return { key: () => prop.key.range, value: prop.value };
-        }
-      }
-    }
-    throw new Error(`${"Unexpected state: ["}${[path, ...paths].join(", ")}]`);
-  },
   JSONArrayExpression(node: JSON.JSONArrayExpression, paths: string[]) {
     const path = String(paths.shift());
     for (let index = 0; index < node.elements.length; index++) {
@@ -73,7 +50,29 @@ const GET_JSON_NODES: Record<
         value: null,
       };
     }
-    throw new Error(`${"Unexpected state: ["}${[path, ...paths].join(", ")}]`);
+    throw new Error(`Unexpected state: [${[path, ...paths].join(", ")}]`);
+  },
+  JSONExpressionStatement(
+    node: JSON.JSONExpressionStatement,
+    _paths: string[],
+  ) {
+    return { value: node.expression };
+  },
+  JSONObjectExpression(node: JSON.JSONObjectExpression, paths: string[]) {
+    const path = String(paths.shift());
+    for (const prop of node.properties) {
+      if (prop.key.type === "JSONIdentifier") {
+        if (prop.key.name === path) {
+          return { key: () => prop.key.range, value: prop.value };
+        }
+      } else if (String(prop.key.value) === path) {
+          return { key: () => prop.key.range, value: prop.value };
+        }
+    }
+    throw new Error(`Unexpected state: [${[path, ...paths].join(", ")}]`);
+  },
+  Program(node: JSON.JSONProgram, _paths: string[]) {
+    return { value: node.body[0] };
   },
 };
 /**
@@ -96,7 +95,7 @@ export function getJSONNodeFromPath(
     },
     value: node,
   };
-  while (paths.length && data.value) {
+  while (paths.length > 0 && data.value) {
     if (!isTraverseTarget(data.value)) {
       throw new Error(`Unexpected node type: ${data.value.type}`);
     }

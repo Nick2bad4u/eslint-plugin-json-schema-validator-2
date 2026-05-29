@@ -1,30 +1,35 @@
 import type { AST as JSONAST } from "jsonc-eslint-parser";
-import { getStaticJSONValue } from "jsonc-eslint-parser";
-import type { AST as YAML } from "yaml-eslint-parser";
-import { getStaticYAMLValue } from "yaml-eslint-parser";
 import type { AST as TOML } from "toml-eslint-parser";
-import { getStaticTOMLValue } from "toml-eslint-parser";
-import { createRule } from "../utils/index.ts";
-import { minimatch } from "minimatch";
-import path from "path";
-import type { PathData } from "../utils/ast/index.ts";
-import {
-  getJSONNodeFromPath,
-  getYAMLNodeFromPath,
-  getTOMLNodeFromPath,
-  analyzeJsAST,
-} from "../utils/ast/index.ts";
-import { loadJson, loadSchema } from "../utils/schema.ts";
-import type { RuleContext } from "../types.ts";
-import type { NodeData } from "../utils/ast/common.ts";
 import type { AST } from "vue-eslint-parser";
-import type { ValidateError, Validator } from "../utils/validator-factory.ts";
-import { compile } from "../utils/validator-factory.ts";
-import type { SchemaObject } from "../utils/types.ts";
-import fs from "fs";
+import type { AST as YAML } from "yaml-eslint-parser";
+
 import { toCompatCreate } from "eslint-json-compat-utils";
+import { getStaticJSONValue } from "jsonc-eslint-parser";
+import { minimatch } from "minimatch";
+import fs from "node:fs";
+import path from "node:path";
+import { getStaticTOMLValue } from "toml-eslint-parser";
+import { getStaticYAMLValue } from "yaml-eslint-parser";
+
+import type { RuleContext, RuleModule } from "../types.ts";
+import type { NodeData } from "../utils/ast/common.ts";
+import type { PathData } from "../utils/ast/index.ts";
+import type { SchemaObject } from "../utils/types.ts";
+import type { ValidateError, Validator } from "../utils/validator-factory.ts";
+
+import {
+  analyzeJsAST,
+  getJSONNodeFromPath,
+  getTOMLNodeFromPath,
+  getYAMLNodeFromPath,
+} from "../utils/ast/index.ts";
+import { createRule } from "../utils/index.ts";
+import { loadJson, loadSchema } from "../utils/schema.ts";
+import { compile } from "../utils/validator-factory.ts";
 
 const CATALOG_URL = "https://www.schemastore.org/api/json/catalog.json";
+
+type SchemaKind = "$schema" | "catalog" | "options";
 
 /**
  * Checks if match file
@@ -37,26 +42,32 @@ function matchFile(filename: string, fileMatch: string[]) {
 }
 
 /**
- * Generate validator from schema path
+ * Report for cannot resolved schema object
  */
-function schemaPathToValidator(
-  schemaPath: string,
-  context: RuleContext,
-): Validator | null {
-  const schema = loadSchema(schemaPath, context);
-  if (!schema) {
-    return null;
-  }
-  return compile(schema, schemaPath, context);
+function reportCannotResolvedObject(context: RuleContext) {
+  context.report({
+    loc: { column: 0, line: 1 },
+    message: "Specified schema could not be resolved.",
+  });
+}
+
+/**
+ * Report for cannot resolved schema path
+ */
+function reportCannotResolvedPath(schemaPath: string, context: RuleContext) {
+  context.report({
+    loc: { column: 0, line: 1 },
+    message: `Specified schema could not be resolved. Path: "${schemaPath}"`,
+  });
 }
 
 /**
  * Generate validator from schema object
  */
 function schemaObjectToValidator(
-  schema: SchemaObject | null,
+  schema: null | SchemaObject,
   context: RuleContext,
-): Validator | null {
+): null | Validator {
   if (!schema) {
     return null;
   }
@@ -65,32 +76,24 @@ function schemaObjectToValidator(
 }
 
 /**
- * Report for cannot resolved schema path
+ * Generate validator from schema path
  */
-function reportCannotResolvedPath(schemaPath: string, context: RuleContext) {
-  context.report({
-    loc: { line: 1, column: 0 },
-    message: `Specified schema could not be resolved. Path: "${schemaPath}"`,
-  });
+function schemaPathToValidator(
+  schemaPath: string,
+  context: RuleContext,
+): null | Validator {
+  const schema = loadSchema(schemaPath, context);
+  if (!schema) {
+    return null;
+  }
+  return compile(schema, schemaPath, context);
 }
-
-/**
- * Report for cannot resolved schema object
- */
-function reportCannotResolvedObject(context: RuleContext) {
-  context.report({
-    loc: { line: 1, column: 0 },
-    message: `Specified schema could not be resolved.`,
-  });
-}
-
-type SchemaKind = "$schema" | "catalog" | "options";
 const SCHEMA_KINDS: SchemaKind[] = ["$schema", "options", "catalog"];
 
 /** Get mergeSchemas option */
 function parseMergeSchemasOption(
   option: boolean | string[] | undefined,
-): SchemaKind[] | null {
+): null | SchemaKind[] {
   return option === true
     ? SCHEMA_KINDS
     : Array.isArray(option)
@@ -100,63 +103,7 @@ function parseMergeSchemasOption(
       : null;
 }
 
-export default createRule("no-invalid", {
-  meta: {
-    docs: {
-      description: "validate object with JSON Schema.",
-      categories: ["recommended"],
-      default: "warn",
-    },
-    fixable: undefined,
-    schema: [
-      {
-        oneOf: [
-          { type: "string" },
-          {
-            type: "object",
-            properties: {
-              schemas: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    description: { type: "string" },
-                    fileMatch: {
-                      type: "array",
-                      items: { type: "string" },
-                      minItems: 1,
-                    },
-                    schema: { type: ["object", "string"] },
-                  },
-                  additionalProperties: true, // It also accepts unrelated properties.
-                  required: ["fileMatch", "schema"],
-                },
-              },
-              useSchemastoreCatalog: { type: "boolean" },
-              mergeSchemas: {
-                oneOf: [
-                  { type: "boolean" },
-                  {
-                    type: "array",
-                    items: {
-                      type: "string",
-                      enum: ["$schema", "catalog", "options"],
-                    },
-                    minItems: 2,
-                    uniqueItems: true,
-                  },
-                ],
-              },
-            },
-            additionalProperties: false,
-          },
-        ],
-      },
-    ],
-    messages: {},
-    type: "suggestion",
-  },
+const noInvalidRule: RuleModule = createRule("no-invalid", {
   create: toCompatCreate((context, { filename }) => {
     const sourceCode = context.sourceCode;
     const cwd = context.cwd;
@@ -223,8 +170,8 @@ export default createRule("no-invalid", {
           return null;
         }
         return {
-          start: sourceCode.getLocFromIndex(range[0]),
           end: sourceCode.getLocFromIndex(range[1]),
+          start: sourceCode.getLocFromIndex(range[0]),
         };
       });
     }
@@ -249,6 +196,245 @@ export default createRule("no-invalid", {
       return null;
     }
 
+    /**
+     * ErrorData to report location.
+     */
+    function errorDataToLoc(
+      errorData: NodeData<JSONAST.JSONNode | TOML.TOMLNode | YAML.YAMLNode>,
+    ) {
+      if (errorData.key) {
+        const range = errorData.key(sourceCode);
+        return {
+          end: sourceCode.getLocFromIndex(range[1]),
+          start: sourceCode.getLocFromIndex(range[0]),
+        };
+      }
+      return errorData.value.loc;
+    }
+    function findSchemaPathFromYAML(node: YAML.YAMLProgram) {
+      const rootExpr = node.body[0]?.content;
+      if (rootExpr?.type !== "YAMLMapping") {
+        return null;
+      }
+      for (const pair of rootExpr.pairs) {
+        if (
+          !pair.key ||
+          !pair.value ||
+          pair.key.type !== "YAMLScalar" ||
+          pair.key.value !== "$schema"
+        ) {
+          continue;
+        }
+        return getStaticYAMLValue(pair.value);
+      }
+      return null;
+    }
+    function findSchemaPathFromTOML(node: TOML.TOMLProgram) {
+      const rootExpr = node.body[0];
+      for (const body of rootExpr.body) {
+        if (body.type !== "TOMLKeyValue" || body.key.keys.length !== 1) {
+          continue;
+        }
+        const [key] = getStaticTOMLValue(body.key);
+        if (key !== "$schema") {
+          continue;
+        }
+        return getStaticTOMLValue(body.value);
+      }
+      return null;
+    }
+    function findSchemaPath(node: unknown) {
+      let $schema = null;
+      if (sourceCode.parserServices.isJSON) {
+        const program = node as JSONAST.JSONProgram;
+        $schema = findSchemaPathFromJSON(program);
+      } else if (sourceCode.parserServices.isYAML) {
+        const program = node as YAML.YAMLProgram;
+        $schema = findSchemaPathFromYAML(program);
+      } else if (sourceCode.parserServices.isTOML) {
+        const program = node as TOML.TOMLProgram;
+        $schema = findSchemaPathFromTOML(program);
+      }
+      return typeof $schema === "string"
+        ? $schema.startsWith(".")
+          ? path.resolve(
+              path.dirname(
+                typeof context.getPhysicalFilename === "function"
+                  ? context.getPhysicalFilename()
+                  : getPhysicalFilename(context.filename),
+              ),
+              $schema,
+            )
+          : $schema
+        : null;
+    }
+    function get$SchemaValidators(context: RuleContext): null | Validator[] {
+      const $schemaPath = findSchemaPath(sourceCode.ast);
+      if (!$schemaPath) return null;
+
+      const validator = schemaPathToValidator($schemaPath, context);
+      if (!validator) {
+        reportCannotResolvedPath($schemaPath, context);
+        return null;
+      }
+
+      return [validator];
+    }
+    function getCatalogValidators(
+      context: RuleContext,
+      relativeFilename: string,
+    ): null | Validator[] {
+      const option = context.options[0] || {};
+      const useSchemastoreCatalog = option.useSchemastoreCatalog !== false;
+      if (!useSchemastoreCatalog) {
+        return null;
+      }
+
+      interface ISchema {
+        description?: string;
+        fileMatch: string[];
+        name?: string;
+        url: string;
+      }
+      const catalog = loadJson<{ schemas: ISchema[] }>(CATALOG_URL, context);
+      if (!catalog) {
+        return null;
+      }
+
+      const validators: Validator[] = [];
+      for (const schemaData of catalog.schemas) {
+        if (!schemaData.fileMatch) {
+          continue;
+        }
+        // Exclude schemas with patterns that match all json files.
+        // https://github.com/SchemaStore/schemastore/pull/3291
+        if (schemaData.fileMatch.some((s) => /^\*\.json$/v.test(s))) {
+          continue;
+        }
+        if (!matchFile(relativeFilename, schemaData.fileMatch)) {
+          continue;
+        }
+        const validator = schemaPathToValidator(schemaData.url, context);
+        if (validator) validators.push(validator);
+      }
+      return validators.length > 0 ? validators : null;
+    }
+    function getOptionsValidators(
+      context: RuleContext,
+      filename: string,
+    ): null | Validator[] {
+      const option = context.options[0];
+      if (typeof option === "string") {
+        const validator = schemaPathToValidator(option, context);
+        return validator ? [validator] : null;
+      }
+
+      if (typeof option !== "object" || !Array.isArray(option.schemas)) {
+        return null;
+      }
+
+      const validators: Validator[] = [];
+      for (const schemaData of option.schemas) {
+        if (!matchFile(filename, schemaData.fileMatch)) {
+          continue;
+        }
+
+        if (typeof schemaData.schema === "string") {
+          const validator = schemaPathToValidator(schemaData.schema, context);
+          if (validator) {
+            validators.push(validator);
+          } else {
+            reportCannotResolvedPath(schemaData.schema, context);
+          }
+        } else {
+          const validator = schemaObjectToValidator(schemaData.schema, context);
+          if (validator) {
+            validators.push(validator);
+          } else {
+            reportCannotResolvedObject(context);
+          }
+        }
+      }
+      return validators.length > 0 ? validators : null;
+    }
+    function createValidator(context: RuleContext, filename: string) {
+      const mergeSchemas = parseMergeSchemasOption(
+        context.options[0]?.mergeSchemas,
+      );
+
+      const validatorsCtx = createValidatorsContext(context, filename);
+      if (mergeSchemas && mergeSchemas.some((kind) => validatorsCtx[kind])) {
+        const validators: Validator[] = [];
+        for (const kind of mergeSchemas) {
+          const v = validatorsCtx[kind];
+          if (v) validators.push(...v);
+        }
+        return margeValidators(validators);
+      }
+
+      const validators =
+        validatorsCtx.$schema || validatorsCtx.options || validatorsCtx.catalog;
+      if (!validators) {
+        return null;
+      }
+      /** Marge validators */
+      function margeValidators(validators: Validator[]) {
+        return (data: unknown) =>
+          validators.reduce<ValidateError[]>(
+            (errors, validator) => [...errors, ...validator(data)],
+            [],
+          );
+      }
+      return margeValidators(validators);
+
+    }
+    function createValidatorsContext(context: RuleContext, filename: string) {
+      interface Cache { validators: null | Validator[] }
+      let $schema: Cache | null = null;
+      let options: Cache | null = null;
+      let catalog: Cache | null = null;
+
+      /**
+       * Get a validator. Returns the value of the cache if there is one.
+       * If there is no cache, cache and return the value obtained from the supplier function
+       */
+      function get(
+        cache: Cache | null,
+        setCache: (c: Cache) => void,
+        supplier: () => null | Validator[],
+      ) {
+        if (cache) {
+          return cache.validators;
+        }
+        const v = supplier();
+        setCache({ validators: v });
+        return v;
+      }
+
+      return {
+        get $schema() {
+          return get(
+            $schema,
+            (c) => ($schema = c),
+            () => get$SchemaValidators(context),
+          );
+        },
+        get catalog() {
+          return get(
+            catalog,
+            (c) => (catalog = c),
+            () => getCatalogValidators(context, filename),
+          );
+        },
+        get options() {
+          return get(
+            options,
+            (c) => (options = c),
+            () => getOptionsValidators(context, filename),
+          );
+        },
+      };
+    }
     return {
       Program(node) {
         if (sourceCode.parserServices.isJSON) {
@@ -299,264 +485,65 @@ export default createRule("no-invalid", {
       },
     };
 
-    /**
-     * ErrorData to report location.
-     */
-    function errorDataToLoc(
-      errorData: NodeData<JSONAST.JSONNode | YAML.YAMLNode | TOML.TOMLNode>,
-    ) {
-      if (errorData.key) {
-        const range = errorData.key(sourceCode);
-        return {
-          start: sourceCode.getLocFromIndex(range[0]),
-          end: sourceCode.getLocFromIndex(range[1]),
-        };
-      }
-      return errorData.value.loc;
-    }
-
-    /** Find schema path from program */
-    function findSchemaPathFromYAML(node: YAML.YAMLProgram) {
-      const rootExpr = node.body[0]?.content;
-      if (!rootExpr || rootExpr.type !== "YAMLMapping") {
-        return null;
-      }
-      for (const pair of rootExpr.pairs) {
-        if (
-          !pair.key ||
-          !pair.value ||
-          pair.key.type !== "YAMLScalar" ||
-          pair.key.value !== "$schema"
-        ) {
-          continue;
-        }
-        return getStaticYAMLValue(pair.value);
-      }
-      return null;
-    }
-
-    /** Find schema path from program */
-    function findSchemaPathFromTOML(node: TOML.TOMLProgram) {
-      const rootExpr = node.body[0];
-      for (const body of rootExpr.body) {
-        if (body.type !== "TOMLKeyValue" || body.key.keys.length !== 1) {
-          continue;
-        }
-        const keyNode = body.key.keys[0];
-        const key = keyNode.type === "TOMLBare" ? keyNode.name : keyNode.value;
-        if (key !== "$schema") {
-          continue;
-        }
-        return getStaticTOMLValue(body.value);
-      }
-      return null;
-    }
-
-    /** Find schema path from program */
-    function findSchemaPath(node: unknown) {
-      let $schema = null;
-      if (sourceCode.parserServices.isJSON) {
-        const program = node as JSONAST.JSONProgram;
-        $schema = findSchemaPathFromJSON(program);
-      } else if (sourceCode.parserServices.isYAML) {
-        const program = node as YAML.YAMLProgram;
-        $schema = findSchemaPathFromYAML(program);
-      } else if (sourceCode.parserServices.isTOML) {
-        const program = node as TOML.TOMLProgram;
-        $schema = findSchemaPathFromTOML(program);
-      }
-      return typeof $schema === "string"
-        ? $schema.startsWith(".")
-          ? path.resolve(
-              path.dirname(
-                typeof context.getPhysicalFilename === "function"
-                  ? context.getPhysicalFilename()
-                  : getPhysicalFilename(context.filename),
-              ),
-              $schema,
-            )
-          : $schema
-        : null;
-    }
-
-    /** Validator from $schema */
-    function get$SchemaValidators(context: RuleContext): Validator[] | null {
-      const $schemaPath = findSchemaPath(sourceCode.ast);
-      if (!$schemaPath) return null;
-
-      const validator = schemaPathToValidator($schemaPath, context);
-      if (!validator) {
-        reportCannotResolvedPath($schemaPath, context);
-        return null;
-      }
-
-      return [validator];
-    }
-
-    /** Validator from catalog.json */
-    function getCatalogValidators(
-      context: RuleContext,
-      relativeFilename: string,
-    ): Validator[] | null {
-      const option = context.options[0] || {};
-      const useSchemastoreCatalog = option.useSchemastoreCatalog !== false;
-      if (!useSchemastoreCatalog) {
-        return null;
-      }
-
-      interface ISchema {
-        name?: string;
-        description?: string;
-        fileMatch: string[];
-        url: string;
-      }
-      const catalog = loadJson<{ schemas: ISchema[] }>(CATALOG_URL, context);
-      if (!catalog) {
-        return null;
-      }
-
-      const validators: Validator[] = [];
-      for (const schemaData of catalog.schemas) {
-        if (!schemaData.fileMatch) {
-          continue;
-        }
-        // Exclude schemas with patterns that match all json files.
-        // https://github.com/SchemaStore/schemastore/pull/3291
-        if (schemaData.fileMatch.some((s) => /^\*\.json$/u.test(s))) {
-          continue;
-        }
-        if (!matchFile(relativeFilename, schemaData.fileMatch)) {
-          continue;
-        }
-        const validator = schemaPathToValidator(schemaData.url, context);
-        if (validator) validators.push(validator);
-      }
-      return validators.length ? validators : null;
-    }
-
-    /** Validator from options.schemas */
-    function getOptionsValidators(
-      context: RuleContext,
-      filename: string,
-    ): Validator[] | null {
-      const option = context.options[0];
-      if (typeof option === "string") {
-        const validator = schemaPathToValidator(option, context);
-        return validator ? [validator] : null;
-      }
-
-      if (typeof option !== "object" || !Array.isArray(option.schemas)) {
-        return null;
-      }
-
-      const validators: Validator[] = [];
-      for (const schemaData of option.schemas) {
-        if (!matchFile(filename, schemaData.fileMatch)) {
-          continue;
-        }
-
-        if (typeof schemaData.schema === "string") {
-          const validator = schemaPathToValidator(schemaData.schema, context);
-          if (validator) {
-            validators.push(validator);
-          } else {
-            reportCannotResolvedPath(schemaData.schema, context);
-          }
-        } else {
-          const validator = schemaObjectToValidator(schemaData.schema, context);
-          if (validator) {
-            validators.push(validator);
-          } else {
-            reportCannotResolvedObject(context);
-          }
-        }
-      }
-      return validators.length ? validators : null;
-    }
-
-    /** Create combined validator */
-    function createValidator(context: RuleContext, filename: string) {
-      const mergeSchemas = parseMergeSchemasOption(
-        context.options[0]?.mergeSchemas,
-      );
-
-      const validatorsCtx = createValidatorsContext(context, filename);
-      if (mergeSchemas && mergeSchemas.some((kind) => validatorsCtx[kind])) {
-        const validators: Validator[] = [];
-        for (const kind of mergeSchemas) {
-          const v = validatorsCtx[kind];
-          if (v) validators.push(...v);
-        }
-        return margeValidators(validators);
-      }
-
-      const validators =
-        validatorsCtx.$schema || validatorsCtx.options || validatorsCtx.catalog;
-      if (!validators) {
-        return null;
-      }
-      return margeValidators(validators);
-
-      /** Marge validators */
-      function margeValidators(validators: Validator[]) {
-        return (data: unknown) =>
-          validators.reduce(
-            (errors, validator) => [...errors, ...validator(data)],
-            [] as ValidateError[],
-          );
-      }
-    }
-
-    /** Creates validators context */
-    function createValidatorsContext(context: RuleContext, filename: string) {
-      type Cache = { validators: Validator[] | null };
-      let $schema: Cache | null = null;
-      let options: Cache | null = null;
-      let catalog: Cache | null = null;
-
-      /**
-       * Get a validator. Returns the value of the cache if there is one.
-       * If there is no cache, cache and return the value obtained from the supplier function
-       */
-      function get(
-        cache: Cache | null,
-        setCache: (c: Cache) => void,
-        supplier: () => Validator[] | null,
-      ) {
-        if (cache) {
-          return cache.validators;
-        }
-        const v = supplier();
-        setCache({ validators: v });
-        return v;
-      }
-
-      return {
-        get $schema() {
-          return get(
-            $schema,
-            (c) => ($schema = c),
-            () => get$SchemaValidators(context),
-          );
-        },
-        get options() {
-          return get(
-            options,
-            (c) => (options = c),
-            () => getOptionsValidators(context, filename),
-          );
-        },
-        get catalog() {
-          return get(
-            catalog,
-            (c) => (catalog = c),
-            () => getCatalogValidators(context, filename),
-          );
-        },
-      };
-    }
   }),
+  meta: {
+    docs: {
+      categories: ["recommended"],
+      default: "warn",
+      description: "validate object with JSON Schema.",
+    },
+    messages: {},
+    schema: [
+      {
+        oneOf: [
+          { type: "string" },
+          {
+            additionalProperties: false,
+            properties: {
+              mergeSchemas: {
+                oneOf: [
+                  { type: "boolean" },
+                  {
+                    items: {
+                      enum: ["$schema", "catalog", "options"],
+                      type: "string",
+                    },
+                    minItems: 2,
+                    type: "array",
+                    uniqueItems: true,
+                  },
+                ],
+              },
+              schemas: {
+                items: {
+                  additionalProperties: true, // It also accepts unrelated properties.
+                  properties: {
+                    description: { type: "string" },
+                    fileMatch: {
+                      items: { type: "string" },
+                      minItems: 1,
+                      type: "array",
+                    },
+                    name: { type: "string" },
+                    schema: { type: ["object", "string"] },
+                  },
+                  required: ["fileMatch", "schema"],
+                  type: "object",
+                },
+                type: "array",
+              },
+              useSchemastoreCatalog: { type: "boolean" },
+            },
+            type: "object",
+          },
+        ],
+      },
+    ],
+    type: "suggestion",
+  },
 });
+
+export default noInvalidRule;
 
 /**
  * ! copied from https://github.com/mdx-js/eslint-mdx/blob/b97db2e912a416d5d40ddb78ab6c9fa1ab150c17/packages/eslint-mdx/src/helpers.ts#L28-L50
@@ -570,8 +557,8 @@ function getPhysicalFilename(filename: string, child?: string): string {
     if (fs.statSync(filename).isDirectory()) {
       return child || filename;
     }
-  } catch (err) {
-    const { code } = err as { code: string };
+  } catch (error) {
+    const { code } = error as { code: string };
     // https://github.com/eslint/eslint/issues/11989
     // Additionally, it seems there is no `ENOTDIR` code on Windows...
     if (code === "ENOTDIR" || code === "ENOENT") {

@@ -23,7 +23,7 @@ See [User Guide](./user-guide/index.md).
 
 ## :white_check_mark: Rules
 
-See [Available Rules](./rules/index.md).
+See [Available Rules](./rules/overview.md).
 
 ## :couple: Related Packages
 
@@ -40,7 +40,6 @@ See [Available Rules](./rules/index.md).
 
 See the [LICENSE](https://github.com/ota-meshi/eslint-plugin-json-schema-validator/blob/main/LICENSE) file for license rights and limitations (MIT).
 
-[SchemaStore]: https://github.com/SchemaStore/schemastore
 [JSON]: https://json.org/
 [JSONC]: https://github.com/microsoft/node-jsonc-parser
 [JSON5]: https://json5.org/

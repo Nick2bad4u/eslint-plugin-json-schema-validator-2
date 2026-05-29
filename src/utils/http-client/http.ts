@@ -1,8 +1,10 @@
-import type { RequestOptions } from "https";
+import type { RequestOptions } from "node:https";
+
+import { createRequire } from "node:module";
+import { isAbsolute } from "node:path";
+import { pathToFileURL } from "node:url";
+
 import defaultClient from "./get-modules/http.ts";
-import { createRequire } from "module";
-import { isAbsolute } from "path";
-import { pathToFileURL } from "url";
 
 /**
  * GET Method

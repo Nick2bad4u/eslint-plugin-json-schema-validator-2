@@ -43,7 +43,7 @@ This plugin provides configs:
 - `*.configs.base` ... Configuration to enable correct JSON, YAML and TOML parsing.
 - `*.configs.recommended` ... Above, plus rule to validate with JSON Schema.
 
-See [the rule list](../rules/index.md) to get the `rules` that this plugin provides.
+See [the rule list](../rules/overview.md) to get the `rules` that this plugin provides.
 
 For backward compatibility, the `flat/` prefix can still be used:
 

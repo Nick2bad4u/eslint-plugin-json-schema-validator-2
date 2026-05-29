@@ -1,6 +1,8 @@
 import type { Linter } from "eslint";
+
 import base from "./base.ts";
-export default [
+
+const recommended: Linter.Config[] = [
   ...base,
   {
     rules: {
@@ -8,4 +10,6 @@ export default [
       "json-schema-validator/no-invalid": "warn",
     },
   },
-] satisfies Linter.Config[];
+];
+
+export default recommended;

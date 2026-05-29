@@ -1,285 +1,154 @@
-import tsParser from "@typescript-eslint/parser";
-import myPlugin from "@ota-meshi/eslint-plugin";
-import tseslint from "typescript-eslint";
-import plugin from "./lib/index.mjs";
+import nickTwoBadFourU from "eslint-config-nick2bad4u";
 
-export default [
-  {
-    ignores: [
-      "**/.cached_schemastore/",
-      ".nyc_output/",
-      "coverage/",
-      "dist/",
-      "!docs/.vitepress/",
-      "docs/.vitepress/dist/",
-      "docs/.vitepress/cache/",
-      "docs/.vitepress/build-system/shim/",
-      "lib/",
-      "node_modules/",
-      "schemastore/",
-      "tests/fixtures/integrations/",
-      "assets/",
-      "!.github/",
-      "!.vscode/",
-      "**/*.md/*.bash",
-    ],
-  },
-  ...myPlugin
-    .config({
-      node: true,
-      ts: true,
-      eslintPlugin: true,
-      vue3: true,
-      packageJson: true,
-      json: true,
-      yaml: true,
-      toml: true,
-      md: true,
-      prettier: true,
-    })
-    .map((config) => {
-      if (!config.plugins?.["json-schema-validator"]) {
-        return config;
-      }
-      return {
-        ...config,
+import plugin from "./plugin.mjs";
+
+const baseConfig = nickTwoBadFourU.configs.withoutTypefest;
+
+/** @type {import("eslint").Linter.Config[]} */
+const config = [
+    {
+        ignores: [
+            ".devcontainer/**",
+            "docs/docusaurus/**",
+            "docs/docusaurus/site-docs/developer/api/**",
+            "docs/docusaurus/static/eslint-inspector/**",
+            "docs/docusaurus/static/stylelint-inspector/**",
+            "knip.config.ts",
+            "plugin.d.mts",
+            "test/src/utils/http-client/get-modules/request-get.mjs",
+            "tsdown.config.ts",
+            "vitest.stryker.config.ts",
+        ],
+    },
+
+    ...baseConfig,
+
+    {
+        files: ["src/**/*.{ts,tsx,mts,cts}"],
+        name: "Local JSON Schema Validator",
         plugins: {
-          ...config.plugins,
-          "json-schema-validator": plugin,
+            "json-schema-validator": plugin,
         },
-      };
-    }),
-  {
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "script",
-
-      parserOptions: {
-        project: true,
-      },
     },
 
-    rules: {
-      "one-var": "off",
-      "no-warning-comments": "warn",
-      "no-lonely-if": "off",
-      "new-cap": "off",
-      "no-shadow": "off",
-      "@typescript-eslint/no-shadow": "off",
-      "no-return-await": "off",
-
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["/regexpp", "/regexpp/*"],
-              message: "Please use `@eslint-community/regexpp` instead.",
-            },
-            {
-              group: ["/eslint-utils", "/eslint-utils/*"],
-              message: "Please use `@eslint-community/eslint-utils` instead.",
-            },
-          ],
+    {
+        files: ["src/**/*.{ts,tsx,mts,cts}", "test/**/*.{ts,tsx,mts,cts}"],
+        name: "Migrated upstream compatibility",
+        rules: {
+            "@typescript-eslint/ban-ts-comment": "off",
+            "@typescript-eslint/no-base-to-string": "off",
+            "@typescript-eslint/no-deprecated": "off",
+            "@typescript-eslint/no-dynamic-delete": "off",
+            "@typescript-eslint/no-invalid-void-type": "off",
+            "@typescript-eslint/no-non-null-assertion": "off",
+            "@typescript-eslint/no-unnecessary-boolean-literal-compare": "off",
+            "@typescript-eslint/no-unnecessary-type-conversion": "off",
+            "@typescript-eslint/no-unnecessary-type-assertion": "off",
+            "@typescript-eslint/no-unnecessary-type-parameters": "off",
+            "@typescript-eslint/no-shadow": "off",
+            "@typescript-eslint/no-unsafe-argument": "off",
+            "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unsafe-call": "off",
+            "@typescript-eslint/no-unsafe-member-access": "off",
+            "@typescript-eslint/no-unsafe-return": "off",
+            "@typescript-eslint/no-unsafe-type-assertion": "off",
+            "@typescript-eslint/no-unused-vars": "off",
+            "@typescript-eslint/prefer-for-of": "off",
+            "@typescript-eslint/prefer-nullish-coalescing": "off",
+            "@typescript-eslint/prefer-optional-chain": "off",
+            "@typescript-eslint/prefer-promise-reject-errors": "off",
+            "@typescript-eslint/prefer-readonly-parameter-types": "off",
+            "@typescript-eslint/restrict-plus-operands": "off",
+            "@typescript-eslint/restrict-template-expressions": "off",
+            "@typescript-eslint/strict-boolean-expressions": "off",
+            "@typescript-eslint/strict-void-return": "off",
+            "@typescript-eslint/switch-exhaustiveness-check": "off",
+            "arrow-body-style": "off",
+            "capitalized-comments": "off",
+            "canonical/filename-no-index": "off",
+            "canonical/no-re-export": "off",
+            "complexity": "off",
+            "import-x/extensions": "off",
+            "import-x/max-dependencies": "off",
+            "import-x/no-dynamic-require": "off",
+            "max-depth": "off",
+            "nitpick/no-redundant-vars": "off",
+            "nitpick/no-useless-rest": "off",
+            "no-barrel-files/no-barrel-files": "off",
+            "no-bitwise": "off",
+            "no-continue": "off",
+            "no-duplicate-imports": "off",
+            "no-eq-null": "off",
+            "no-plusplus": "off",
+            "no-unsanitized/method": "off",
+            "no-useless-assignment": "off",
+            "listeners/no-inline-function-event-listener": "off",
+            "listeners/no-missing-remove-event-listener": "off",
+            "n/global-require": "off",
+            "n/no-extraneous-import": "off",
+            "n/no-process-env": "off",
+            "n/no-sync": "off",
+            "n/no-unsupported-features/node-builtins": "off",
+            "n/prefer-node-protocol": "off",
+            "perfectionist/sort-imports": "off",
+            "perfectionist/sort-modules": "off",
+            "perfectionist/sort-named-exports": "off",
+            "perfectionist/sort-named-imports": "off",
+            "perfectionist/sort-objects": "off",
+            "perfectionist/sort-union-types": "off",
+            "prefer-named-capture-group": "off",
+            "preserve-caught-error": "off",
+            "promise/always-return": "off",
+            "promise/catch-or-return": "off",
+            "regexp/prefer-named-capture-group": "off",
+            "regexp/require-unicode-regexp": "off",
+            "regexp/require-unicode-sets-regexp": "off",
+            "sdl/no-insecure-url": "off",
+            "sdl/no-nonnull-assertion-on-security-input": "off",
+            "test-signal/no-empty-async-tests": "off",
+            "test-signal/require-assertions": "off",
+            "test-signal/require-negative-path": "off",
+            "tsdoc-require-2/require": "off",
+            "typedoc/require-exported-doc-comment": "off",
+            "unicorn/consistent-function-scoping": "off",
+            "unicorn/import-style": "off",
+            "unicorn/no-array-reverse": "off",
+            "unicorn/no-array-callback-reference": "off",
+            "unicorn/no-array-reduce": "off",
+            "unicorn/no-array-sort": "off",
+            "unicorn/prefer-module": "off",
+            "unicorn/prefer-node-protocol": "off",
+            "unicorn/prefer-json-parse-buffer": "off",
+            "unicorn/prefer-structured-clone": "off",
+            "unicorn/relative-url-style": "off",
+            "vitest/no-conditional-tests": "off",
+            "vitest/prefer-each": "off",
+            "vitest/prefer-expect-assertions": "off",
+            "vitest/require-hook": "off",
         },
-      ],
-    },
-  },
-  {
-    files: ["**/*.ts", "**/*.mts"],
-
-    languageOptions: {
-      parser: tsParser,
-      sourceType: "module",
-
-      parserOptions: {
-        project: true,
-      },
     },
 
-    rules: {
-      "@typescript-eslint/naming-convention": [
-        "error",
-        {
-          selector: "default",
-          format: ["camelCase"],
-          leadingUnderscore: "allow",
-          trailingUnderscore: "allow",
+    {
+        files: ["package.json"],
+        name: "Migrated package compatibility",
+        rules: {
+            "depend/ban-dependencies": "off",
+            "node-dependencies/no-deprecated": "off",
         },
-        {
-          selector: "variable",
-          format: ["camelCase", "UPPER_CASE"],
-          leadingUnderscore: "allow",
-          trailingUnderscore: "allow",
+    },
+
+    {
+        files: ["*.mjs"],
+        name: "Repository config compatibility",
+        rules: {
+            "@typescript-eslint/dot-notation": "off",
+            "@typescript-eslint/no-unnecessary-condition": "off",
+            "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unsafe-call": "off",
+            "@typescript-eslint/no-unsafe-member-access": "off",
+            "perfectionist/sort-objects": "off",
         },
-        {
-          selector: "typeLike",
-          format: ["PascalCase"],
-        },
-        {
-          selector: "property",
-          format: null,
-        },
-        {
-          selector: "method",
-          format: null,
-        },
-        {
-          selector: "import",
-          format: null,
-        },
-      ],
-
-      "@typescript-eslint/no-non-null-assertion": "off",
     },
-  },
-  ...tseslint.config({
-    files: ["tests/fixtures/**"],
-    extends: [tseslint.configs.disableTypeChecked],
-    rules: {
-      "json-schema-validator/no-invalid": "off",
-      "jsonc/vue-custom-block/no-parsing-error": "off",
-    },
-  }),
-  {
-    files: ["scripts/**/*.ts", "tests/**/*.ts"],
-
-    languageOptions: {
-      parser: tsParser,
-      sourceType: "module",
-
-      parserOptions: {
-        project: true,
-      },
-    },
-
-    rules: {
-      "jsdoc/require-jsdoc": "off",
-      "no-console": "off",
-      "@typescript-eslint/no-misused-promises": "off",
-    },
-  },
-  {
-    files: ["**/*.vue"],
-
-    languageOptions: {
-      globals: {
-        require: true,
-      },
-      sourceType: "module",
-    },
-  },
-  ...tseslint.config({
-    files: ["docs/.vitepress/**/*.", "docs/.vitepress/*."].flatMap((s) => [
-      `${s}js`,
-      `${s}mjs`,
-      `${s}ts`,
-      `${s}mts`,
-      `${s}vue`,
-    ]),
-    extends: [tseslint.configs.disableTypeChecked],
-  }),
-  {
-    files: ["docs/.vitepress/**/*.", "docs/.vitepress/*."].flatMap((s) => [
-      `${s}js`,
-      `${s}mjs`,
-      `${s}ts`,
-      `${s}mts`,
-      `${s}vue`,
-    ]),
-
-    languageOptions: {
-      globals: {
-        window: true,
-      },
-      sourceType: "module",
-      parserOptions: {
-        project: null,
-      },
-    },
-
-    rules: {
-      "jsdoc/require-jsdoc": "off",
-      "eslint-plugin/require-meta-docs-description": "off",
-      "eslint-plugin/require-meta-docs-url": "off",
-      "eslint-plugin/require-meta-type": "off",
-      "eslint-plugin/prefer-message-ids": "off",
-      "eslint-plugin/prefer-object-rule": "off",
-      "eslint-plugin/require-meta-schema": "off",
-      "n/no-extraneous-import": "off",
-      "n/file-extension-in-import": "off",
-      "n/no-unsupported-features/node-builtins": "off",
-      "@typescript-eslint/explicit-module-boundary-types": "off",
-    },
-  },
-  {
-    files: ["**/*.mjs"],
-    languageOptions: {
-      sourceType: "module",
-    },
-  },
-  ...tseslint.config({
-    files: ["*.md/*.js", "**/*.md/*.js", "**/*.md/*.vue"],
-    extends: [tseslint.configs.disableTypeChecked],
-    languageOptions: {
-      sourceType: "module",
-    },
-    rules: {
-      "n/no-missing-import": "off",
-    },
-  }),
-  ...tseslint.config({
-    files: ["**/*.md"],
-    extends: [tseslint.configs.disableTypeChecked],
-  }),
-  {
-    files: ["**/*.toml"],
-    rules: {
-      "prettier/prettier": "off",
-    },
-  },
-  {
-    files: [
-      "tests/fixtures/**/*.js",
-      "tests/fixtures/**/*.yaml",
-      "tests/fixtures/**/*.yml",
-      "tests/fixtures/**/*.toml",
-      "tests/fixtures/**/*.json5",
-    ],
-    languageOptions: {
-      sourceType: "module",
-      globals: {
-        exports: true,
-        require: true,
-        module: true,
-      },
-    },
-    rules: {
-      "yml/no-empty-sequence-entry": "off",
-      "toml/tables-order": "off",
-      "yml/no-empty-document": "off",
-      "yml/require-string-key": "off",
-      "yml/no-empty-key": "off",
-      "no-sparse-arrays": "off",
-      "n/no-unsupported-features/es-syntax": "off",
-      "no-implicit-coercion": "off",
-      "n/no-exports-assign": "off",
-      "n/exports-style": "off",
-      "no-void": "off",
-      eqeqeq: "off",
-      "prefer-template": "off",
-      yoda: "off",
-      "jsdoc/require-jsdoc": "off",
-      "jsonc/vue-custom-block/no-parsing-error": "off",
-      "no-constant-binary-expression": "off",
-      "prettier/prettier": "off",
-      "jsonc/no-sparse-arrays": "off",
-    },
-  },
-  {
-    files: ["docs/.vitepress/shim/require-from-cache.mjs"],
-    rules: {
-      "n/no-missing-import": "off",
-    },
-  },
 ];
+
+export default config;

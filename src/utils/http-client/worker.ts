@@ -1,9 +1,9 @@
-import type { RequestOptions } from "https";
+import type { RequestOptions } from "node:https";
+
 import { runAsWorker } from "synckit";
-import { get } from "./http";
+
+import { get } from "./http.ts";
 
 runAsWorker(
-  async (url: string, options?: RequestOptions, httpModulePath?: string) => {
-    return get(url, options, httpModulePath);
-  },
+  async (url: string, options?: RequestOptions, httpModulePath?: string) => get(url, options, httpModulePath),
 );
