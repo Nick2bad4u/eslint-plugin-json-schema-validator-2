@@ -2,5 +2,6 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "nick2bad4u",
         "projectKey": "Nick2bad4u_eslint-plugin-json-schema-validator-2"
-    }
+    },
+    "vitest.rootConfig": "C:\\Repos\\eslint-plugin-json-schema-validator-2\\vite.config.ts"
 }
