@@ -19,10 +19,51 @@ const schemas = new Map([
                     type: "string",
                 },
             },
-            required: [
-                "email",
-                "website",
-            ],
+            required: ["email", "website"],
+            type: "object",
+        },
+    ],
+    [
+        "https://raw.githubusercontent.com/ota-meshi/extract-vscode-schemas/main/resources/vscode/schemas/launch.json",
+        {
+            properties: {
+                compounds: {
+                    items: {
+                        properties: {
+                            configurations: {
+                                items: {
+                                    oneOf: "not-an-object",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            type: "object",
+        },
+    ],
+    [
+        "https://raw.githubusercontent.com/ota-meshi/extract-vscode-schemas/main/resources/vscode/schemas/settings/machine.json",
+        {
+            properties: {
+                "workbench.externalUriOpeners": {
+                    additionalProperties: {
+                        anyOf: [
+                            {
+                                enum: [],
+                            },
+                            {
+                                properties: {
+                                    nested: {
+                                        enum: [],
+                                    },
+                                },
+                                type: "object",
+                            },
+                        ],
+                    },
+                },
+            },
             type: "object",
         },
     ],
