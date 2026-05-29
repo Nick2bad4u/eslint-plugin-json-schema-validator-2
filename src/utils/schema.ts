@@ -2,6 +2,7 @@ import debugBuilder from "debug";
 import { draft7 as migrateToDraft7 } from "json-schema-migrate-x";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { RuleContext } from "../types.ts";
 import type { SchemaObject } from "./types.ts";
@@ -13,6 +14,10 @@ const debug = debugBuilder("eslint-plugin-json-schema-validator:utils-schema");
 
 const TTL = 1000 * 60 * 60 * 24; // 1 day
 const RELOADING = new Set<string>();
+const moduleFilename =
+  typeof __filename === "string" ? __filename : fileURLToPath(import.meta.url);
+const moduleDirname =
+  typeof __dirname === "string" ? __dirname : path.dirname(moduleFilename);
 
 /**
  * Load json data
@@ -47,7 +52,7 @@ function loadJsonFromURL<T>(
     jsonFileName = `${jsonFileName}.json`;
   }
   const jsonFilePath = path.join(
-    import.meta.dirname,
+    moduleDirname,
     `../.cached_schemastore/${jsonFileName}`,
   );
 
@@ -60,23 +65,13 @@ function loadJsonFromURL<T>(
 
   let data, timestamp;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Resolved by tsdown
-    ({ data, timestamp } = require(
-      `../.cached_schemastore/${jsonFileName}`,
-    ) as {
+    const jsonText = fs.readFileSync(jsonFilePath, "utf8");
+    ({ data, timestamp } = JSON.parse(jsonText) as {
       data: SchemaObject;
       timestamp: number;
     });
   } catch {
-    try {
-      const jsonText = fs.readFileSync(jsonFilePath, "utf8");
-      ({ data, timestamp } = JSON.parse(jsonText) as {
-        data: SchemaObject;
-        timestamp: number;
-      });
-    } catch {
-      // Ignore
-    }
+    // Ignore missing or invalid local cache entries.
   }
 
   if (data != null && typeof timestamp === "number") {
@@ -200,8 +195,6 @@ function postProcess<T>(
       v: meta.version,
     }),
   );
-  if (typeof require !== "undefined") delete require.cache[jsonFilePath];
-
   return data;
 }
 

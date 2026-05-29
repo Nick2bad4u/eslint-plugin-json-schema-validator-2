@@ -2,13 +2,17 @@ import type { RequestOptions } from "node:https";
 
 import { createRequire } from "node:module";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createSyncFn } from "synckit";
 
-const require = createRequire(import.meta.url);
-const ext = path.extname(import.meta.filename);
+const moduleUrl =
+  typeof __filename === "string" ? pathToFileURL(__filename).href : import.meta.url;
+const moduleFilename =
+  typeof __filename === "string" ? __filename : fileURLToPath(import.meta.url);
+const require = createRequire(moduleUrl);
+const ext = path.extname(moduleFilename);
 const sourceRuntimeWorkerPath = fileURLToPath(
-  new URL("../../../dist/utils/http-client/worker.mjs", import.meta.url),
+  new URL("../../../dist/utils/http-client/worker.js", moduleUrl),
 );
 
 const resolveIfAvailable = (workerPath: string): null | string => {
@@ -29,7 +33,7 @@ const resolveWorkerPath = (): string => {
   }
 
   const sameDirectoryWorkerPath = fileURLToPath(
-    new URL(`./worker${ext}`, import.meta.url),
+    new URL(`./worker${ext}`, moduleUrl),
   );
   const sameDirectoryWorker = resolveIfAvailable(sameDirectoryWorkerPath);
 
@@ -39,7 +43,7 @@ const resolveWorkerPath = (): string => {
 
   return require.resolve(
       fileURLToPath(
-        new URL(`./utils/http-client/worker${ext}`, import.meta.url),
+        new URL(`./utils/http-client/worker${ext}`, moduleUrl),
       ),
   );
 };

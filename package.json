@@ -48,19 +48,19 @@
     "exports": {
         ".": {
             "import": {
-                "types": "./dist/plugin.d.mts",
-                "default": "./dist/plugin.mjs"
+                "types": "./dist/plugin.d.ts",
+                "default": "./dist/plugin.js"
             },
             "require": {
                 "types": "./dist/plugin.d.cts",
                 "default": "./dist/plugin.cjs"
             },
-            "default": "./dist/plugin.mjs"
+            "default": "./dist/plugin.js"
         },
         "./package.json": "./package.json"
     },
     "main": "./dist/plugin.cjs",
-    "types": "./dist/plugin.d.mts",
+    "types": "./dist/plugin.d.ts",
     "files": [
         "dist",
         "docs/rules/**",
@@ -70,13 +70,14 @@
         "docs/docusaurus"
     ],
     "scripts": {
-        "build": "tsdown && npm run build:types:cjs",
+        "build": "tsc -b tsconfig.build.json --force && npm run build:types:cjs && npm run build:cjs",
+        "build:cjs": "esbuild dist/plugin.js --bundle --format=cjs --platform=node --packages=external --sourcemap --outfile=dist/plugin.cjs --footer:js=\"module.exports = module.exports.default;\" && esbuild dist/utils/http-client/worker.js --bundle --format=cjs --platform=node --packages=external --sourcemap --outfile=dist/utils/http-client/worker.cjs",
         "build:clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
         "build:eslint-inspector": "npx -y @eslint/config-inspector@latest build --outDir \"docs/docusaurus/static/eslint-inspector\" --base \"/eslint-plugin-json-schema-validator-2/eslint-inspector/\"",
         "build:eslint-inspector:local": "npx @eslint/config-inspector",
         "build:stylelint-inspector": "npx -y stylelint-config-inspector@latest build --outDir \"docs/docusaurus/static/stylelint-inspector\" --base \"/eslint-plugin-json-schema-validator-2/stylelint-inspector/\"",
         "build:stylelint-inspector:local": "npx stylelint-config-inspector@latest",
-        "build:types:cjs": "node -e \"const fs=require('node:fs'); if (fs.existsSync('dist/plugin.d.cts')) process.exit(0); if (fs.existsSync('dist/plugin.d.mts')) fs.copyFileSync('dist/plugin.d.mts','dist/plugin.d.cts')\"",
+        "build:types:cjs": "node -e \"require('node:fs').copyFileSync('dist/plugin.d.ts','dist/plugin.d.cts')\"",
         "changelog": "git-cliff --config cliff.toml --current",
         "changelog:generate": "git-cliff --config cliff.toml --output CHANGELOG.md",
         "changelog:preview": "git-cliff --config cliff.toml --unreleased",
@@ -284,7 +285,6 @@
         "stylelint": "^17.12.0",
         "stylelint-config-nick2bad4u": "^1.0.14",
         "ts-unused-exports": "^11.0.1",
-        "tsdown": "^0.22.1",
         "tsx": "^4.22.3",
         "twoslash-eslint": "^0.3.8",
         "typedoc": "^0.28.19",

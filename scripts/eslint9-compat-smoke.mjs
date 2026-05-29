@@ -1,6 +1,6 @@
 import { ESLint } from "eslint";
 
-import plugin from "../dist/plugin.mjs";
+import plugin from "../dist/plugin.js";
 
 const eslint = new ESLint({
   overrideConfig: [

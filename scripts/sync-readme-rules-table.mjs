@@ -7,7 +7,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import builtPlugin from "../dist/plugin.mjs";
+import builtPlugin from "../dist/plugin.js";
 
 const rulesSectionHeading = "## Rules";
 
