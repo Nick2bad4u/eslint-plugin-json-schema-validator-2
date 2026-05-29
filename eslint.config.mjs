@@ -1,5 +1,4 @@
 import nickTwoBadFourU from "eslint-config-nick2bad4u";
-import * as jsoncParser from "jsonc-eslint-parser";
 
 import plugin from "./plugin.mjs";
 
@@ -9,13 +8,6 @@ const baseConfig = nickTwoBadFourU.configs.all;
 const config = [
     ...baseConfig,
 
-    {
-        files: [".devcontainer/devcontainer.json"],
-        languageOptions: {
-            parser: jsoncParser,
-        },
-        name: "Local JSONC Devcontainer",
-    },
     {
         files: ["docs/docusaurus/src/pages/index.tsx"],
         name: "Local Docusaurus Root Page",

@@ -214,11 +214,13 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
         };
     }),
     meta: {
+        deprecated: false,
         docs: {
             categories: ["recommended"],
             default: "warn",
             description: "validate object with JSON Schema.",
         },
+        hasSuggestions: false,
         messages: {},
         schema: [
             {
