@@ -233,6 +233,12 @@ const config = {
                     showLastUpdateTime: true,
                     sidebarPath: "./sidebars.ts",
                 },
+                googleTagManager: {
+                    containerId: "GTM-T8J6HPLF",
+                },
+                gtag: {
+                    trackingID: "G-18DR1S6R1T",
+                },
                 pages: {
                     editUrl: `https://github.com/${organizationName}/${projectName}/blob/main/docs/docusaurus/`,
                     path: "src/pages",
