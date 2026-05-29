@@ -19,6 +19,21 @@ const outputDirectory = dirname(outputPath);
 const shouldRegenerateUuid = process.argv.includes("--regenerate");
 
 /**
+ * @param {unknown} error
+ *
+ * @returns {string}
+ */
+function formatUnknownError(error) {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    if (typeof error === "string") {
+        return error;
+    }
+    return "Unknown error";
+}
+
+/**
  * Load the repository package.json contents with explicit filesystem and JSON
  * parse error handling.
  *
@@ -127,10 +142,7 @@ try {
         "Pass --regenerate to assign a new UUID (note: that disconnects any previously connected DevTools workspace for this checkout)."
     );
 } catch (error) {
-    const message =
-        error instanceof Error
-            ? error.message
-            : String(error ?? "Unknown error");
+    const message = formatUnknownError(error);
 
     console.error(message);
     process.exitCode = 1;

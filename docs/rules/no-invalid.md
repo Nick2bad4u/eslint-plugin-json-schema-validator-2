@@ -16,6 +16,10 @@ since: "v0.1.0"
 
 This rule validates the file with JSON Schema and reports errors.
 
+It supports JSON, JSONC, JSON5, YAML, TOML, JavaScript object exports,
+Markdown-family YAML frontmatter through `configs.frontmatter`, and Vue custom
+blocks when `eslint-plugin-vue` is installed.
+
 <!-- eslint-skip -->
 
 ```json5
@@ -37,7 +41,7 @@ This rule validates the file with JSON Schema and reports errors.
 }
 ```
 
-## :wrench: Options
+## :wrench: Options {#options}
 
 ```json5
 {
@@ -66,6 +70,12 @@ This rule validates the file with JSON Schema and reports errors.
 - `useSchemastoreCatalog` ... If `true`, it will automatically configure some schemas defined in [https://www.schemastore.org/api/json/catalog.json](https://www.schemastore.org/api/json/catalog.json). Default `true`
 - `mergeSchemas` ... If `true`, it will merge all schemas defined in `schemas`, at the `$schema` field within files, and the catalogue. If an array is given, it will merge only schemas from the given sources. Default `false`
 - `reportMode` ... Controls which validation errors are reported. Use `"all"` to keep every Ajv error, or `"most-specific"` to suppress ancestor-path errors when deeper errors point at the same failing data. Default `"all"`
+
+Use the
+[user guide](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/docs/user-guide/index.md#zap-advanced-usage)
+for shared settings such as cache and HTTP configuration, and the
+[project README](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2#advanced-configuration)
+for a compact Flat Config example.
 
 Standard JSON Schema formats from `ajv-formats` are enabled by default. Formats
 such as `email`, `uri`, `uuid`, and `date-time` validate without additional
@@ -213,6 +223,8 @@ foo: bar
 
 ## :books: Further reading
 
+- [User guide](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/docs/user-guide/index.md)
+- [Rule overview](./overview.md)
 - [JSON Schema](https://json-schema.org/)
 - [JSON Schema Store](https://www.schemastore.org/json/)
 

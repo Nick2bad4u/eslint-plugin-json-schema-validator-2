@@ -102,6 +102,13 @@ export function convertHashLinksToBangLinksInParts(parts) {
 }
 
 /**
+ * @param {string} value
+ */
+function hasPathSeparator(value) {
+    return value.includes("/") || value.includes("\\");
+}
+
+/**
  * Determines whether a `#` in a link target is likely being used as a
  * module/export separator (repo convention) rather than as a TypeDoc
  * declaration-reference instance member separator.
@@ -141,7 +148,7 @@ function isUrlLike(moduleSource) {
     // not a URL.
     if (
         /^[A-Za-z]$/v.test(scheme) &&
-        /\/|\\/v.test(moduleSource.slice(firstColon + 1))
+        hasPathSeparator(moduleSource.slice(firstColon + 1))
     ) {
         return false;
     }

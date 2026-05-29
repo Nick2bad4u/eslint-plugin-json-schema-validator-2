@@ -1,4 +1,4 @@
-import type { UnknownRecord } from "type-fest";
+import type { ArrayElement, UnknownRecord  } from "type-fest";
 import type { AST } from "vue-eslint-parser";
 
 import { arrayAt, arrayFirst, isPresent, keyIn, setHas } from "ts-extras";
@@ -71,6 +71,7 @@ type BinaryOperator =
 type BitwiseOperands =
     | { kind: "bigint"; left: bigint; right: bigint }
     | { kind: "number"; left: number; right: number };
+type ObjectExpressionProperty = ArrayElement<AST.ESLintObjectExpression["properties"]>;
 type StaticObject = UnknownRecord;
 
 type SubPathData = Pick<PathData, "children" | "data">;
@@ -415,30 +416,7 @@ const VISITORS = {
         const data: StaticObject = {};
         const children: SubPathData["children"] = new Map();
         for (const prop of node.properties) {
-            if (prop.type === "Property") {
-                const keyName = getStaticPropertyName(prop, context);
-                if (isPresent(keyName) && isESLintExpression(prop.value)) {
-                    const propData = getPathData(prop.value, context);
-                    if (propData.data === UNKNOWN) {
-                        data[keyName] = UNKNOWN;
-                        children.set(keyName, UNKNOWN);
-                    } else {
-                        data[keyName] = propData.data;
-                        children.set(keyName, {
-                            key: prop.key.range,
-                            ...propData,
-                        });
-                    }
-                }
-            } else if (prop.type === "SpreadElement") {
-                const propData = getPathData(prop.argument, context);
-                if (isStaticObject(propData.data)) {
-                    for (const [key, val] of propData.children.entries()) {
-                        data[key] = propData.data[key];
-                        children.set(key, val);
-                    }
-                }
-            }
+            addObjectExpressionProperty(data, children, prop, context);
         }
 
         return {
@@ -544,6 +522,73 @@ const VISITORS = {
         return UNKNOWN_PATH_DATA;
     },
 };
+
+/**
+ * Applies one object literal property to the static object and path metadata.
+ */
+function addObjectExpressionProperty(
+    data: StaticObject,
+    children: SubPathData["children"],
+    prop: ObjectExpressionProperty,
+    context: RuleContext
+): void {
+    if (prop.type === "Property") {
+        addStaticObjectProperty(data, children, prop, context);
+        return;
+    }
+
+    if (prop.type === "SpreadElement") {
+        addSpreadObjectProperty(data, children, prop, context);
+    }
+}
+
+/**
+ * Applies a spread object literal property when the spread value is static.
+ */
+function addSpreadObjectProperty(
+    data: StaticObject,
+    children: SubPathData["children"],
+    prop: Extract<ObjectExpressionProperty, { type: "SpreadElement" }>,
+    context: RuleContext
+): void {
+    const propData = getPathData(prop.argument, context);
+    if (!isStaticObject(propData.data)) {
+        return;
+    }
+
+    for (const [key, val] of propData.children.entries()) {
+        data[key] = propData.data[key];
+        children.set(key, val);
+    }
+}
+
+/**
+ * Applies a statically named object literal property.
+ */
+function addStaticObjectProperty(
+    data: StaticObject,
+    children: SubPathData["children"],
+    prop: Extract<ObjectExpressionProperty, { type: "Property" }>,
+    context: RuleContext
+): void {
+    const keyName = getStaticPropertyName(prop, context);
+    if (!isPresent(keyName) || !isESLintExpression(prop.value)) {
+        return;
+    }
+
+    const propData = getPathData(prop.value, context);
+    if (propData.data === UNKNOWN) {
+        data[keyName] = UNKNOWN;
+        children.set(keyName, UNKNOWN);
+        return;
+    }
+
+    data[keyName] = propData.data;
+    children.set(keyName, {
+        key: prop.key.range,
+        ...propData,
+    });
+}
 
 /**
  * Adds static values with JavaScript-like primitive coercion.

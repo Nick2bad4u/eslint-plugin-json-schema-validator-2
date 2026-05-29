@@ -5,7 +5,13 @@ import type { AST as VueAST } from "vue-eslint-parser";
 import * as jsoncESLintParser from "jsonc-eslint-parser";
 import * as path from "node:path";
 import * as tomlESLintParser from "toml-eslint-parser";
-import { arrayIncludes, isPresent, keyIn, objectEntries } from "ts-extras";
+import {
+    arrayIncludes,
+    isPresent,
+    keyIn,
+    objectEntries,
+    safeCastTo,
+} from "ts-extras";
 import * as yamlESLintParser from "yaml-eslint-parser";
 
 import type {
@@ -13,6 +19,7 @@ import type {
     RuleDefinition,
     RuleListener,
     RuleModule,
+    SourceCode,
 } from "../types.js";
 
 interface CustomBlockVisitorOptions {
@@ -155,7 +162,7 @@ function createCustomBlockRule(
     blockContext: RuleContext,
     langFallback: string
 ): RuleListener {
-    const customBlock = blockContext.parserServices.customBlock;
+    const customBlock = blockContext.sourceCode.parserServices.customBlock;
     if (!isPresent(customBlock)) {
         return {};
     }
@@ -235,6 +242,17 @@ function isUnknownRecord(value: unknown): value is UnknownRecord {
  * Converts ESLint's public rule context to this plugin's compatibility context.
  */
 function toRuleContext(context: Rule.RuleContext): RuleContext {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Compatibility wrapper bridges ESLint's public context to this plugin's narrowed legacy context.
-    return context as unknown as RuleContext;
+    return {
+        cwd: context.cwd,
+        filename: context.filename,
+        id: context.id,
+        options: context.options,
+        physicalFilename: context.physicalFilename,
+        report: (descriptor) => {
+            context.report(descriptor);
+        },
+        settings: safeCastTo<RuleContext["settings"]>(context.settings),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- ESLint's generic SourceCode type is narrower than parser-specific JSON/YAML/TOML SourceCode at this compatibility boundary.
+        sourceCode: context.sourceCode as unknown as SourceCode,
+    };
 }

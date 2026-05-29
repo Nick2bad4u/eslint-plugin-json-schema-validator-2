@@ -10,6 +10,18 @@ const textDecoder = new TextDecoder();
 const blockSize = 512;
 
 /**
+ * @param {Uint8Array} bytes
+ *
+ * @returns {string}
+ */
+const decodeTarString = (bytes) => {
+    const value = textDecoder.decode(bytes);
+    const nullIndex = value.indexOf("\0");
+
+    return nullIndex === -1 ? value : value.slice(0, nullIndex);
+};
+
+/**
  * @param {Uint8Array} header
  * @param {number} start
  * @param {number} end
@@ -17,10 +29,7 @@ const blockSize = 512;
  * @returns {number}
  */
 const parseOctalSize = (header, start, end) => {
-    const raw = textDecoder
-        .decode(header.subarray(start, end))
-        .replace(/\0.*$/u, "")
-        .trim();
+    const raw = decodeTarString(header.subarray(start, end)).trim();
 
     return raw.length === 0 ? 0 : Number.parseInt(raw, 8);
 };
@@ -41,15 +50,11 @@ const parseTarball = (tarballData) => {
             break;
         }
 
-        const name = textDecoder
-            .decode(header.subarray(0, 100))
-            .replace(/\0.*$/u, "");
-        const prefix = textDecoder
-            .decode(header.subarray(345, 500))
-            .replace(/\0.*$/u, "");
+        const name = decodeTarString(header.subarray(0, 100));
+        const prefix = decodeTarString(header.subarray(345, 500));
         const filename = prefix.length > 0 ? `${prefix}/${name}` : name;
         const size = parseOctalSize(header, 124, 136);
-        const typeflag = String.fromCharCode(header[156] ?? 0);
+        const typeflag = String.fromCodePoint(header[156] ?? 0);
         const dataStart = offset + blockSize;
         const dataEnd = dataStart + size;
 

@@ -9,7 +9,7 @@ npm install --save-dev eslint eslint-plugin-json-schema-validator-2
 ::: tip Requirements
 
 - ESLint v9.38.0 and above
-- Node.js v20.19.0 or higher (in the 20.x line), v22.13.0 or higher (in the 22.x line), or v24.0.0 and above
+- Node.js v22.0.0 or higher
 
 :::
 
@@ -19,7 +19,8 @@ npm install --save-dev eslint eslint-plugin-json-schema-validator-2
 
 ### Configuration
 
-Use `eslint.config.js` file to configure rules. See also: <https://eslint.org/docs/latest/use/configure/configuration-files-new>.
+Use `eslint.config.js` or `eslint.config.mjs` to configure rules. See also:
+<https://eslint.org/docs/latest/use/configure/configuration-files>.
 
 Example **eslint.config.js**:
 
@@ -44,7 +45,9 @@ This plugin provides configs:
 - `*.configs.frontmatter` ... Above, plus a processor that extracts leading YAML frontmatter from Markdown, MDX and MDC files as virtual `*.frontmatter.yaml` files.
 - `*.configs.recommended` ... Above, plus rule to validate with JSON Schema.
 
-See [the rule list](../rules/overview.md) to get the `rules` that this plugin provides.
+See [the rule list](../rules/overview.md) and the
+[`no-invalid` reference](../rules/no-invalid.md) for every option this plugin
+provides.
 
 For backward compatibility, the `flat/` prefix can still be used:
 
@@ -54,7 +57,10 @@ For backward compatibility, the `flat/` prefix can still be used:
 
 ### Running ESLint from the command line
 
-If you want to run `eslint` from the command line, make sure you include the `.json`, `.jsonc`, `.json5`, `.yaml`, `.yml` and `.toml` extension using [the `--ext` option](https://eslint.org/docs/user-guide/configuring#specifying-file-extensions-to-lint) or a glob pattern, because ESLint targets only `.js` files by default.
+If you want to run `eslint` from the command line, use explicit globs that
+include the structured-data files you want linted. Relying on a directory target
+is easy to misconfigure because ESLint's default file selection is centered on
+JavaScript-family files.
 
 Examples:
 
@@ -120,7 +126,7 @@ export default [
 
 - `cache` ... Settings for remote schema cache files.
   - `directory` ... Cache directory. Relative paths resolve from the ESLint current working directory.
-  - `ttl` ... Cache time-to-live in milliseconds. Use `false` to keep cached entries without scheduling background refreshes.
+  - `ttl` ... Cache time-to-live in milliseconds. The default is 30 days. Use `false` to keep cached entries without scheduling background refreshes.
 - `http` ... Settings to resolve schema URLs.
   - `getModulePath` ... Module path to `GET` the URL. The default implementation is [./src/utils/http-client/get-modules/http.ts](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/src/utils/http-client/get-modules/http.ts).
   - `requestOptions` ... Options used in the module.
@@ -176,4 +182,15 @@ export default [
 
 ## :question: FAQ
 
-- TODO
+### Does SchemaStore run by default?
+
+Yes. `json-schema-validator-2/no-invalid` uses SchemaStore by default when the
+linted filename matches a catalog entry. Set `useSchemastoreCatalog: false` in
+an override when a local schema should be the only source of truth.
+
+### How do I validate Markdown frontmatter?
+
+Use `configs.frontmatter`, then match your schema against
+`**/*.frontmatter.yaml`. See the
+[Markdown frontmatter section](../rules/no-invalid.md#markdown-frontmatter) for
+a complete Flat Config example.

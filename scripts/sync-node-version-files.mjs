@@ -60,6 +60,34 @@ const normalizeNodeVersion = (version) => {
 const isRecord = (value) => typeof value === "object" && value !== null;
 
 /**
+ * @param {string} argument
+ * @param {string | undefined} nextArgument
+ *
+ * @returns {null | { consumedNext: boolean; version: string }}
+ */
+const parseVersionArgument = (argument, nextArgument) => {
+    if (argument === "--version") {
+        if (typeof nextArgument !== "string") {
+            throw new TypeError("Expected a version after --version.");
+        }
+
+        return {
+            consumedNext: true,
+            version: normalizeNodeVersion(nextArgument),
+        };
+    }
+
+    if (argument.startsWith("--version=")) {
+        return {
+            consumedNext: false,
+            version: normalizeNodeVersion(argument.slice("--version=".length)),
+        };
+    }
+
+    return null;
+};
+
+/**
  * Validate script arguments for repository Node version file synchronization.
  *
  * Supports check-only mode, exact current-runtime validation, and explicit
@@ -102,22 +130,15 @@ const parseArguments = (argumentList) => {
             continue;
         }
 
-        if (argument === "--version") {
-            const nextArgument = argumentList[index + 1];
-
-            if (typeof nextArgument !== "string") {
-                throw new TypeError("Expected a version after --version.");
+        const versionArgument = parseVersionArgument(
+            argument,
+            argumentList[index + 1]
+        );
+        if (versionArgument !== null) {
+            explicitVersion = versionArgument.version;
+            if (versionArgument.consumedNext) {
+                index += 1;
             }
-
-            explicitVersion = normalizeNodeVersion(nextArgument);
-            index += 1;
-            continue;
-        }
-
-        if (argument.startsWith("--version=")) {
-            explicitVersion = normalizeNodeVersion(
-                argument.slice("--version=".length)
-            );
             continue;
         }
 

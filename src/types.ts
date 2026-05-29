@@ -43,19 +43,11 @@ export type NodeOrToken = Node | Token;
 export interface RuleContext {
     cwd: string;
     filename: string;
-    getAncestors: () => Node[];
     getPhysicalFilename?: () => string;
     id: string;
     options: unknown[];
-    parserPath: string;
-    parserServices: {
-        customBlock?: AST.VElement;
-        isJSON?: true;
-        isTOML?: true;
-        isYAML?: true;
-    };
     physicalFilename: string;
-    report: (descriptor: ReportDescriptor) => void;
+    report: Rule.RuleContext["report"];
     settings: { "json-schema-validator-2"?: JsonSchemaValidatorSettings };
     sourceCode: SourceCode;
 }
@@ -121,10 +113,6 @@ export interface SourceCode {
     ast: JSON.JSONProgram | TOML.TOMLProgram | YAML.YAMLProgram;
     commentsExistBetween: (left: NodeOrToken, right: NodeOrToken) => boolean;
     getAllComments: () => Comment[];
-    getComments: (node: NodeOrToken) => {
-        leading: Comment[];
-        trailing: Comment[];
-    };
     getCommentsAfter: (nodeOrToken: NodeOrToken) => Comment[];
     getCommentsBefore: (nodeOrToken: NodeOrToken) => Comment[];
     getCommentsInside: (node: Node) => Comment[];
@@ -223,10 +211,10 @@ export interface SourceCode {
 
     hasBOM: boolean;
 
-    isSpaceBetweenTokens: (first: Token, second: Token) => boolean;
     lines: string[];
 
     parserServices: {
+        customBlock?: AST.VElement;
         isJSON?: true;
         isTOML?: true;
         isYAML?: true;
@@ -266,26 +254,6 @@ interface DeprecatedInfo {
 
 type FilterPredicate = (tokenOrComment: Token) => boolean;
 
-type ReportDescriptor = ReportDescriptorLocation &
-    ReportDescriptorMessage &
-    ReportDescriptorOptions;
-
-type ReportDescriptorLocation =
-    | { loc: SourceLocation | { column: number; line: number } }
-    | { node: NodeOrToken };
-type ReportDescriptorMessage = { message: string } | { messageId: string };
-
-interface ReportDescriptorOptions extends ReportDescriptorOptionsBase {
-    suggest?: null | SuggestionReportDescriptor[];
-}
-
-interface ReportDescriptorOptionsBase {
-    data?: Record<string, string>;
-
-    fix?:
-        | ((fixer: RuleFixer) => Fix | Fix[] | IterableIterator<Fix> | null)
-        | null;
-}
 interface RuleDocs {
     /** Legacy plugin-doc category metadata used by generated rule docs. */
     categories: "recommended"[] | null;
@@ -317,13 +285,3 @@ interface RuleReplacement {
         url?: string;
     };
 }
-
-interface SourceLocation {
-    end: JSON.Position;
-    start: JSON.Position;
-}
-
-type SuggestionDescriptorMessage = { desc: string } | { messageId: string };
-
-type SuggestionReportDescriptor = ReportDescriptorOptionsBase &
-    SuggestionDescriptorMessage;

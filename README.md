@@ -2,8 +2,8 @@
 
 [![npm license.](https://flat.badgen.net/npm/license/eslint-plugin-json-schema-validator-2?color=purple)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-plugin-json-schema-validator-2?color=pink)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator-2) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=cyan)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=yellow)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=green)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=red)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/issues) [![codecov.](https://flat.badgen.net/codecov/github/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=blue)](https://codecov.io/gh/Nick2bad4u/eslint-plugin-json-schema-validator-2)
 
-ESLint rules that validate JSON, JSONC, JSON5, YAML, TOML, JavaScript exports,
-and Vue custom blocks with JSON Schema.
+ESLint rules that validate JSON, JSONC, JSON5, YAML, TOML, Markdown
+frontmatter, JavaScript exports, and Vue custom blocks with JSON Schema.
 
 This fork keeps the useful validation behavior from the upstream plugin while
 moving the repository onto the modern ESLint plugin tooling used across
@@ -42,6 +42,10 @@ The plugin exposes these configs:
   `frontmatter`.
 - `jsonSchemaValidator.configs["flat/recommended"]` is a compatibility alias for `recommended`.
 
+Full setup details live in the [user guide](docs/user-guide/index.md). Rule
+behavior, every option, and implementation links live in the
+[`no-invalid` rule docs](docs/rules/no-invalid.md).
+
 ## Rules
 
 | Rule | Description | Fix |
@@ -62,7 +66,8 @@ without extra setup.
 
 Use rule options when a file does not advertise a `$schema` field, when you need
 to add local or remote custom schemas, or when you need to merge multiple schema
-sources:
+sources. The same options are documented in
+[json-schema-validator-2/no-invalid](docs/rules/no-invalid.md):
 
 ```js
 export default [
@@ -227,6 +232,10 @@ export default [
   },
 ];
 ```
+
+See the [getting started guide](docs/docusaurus/site-docs/getting-started.md)
+for the shorter site walkthrough and the [rule overview](docs/rules/overview.md)
+for the rule catalog.
 
 ## Related Packages
 

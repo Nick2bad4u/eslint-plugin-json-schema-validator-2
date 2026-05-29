@@ -171,9 +171,9 @@
 .heroActionPrimary {
     border-color: rgb(191 219 254 / 40%);
     background:
-        linear-gradient(145deg, rgb(14 165 233 / 92%), rgb(37 99 235 / 90%)),
+        linear-gradient(145deg, rgb(3 105 161), rgb(29 78 216)),
         linear-gradient(180deg, rgb(255 255 255 / 12%), transparent);
-    color: rgb(240 249 255);
+    color: #ffffff;
 }
 
 .heroActionSecondary {

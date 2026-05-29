@@ -73,7 +73,6 @@ export function loadTestCases(
         const errorFile = inputFile.replace(INPUT_FILE_PATTERN, "errors.json");
         let errors: RuleTester.InvalidTestCase["errors"];
         try {
-            // WriteFixtures(ruleName, inputFile, { force: true });
             errors = parseJsonValue(
                 fs.readFileSync(errorFile, "utf8")
             ) as RuleTester.InvalidTestCase["errors"];
@@ -187,11 +186,10 @@ function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
         config = readFixtureConfig(configFile);
     }
     if (config !== undefined) {
-        code = hashComment
-            ? `# ${filename}\n${code0}`
-            : blockComment
-              ? `/* ${filename} */\n${code0}`
-              : `<!--${filename}-->\n${code0}`;
+        code = prependFixtureFilename(code0, filename, {
+            blockComment,
+            hashComment,
+        });
         return {
             languageOptions: { parser: getParser(inputFile) },
             ...config,
@@ -213,14 +211,10 @@ function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
         if (configJson === undefined) {
             throw new Error(`missing inline config in @ ${inputFile}`);
         }
-        code = hashComment
-            ? code0.replace(INLINE_HASH_COMMENT_PATTERN, `# ${filename}\n`)
-            : blockComment
-              ? code0.replace(INLINE_BLOCK_COMMENT_PATTERN, `# ${filename}\n`)
-              : code0.replace(
-                    INLINE_HTML_COMMENT_PATTERN,
-                    `<!--${filename}-->`
-                );
+        code = replaceInlineFixtureConfig(code0, filename, {
+            blockComment,
+            hashComment,
+        });
         try {
             config = parseJsonValue(configJson) as FixtureConfig;
         } catch (error: unknown) {
@@ -349,6 +343,23 @@ function parseJsonValue(text: string): unknown {
     return JSON.parse(text) as unknown;
 }
 
+function prependFixtureFilename(
+    code: string,
+    filename: string,
+    {
+        blockComment,
+        hashComment,
+    }: { blockComment: boolean; hashComment: boolean }
+): string {
+    if (hashComment) {
+        return `# ${filename}\n${code}`;
+    }
+    if (blockComment) {
+        return `/* ${filename} */\n${code}`;
+    }
+    return `<!--${filename}-->\n${code}`;
+}
+
 function readFixtureConfig(configFile: string): FixtureConfig {
     return parseJsonValue(fs.readFileSync(configFile, "utf8")) as FixtureConfig;
 }
@@ -383,6 +394,23 @@ function readRequirements(requirementsPath: string): Record<string, string> {
         string,
         string
     >;
+}
+
+function replaceInlineFixtureConfig(
+    code: string,
+    filename: string,
+    {
+        blockComment,
+        hashComment,
+    }: { blockComment: boolean; hashComment: boolean }
+): string {
+    if (hashComment) {
+        return code.replace(INLINE_HASH_COMMENT_PATTERN, `# ${filename}\n`);
+    }
+    if (blockComment) {
+        return code.replace(INLINE_BLOCK_COMMENT_PATTERN, `# ${filename}\n`);
+    }
+    return code.replace(INLINE_HTML_COMMENT_PATTERN, `<!--${filename}-->`);
 }
 
 function writeFixtures(

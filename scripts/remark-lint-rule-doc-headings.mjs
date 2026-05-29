@@ -136,7 +136,7 @@ const defaultHelperDocPathPattern =
     /(^|\/)docs\/rules\/(?!overview\.md$|getting-started\.md$|presets\/)[^/]+\.md$/u;
 const defaultRuleCatalogIdLinePattern = /^> \*\*Rule catalog ID:\*\* R\d{3}$/u;
 const defaultPackageDocumentationLabelPattern =
-    /^[^\r\n]+ package documentation:$/mu;
+    /^[^\r\n]*\S[^\r\n]* package documentation:$/mu;
 const eslintPluginPackagePrefix = "eslint-plugin-";
 
 const packageMetadataCache = new Map();
@@ -392,7 +392,7 @@ const getHeadingsByDepth = (tree, depth) =>
 export default function remarkLintRuleDocHeadings(options = {}) {
     const headingToggles = {
         ...defaultHeadingToggles,
-        ...(options.headings ?? {}),
+        ...options.headings,
     };
     const helperDocPathPattern =
         options.helperDocPathPattern ?? defaultHelperDocPathPattern;
@@ -480,8 +480,11 @@ export default function remarkLintRuleDocHeadings(options = {}) {
             );
 
             if (!expectedH1Titles.includes(actualTitle)) {
+                const expectedH1TitlesText = expectedH1Titles
+                    .map((title) => `\`${title}\``)
+                    .join(", ");
                 file.message(
-                    `H1 heading must match one of: ${expectedH1Titles.map((title) => `\`${title}\``).join(", ")}.`,
+                    `H1 heading must match one of: ${expectedH1TitlesText}.`,
                     h1Headings[0],
                     "remark-lint:rule-doc-headings:h1-title"
                 );
@@ -715,7 +718,7 @@ export default function remarkLintRuleDocHeadings(options = {}) {
                 nextH2Heading
             );
 
-            if (!/\[[^\]]+\]\([^\)]+\)/u.test(deprecatedSectionContent)) {
+            if (!/\[[^\]\n]+]\([^)\n]+\)/u.test(deprecatedSectionContent)) {
                 file.message(
                     "`## Deprecated` should include a link to the recommended replacement rule or package.",
                     deprecatedSectionHeading,

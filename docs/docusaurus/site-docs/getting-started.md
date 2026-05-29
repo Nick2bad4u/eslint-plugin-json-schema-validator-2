@@ -23,6 +23,12 @@ export default [
 The recommended preset registers parsers for JSON, YAML, and TOML files and
 enables `json-schema-validator-2/no-invalid` as a warning.
 
+The complete option reference is in the
+[`no-invalid` rule docs](https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/no-invalid/).
+The broader README is
+available in the
+[repository root](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2#readme).
+
 ## Custom schemas
 
 Pass schemas directly to the rule when a file does not advertise a `$schema`
@@ -84,8 +90,8 @@ export default [
 ];
 ```
 
-Remote schemas are cached automatically. Configure the cache from shared
-settings when CI or local tooling needs a specific location:
+Remote schemas are cached automatically for 30 days. Configure the cache from
+shared settings when CI or local tooling needs a specific location:
 
 ```js
 export default [
@@ -94,13 +100,16 @@ export default [
       "json-schema-validator-2": {
         cache: {
           directory: ".cache/json-schema-validator-2",
-          ttl: false,
+          ttl: 1000 * 60 * 60 * 24 * 30,
         },
       },
     },
   },
 ];
 ```
+
+Set `ttl: false` if you want to keep using cached remote schemas without
+scheduling background refreshes.
 
 ## Markdown frontmatter
 

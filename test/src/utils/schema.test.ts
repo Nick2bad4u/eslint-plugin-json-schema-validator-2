@@ -26,11 +26,8 @@ describe("schema cache settings", () => {
         const context = safeCastTo<RuleContext>({
             cwd: REPO_ROOT,
             filename: path.join(TEST_DIR, "cache-test.json"),
-            getAncestors: () => [],
             id: "json-schema-validator-2/no-invalid",
             options: [],
-            parserPath: "",
-            parserServices: {},
             physicalFilename: path.join(TEST_DIR, "cache-test.json"),
             report: () => {},
             settings: {

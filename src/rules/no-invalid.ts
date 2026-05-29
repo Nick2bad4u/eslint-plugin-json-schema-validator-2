@@ -228,6 +228,7 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
         };
     }),
     meta: {
+        defaultOptions: [{}],
         docs: {
             categories: ["recommended"],
             default: "warn",
@@ -248,6 +249,9 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
             url: "https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/no-invalid",
         },
         messages: {
+            cannotResolveSchema: "Specified schema could not be resolved.",
+            cannotResolveSchemaPath:
+                'Specified schema could not be resolved. Path: "{{schemaPath}}".',
             validationError: "{{message}}",
         },
         schema: [
@@ -614,26 +618,9 @@ function getOptionsValidators(
     const validators: Validator[] = [];
     for (const schemaData of option.schemas) {
         if (matchFile(filename, schemaData.fileMatch)) {
-            if (typeof schemaData.schema === "string") {
-                const schemaValidator = schemaPathToValidator(
-                    schemaData.schema,
-                    context
-                );
-                if (isPresent(schemaValidator)) {
-                    validators.push(schemaValidator);
-                } else {
-                    reportCannotResolvedPath(schemaData.schema, context);
-                }
-            } else {
-                const schemaValidator = schemaObjectToValidator(
-                    schemaData.schema,
-                    context
-                );
-                if (isPresent(schemaValidator)) {
-                    validators.push(schemaValidator);
-                } else {
-                    reportCannotResolvedObject(context);
-                }
+            const validator = optionSchemaToValidator(schemaData, context);
+            if (isPresent(validator)) {
+                validators.push(validator);
             }
         }
     }
@@ -693,10 +680,19 @@ function getRuleOption(context: RuleContext): null | RuleOption {
  * Get $schema validators.
  */
 function getSchemaValidators(context: RuleContext): null | Validator[] {
+    const ast = context.sourceCode.ast;
+    if (
+        !isJSONProgram(context.sourceCode, ast) &&
+        !isYAMLProgram(context.sourceCode, ast) &&
+        !isTOMLProgram(context.sourceCode, ast)
+    ) {
+        return null;
+    }
+
     const schemaPath = findSchemaPath(
         context,
         context.sourceCode,
-        context.sourceCode.ast
+        ast
     );
     if (!isPresent(schemaPath)) {
         return null;
@@ -916,6 +912,30 @@ function mergeValidators(validators: readonly Validator[]): Validator {
 }
 
 /**
+ * Resolve one configured schema entry into a validator.
+ */
+function optionSchemaToValidator(
+    schemaData: OptionSchema,
+    context: RuleContext
+): null | Validator {
+    if (typeof schemaData.schema === "string") {
+        const schemaValidator = schemaPathToValidator(schemaData.schema, context);
+        if (isPresent(schemaValidator)) {
+            return schemaValidator;
+        }
+        reportCannotResolvedPath(schemaData.schema, context);
+        return null;
+    }
+
+    const schemaValidator = schemaObjectToValidator(schemaData.schema, context);
+    if (isPresent(schemaValidator)) {
+        return schemaValidator;
+    }
+    reportCannotResolvedObject(context);
+    return null;
+}
+
+/**
  * Get mergeSchemas option.
  */
 function parseMergeSchemasOption(option: unknown): null | SchemaKind[] {
@@ -964,7 +984,7 @@ function rangeToLocation(
 function reportCannotResolvedObject(context: RuleContext) {
     context.report({
         loc: { column: 0, line: 1 },
-        message: "Specified schema could not be resolved.",
+        messageId: "cannotResolveSchema",
     });
 }
 
@@ -973,8 +993,9 @@ function reportCannotResolvedObject(context: RuleContext) {
  */
 function reportCannotResolvedPath(schemaPath: string, context: RuleContext) {
     context.report({
+        data: { schemaPath },
         loc: { column: 0, line: 1 },
-        message: `Specified schema could not be resolved. Path: "${schemaPath}"`,
+        messageId: "cannotResolveSchemaPath",
     });
 }
 

@@ -112,13 +112,15 @@ if (useDefaultFiles && targetFiles.length === 0) {
 }
 
 if (useDefaultFiles) {
+    const excludedFilesText = pc.magenta([...excludedFiles].join(", "));
     const scopeText = overrideExcluded
-        ? "including" + ` ${pc.magenta([...excludedFiles].join(", "))}`
-        : "excluding" + ` ${pc.magenta([...excludedFiles].join(", "))}`;
+        ? `including ${excludedFilesText}`
+        : `excluding ${excludedFilesText}`;
+    const workflowCount = pc.magenta(String(targetFiles.length));
+    const workflowSummary = pc.cyan(`workflow file(s), ${scopeText}.`);
+
     console.log(
-        `${pc.bold(pc.cyan("Running actionlint on"))} ${pc.magenta(
-            String(targetFiles.length)
-        )} ${pc.cyan(`workflow file(s), ${scopeText}.`)}`
+        `${pc.bold(pc.cyan("Running actionlint on"))} ${workflowCount} ${workflowSummary}`
     );
 }
 
