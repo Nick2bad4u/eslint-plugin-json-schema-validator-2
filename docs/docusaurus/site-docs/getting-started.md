@@ -7,13 +7,13 @@ sidebar_position: 2
 Install ESLint and the plugin:
 
 ```bash
-npm install --save-dev eslint eslint-plugin-json-schema-validator
+npm install --save-dev eslint eslint-plugin-json-schema-validator-2
 ```
 
 Enable the recommended Flat Config preset:
 
 ```js
-import jsonSchemaValidator from "eslint-plugin-json-schema-validator";
+import jsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 
 export default [
   ...jsonSchemaValidator.configs.recommended,
@@ -21,7 +21,7 @@ export default [
 ```
 
 The recommended preset registers parsers for JSON, YAML, and TOML files and
-enables `json-schema-validator/no-invalid` as a warning.
+enables `json-schema-validator-2/no-invalid` as a warning.
 
 ## Custom schemas
 
@@ -33,7 +33,7 @@ export default [
   ...jsonSchemaValidator.configs.base,
   {
     rules: {
-      "json-schema-validator/no-invalid": [
+      "json-schema-validator-2/no-invalid": [
         "error",
         {
           schemas: [

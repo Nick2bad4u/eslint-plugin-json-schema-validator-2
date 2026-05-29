@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Configure eslint-plugin-json-schema-validator with ESLint Flat Config.
+description: Configure eslint-plugin-json-schema-validator-2 with ESLint Flat Config.
 ---
 
 # Getting Started
@@ -8,7 +8,7 @@ description: Configure eslint-plugin-json-schema-validator with ESLint Flat Conf
 Use the plugin from `eslint.config.js`:
 
 ```js
-import jsonSchemaValidator from "eslint-plugin-json-schema-validator";
+import jsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 
 export default [
   ...jsonSchemaValidator.configs.recommended,
@@ -23,7 +23,7 @@ export default [
   ...jsonSchemaValidator.configs.base,
   {
     rules: {
-      "json-schema-validator/no-invalid": "error",
+      "json-schema-validator-2/no-invalid": "error",
     },
   },
 ];

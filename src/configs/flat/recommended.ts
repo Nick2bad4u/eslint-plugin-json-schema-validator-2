@@ -6,8 +6,8 @@ const recommended: Linter.Config[] = [
   ...base,
   {
     rules: {
-      // eslint-plugin-json-schema-validator rules
-      "json-schema-validator/no-invalid": "warn",
+      // eslint-plugin-json-schema-validator-2 rules
+      "json-schema-validator-2/no-invalid": "warn",
     },
   },
 ];

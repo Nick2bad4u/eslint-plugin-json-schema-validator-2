@@ -6,8 +6,8 @@ import plugin from "../../src/index.ts";
 
 const { version } = pkg;
 const expectedMeta = {
-  name: "eslint-plugin-json-schema-validator",
-  namespace: "json-schema-validator",
+  name: "eslint-plugin-json-schema-validator-2",
+  namespace: "json-schema-validator-2",
   version,
 };
 

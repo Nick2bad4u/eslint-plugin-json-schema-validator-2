@@ -8,7 +8,7 @@ const eslint = new ESLint({
     {
       files: ["**/*.json"],
       rules: {
-        "json-schema-validator/no-invalid": [
+        "json-schema-validator-2/no-invalid": [
           "error",
           {
             schemas: [
@@ -40,7 +40,7 @@ const [result] = await eslint.lintText("{}", {
 });
 
 if (result === undefined || result.errorCount === 0) {
-  throw new Error("Expected json-schema-validator/no-invalid to report.");
+  throw new Error("Expected json-schema-validator-2/no-invalid to report.");
 }
 
 console.log("ESLint compatibility smoke passed.");

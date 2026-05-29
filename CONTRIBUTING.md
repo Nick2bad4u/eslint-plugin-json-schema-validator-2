@@ -1,4 +1,4 @@
-# Contributing to eslint-plugin-json-schema-validator
+# Contributing to eslint-plugin-json-schema-validator-2
 
 Thanks for your interest in contributing.
 

@@ -1,12 +1,12 @@
 ---
 pageClass: "rule-details"
 sidebarDepth: 0
-title: "json-schema-validator/no-invalid"
+title: "json-schema-validator-2/no-invalid"
 description: "validate object with JSON Schema."
 since: "v0.1.0"
 ---
 
-# json-schema-validator/no-invalid
+# json-schema-validator-2/no-invalid
 
 > validate object with JSON Schema.
 
@@ -20,7 +20,7 @@ This rule validates the file with JSON Schema and reports errors.
 
 ```json5
 // File name is ".eslintrc.json"
-/* eslint json-schema-validator/no-invalid: 'error' */
+/* eslint json-schema-validator-2/no-invalid: 'error' */
 {
   overrides: [
     {
@@ -41,7 +41,7 @@ This rule validates the file with JSON Schema and reports errors.
 
 ```json5
 {
-  "json-schema-validator/no-invalid": [
+  "json-schema-validator-2/no-invalid": [
     "error",
     {
       schemas: [
@@ -70,7 +70,7 @@ This option can also be given a JSON schema file or URL. This is useful for conf
 <!-- eslint-skip -->
 
 ```js
-/* eslint json-schema-validator/no-invalid: [
+/* eslint json-schema-validator-2/no-invalid: [
       "error",
       "https://www.schemastore.org/eslintrc"
    ]
@@ -148,7 +148,7 @@ foo: bar
 
 ## :rocket: Version
 
-This rule was introduced in eslint-plugin-json-schema-validator v0.1.0
+This rule was introduced in eslint-plugin-json-schema-validator-2 v0.1.0
 
 ## :mag: Implementation
 

@@ -3,7 +3,7 @@
 ## :cd: Installation
 
 ```bash
-npm install --save-dev eslint eslint-plugin-json-schema-validator
+npm install --save-dev eslint eslint-plugin-json-schema-validator-2
 ```
 
 ::: tip Requirements
@@ -24,7 +24,7 @@ Use `eslint.config.js` file to configure rules. See also: <https://eslint.org/do
 Example **eslint.config.js**:
 
 ```js
-import eslintPluginJsonSchemaValidator from "eslint-plugin-json-schema-validator";
+import eslintPluginJsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 export default [
   // add more generic rule sets here, such as:
   // js.configs.recommended,
@@ -32,7 +32,7 @@ export default [
   {
     rules: {
       // override/add rules settings here, such as:
-      // 'json-schema-validator/no-invalid': 'warn'
+      // 'json-schema-validator-2/no-invalid': 'warn'
     },
   },
 ];
@@ -100,7 +100,7 @@ Example **.eslintrc.js**:
 ```js
 module.exports = {
   settings: {
-    "json-schema-validator": {
+    "json-schema-validator-2": {
       http: {
         getModulePath: "",
         requestOptions: {},
@@ -111,7 +111,7 @@ module.exports = {
 ```
 
 - `http` ... Settings to resolve schema URLs.
-  - `getModulePath` ... Module path to `GET` the URL. The default implementation is [./src/utils/http-client/get-modules/http.ts](https://github.com/ota-meshi/eslint-plugin-json-schema-validator/blob/main/src/utils/http-client/get-modules/http.ts).
+  - `getModulePath` ... Module path to `GET` the URL. The default implementation is [./src/utils/http-client/get-modules/http.ts](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/src/utils/http-client/get-modules/http.ts).
   - `requestOptions` ... Options used in the module.
 
 #### Example of `http`
@@ -146,7 +146,7 @@ module.exports = function get(url, options) {
 ```js
 module.exports = {
   settings: {
-    "json-schema-validator": {
+    "json-schema-validator-2": {
       http: {
         getModulePath: require.resolve("./path/to/request-get.js"),
         requestOptions: {

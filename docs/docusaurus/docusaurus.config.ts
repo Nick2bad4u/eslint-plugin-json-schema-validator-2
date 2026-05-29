@@ -14,7 +14,7 @@ const enableExperimentalFaster =
 
 const organizationName = "Nick2bad4u";
 const projectName = "eslint-plugin-json-schema-validator-2";
-const packageName = "eslint-plugin-json-schema-validator";
+const packageName = "eslint-plugin-json-schema-validator-2";
 const siteOrigin = "https://nick2bad4u.github.io";
 const siteUrl = `${siteOrigin}${baseUrl}`;
 const siteDescription =

@@ -22,7 +22,7 @@ async function getDirRules() {
     .readdirSync(rulesRoot)
     .filter((n) => n.endsWith(".ts"))) {
     const ruleName = filename.replace(/\.ts$/v, "");
-    const ruleId = `json-schema-validator/${ruleName}`;
+    const ruleId = `json-schema-validator-2/${ruleName}`;
 
     const rule = (
       await import(pathToFileURL(path.join(rulesRoot, filename)).href)

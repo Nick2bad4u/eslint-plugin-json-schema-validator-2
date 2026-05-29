@@ -1,6 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "eslint-plugin-json-schema-validator",
+    "name": "eslint-plugin-json-schema-validator-2",
     "version": "6.2.0",
     "private": false,
     "description": "ESLint rules that validate JSON, YAML, TOML, JavaScript, and Vue custom-block data with JSON Schema.",

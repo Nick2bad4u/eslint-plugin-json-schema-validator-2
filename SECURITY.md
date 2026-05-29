@@ -35,7 +35,7 @@ fixes.
 
 ## Security Best Practices For Users
 
-- Keep `eslint-plugin-json-schema-validator`, ESLint, TypeScript, and
+- Keep `eslint-plugin-json-schema-validator-2`, ESLint, TypeScript, and
   dependencies updated.
 - Run linting in CI on trusted code only.
 - Review new rule autofixes before applying at scale.

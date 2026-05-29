@@ -12,7 +12,7 @@ const config = [
         files: ["src/**/*.{ts,tsx,mts,cts}"],
         name: "Local JSON Schema Validator",
         plugins: {
-            "json-schema-validator": plugin,
+            "json-schema-validator-2": plugin,
         },
     },
 ];

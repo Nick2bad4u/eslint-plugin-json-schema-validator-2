@@ -4,7 +4,7 @@ import Layout from "@theme/Layout";
 
 import styles from "./index.module.css";
 
-const packageName = "eslint-plugin-json-schema-validator";
+const packageName = "eslint-plugin-json-schema-validator-2";
 const description =
   "Validate JSON, YAML, TOML, JavaScript exports, and Vue custom blocks with JSON Schema during ESLint runs.";
 

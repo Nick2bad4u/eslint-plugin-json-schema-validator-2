@@ -18,7 +18,7 @@ const sidebars = {
       items: [
         {
           id: "no-invalid",
-          label: "json-schema-validator/no-invalid",
+          label: "json-schema-validator-2/no-invalid",
           type: "doc",
         },
       ],

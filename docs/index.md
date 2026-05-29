@@ -1,21 +1,21 @@
 # Introduction
 
-[eslint-plugin-json-schema-validator](https://www.npmjs.com/package/eslint-plugin-json-schema-validator) is ESLint plugin that validates data using JSON Schema Validator.
+[eslint-plugin-json-schema-validator-2](https://www.npmjs.com/package/eslint-plugin-json-schema-validator-2) is ESLint plugin that validates data using JSON Schema Validator.
 
-[![NPM license](https://img.shields.io/npm/l/eslint-plugin-json-schema-validator.svg)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator)
-[![NPM version](https://img.shields.io/npm/v/eslint-plugin-json-schema-validator.svg)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator)
-[![NPM downloads](https://img.shields.io/badge/dynamic/json.svg?label=downloads&colorB=green&suffix=/day&query=$.downloads&uri=https://api.npmjs.org//downloads/point/last-day/eslint-plugin-json-schema-validator&maxAge=3600)](http://www.npmtrends.com/eslint-plugin-json-schema-validator)
-[![NPM downloads](https://img.shields.io/npm/dw/eslint-plugin-json-schema-validator.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator)
-[![NPM downloads](https://img.shields.io/npm/dm/eslint-plugin-json-schema-validator.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator)
-[![NPM downloads](https://img.shields.io/npm/dy/eslint-plugin-json-schema-validator.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator)
-[![NPM downloads](https://img.shields.io/npm/dt/eslint-plugin-json-schema-validator.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator)
-[![Build Status](https://github.com/ota-meshi/eslint-plugin-json-schema-validator/actions/workflows/NodeCI.yml/badge.svg?branch=main)](https://github.com/ota-meshi/eslint-plugin-json-schema-validator/actions/workflows/NodeCI.yml)
+[![NPM license](https://img.shields.io/npm/l/eslint-plugin-json-schema-validator-2.svg)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator-2)
+[![NPM version](https://img.shields.io/npm/v/eslint-plugin-json-schema-validator-2.svg)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator-2)
+[![NPM downloads](https://img.shields.io/badge/dynamic/json.svg?label=downloads&colorB=green&suffix=/day&query=$.downloads&uri=https://api.npmjs.org//downloads/point/last-day/eslint-plugin-json-schema-validator-2&maxAge=3600)](http://www.npmtrends.com/eslint-plugin-json-schema-validator-2)
+[![NPM downloads](https://img.shields.io/npm/dw/eslint-plugin-json-schema-validator-2.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator-2)
+[![NPM downloads](https://img.shields.io/npm/dm/eslint-plugin-json-schema-validator-2.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator-2)
+[![NPM downloads](https://img.shields.io/npm/dy/eslint-plugin-json-schema-validator-2.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator-2)
+[![NPM downloads](https://img.shields.io/npm/dt/eslint-plugin-json-schema-validator-2.svg)](http://www.npmtrends.com/eslint-plugin-json-schema-validator-2)
+[![Build Status](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/actions/workflows/NodeCI.yml/badge.svg?branch=main)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/actions/workflows/NodeCI.yml)
 
 ## :name_badge: Features
 
 This ESLint plugin validates [JSON], [JSONC], [JSON5], [YAML], [TOML], **JavaScript** and [Vue Custom Blocks] with JSON Schema.
 
-You can check on the [Online DEMO](https://eslint-online-playground.netlify.app/#eslint-plugin-json-schema-validator).
+You can check on the [Online DEMO](https://eslint-online-playground.netlify.app/#eslint-plugin-json-schema-validator-2).
 
 ## :book: Usage
 
@@ -38,7 +38,7 @@ See [Available Rules](./rules/overview.md).
 
 ## :lock: License
 
-See the [LICENSE](https://github.com/ota-meshi/eslint-plugin-json-schema-validator/blob/main/LICENSE) file for license rights and limitations (MIT).
+See the [LICENSE](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/LICENSE) file for license rights and limitations (MIT).
 
 [JSON]: https://json.org/
 [JSONC]: https://github.com/microsoft/node-jsonc-parser

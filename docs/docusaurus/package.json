@@ -1,9 +1,9 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "@eslint-plugin-json-schema-validator/docs",
+    "name": "@eslint-plugin-json-schema-validator-2/docs",
     "version": "0.1.0",
     "private": true,
-    "description": "Docusaurus documentation site for eslint-plugin-json-schema-validator.",
+    "description": "Docusaurus documentation site for eslint-plugin-json-schema-validator-2.",
     "keywords": [
         "docusaurus",
         "documentation",

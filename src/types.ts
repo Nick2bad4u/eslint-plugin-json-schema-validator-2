@@ -53,7 +53,7 @@ export interface RuleContext {
   };
   physicalFilename: string;
   report: (descriptor: ReportDescriptor) => void;
-  settings: { "json-schema-validator"?: JsonSchemaValidatorSettings };
+  settings: { "json-schema-validator-2"?: JsonSchemaValidatorSettings };
   sourceCode: SourceCode;
 }
 

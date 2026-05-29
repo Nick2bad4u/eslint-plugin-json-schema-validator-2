@@ -1,6 +1,6 @@
-# eslint-plugin-json-schema-validator
+# eslint-plugin-json-schema-validator-2
 
-[![npm license.](https://flat.badgen.net/npm/license/eslint-plugin-json-schema-validator-2?color=purple)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-plugin-json-schema-validator-2?color=pink)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=cyan)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=yellow)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=green)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=red)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator/issues) [![codecov.](https://flat.badgen.net/codecov/github/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=blue)](https://codecov.io/gh/Nick2bad4u/eslint-plugin-json-schema-validator)
+[![npm license.](https://flat.badgen.net/npm/license/eslint-plugin-json-schema-validator-2?color=purple)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-plugin-json-schema-validator-2?color=pink)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator-2) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=cyan)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=yellow)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=green)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=red)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/issues) [![codecov.](https://flat.badgen.net/codecov/github/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=blue)](https://codecov.io/gh/Nick2bad4u/eslint-plugin-json-schema-validator-2)
 
 ESLint rules that validate JSON, JSONC, JSON5, YAML, TOML, JavaScript exports,
 and Vue custom blocks with JSON Schema.
@@ -12,7 +12,7 @@ Nick2bad4u plugin projects.
 ## Installation
 
 ```bash
-npm install --save-dev eslint eslint-plugin-json-schema-validator
+npm install --save-dev eslint eslint-plugin-json-schema-validator-2
 ```
 
 ## Usage
@@ -20,7 +20,7 @@ npm install --save-dev eslint eslint-plugin-json-schema-validator
 Use Flat Config:
 
 ```js
-import jsonSchemaValidator from "eslint-plugin-json-schema-validator";
+import jsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 
 export default [
   ...jsonSchemaValidator.configs.recommended,
@@ -30,7 +30,7 @@ export default [
 The plugin exposes these configs:
 
 - `jsonSchemaValidator.configs.base` registers the JSON, YAML, and TOML parsers.
-- `jsonSchemaValidator.configs.recommended` adds `json-schema-validator/no-invalid`.
+- `jsonSchemaValidator.configs.recommended` adds `json-schema-validator-2/no-invalid`.
 - `jsonSchemaValidator.configs["flat/base"]` is a compatibility alias for `base`.
 - `jsonSchemaValidator.configs["flat/recommended"]` is a compatibility alias for `recommended`.
 
@@ -51,7 +51,7 @@ export default [
   ...jsonSchemaValidator.configs.base,
   {
     rules: {
-      "json-schema-validator/no-invalid": [
+      "json-schema-validator-2/no-invalid": [
         "error",
         {
           schemas: [

@@ -1,11 +1,11 @@
 ---
 title: Overview
-description: Rule documentation overview for eslint-plugin-json-schema-validator.
+description: Rule documentation overview for eslint-plugin-json-schema-validator-2.
 ---
 
 # Rule Overview
 
-`eslint-plugin-json-schema-validator` focuses on validating structured project
+`eslint-plugin-json-schema-validator-2` focuses on validating structured project
 data against JSON Schema during normal ESLint runs.
 
 The initial fork keeps the upstream validation rule and moves the repository

@@ -10,7 +10,7 @@ const base: Linter.Config[] = [
   {
     plugins: {
 
-      get "json-schema-validator"(): ESLint.Plugin {
+      get "json-schema-validator-2"(): ESLint.Plugin {
         return plugin;
       },
     },

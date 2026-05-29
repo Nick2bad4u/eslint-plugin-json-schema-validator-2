@@ -1,4 +1,4 @@
-# eslint-plugin-json-schema-validator
+# eslint-plugin-json-schema-validator-2
 
 ## 6.2.0
 

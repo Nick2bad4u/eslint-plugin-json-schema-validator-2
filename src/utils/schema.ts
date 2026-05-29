@@ -10,7 +10,7 @@ import type { SchemaObject } from "./types.ts";
 import * as meta from "../meta.ts";
 import { get, syncGet } from "./http-client/index.ts";
 
-const debug = debugBuilder("eslint-plugin-json-schema-validator:utils-schema");
+const debug = debugBuilder("eslint-plugin-json-schema-validator-2:utils-schema");
 
 const TTL = 1000 * 60 * 60 * 24; // 1 day
 const RELOADING = new Set<string>();
@@ -56,7 +56,7 @@ function loadJsonFromURL<T>(
     `../.cached_schemastore/${jsonFileName}`,
   );
 
-  const options = context.settings?.["json-schema-validator"]?.http;
+  const options = context.settings?.["json-schema-validator-2"]?.http;
 
   const httpRequestOptions = options?.requestOptions ?? {};
   const httpGetModulePath = resolvePath(options?.getModulePath, context);

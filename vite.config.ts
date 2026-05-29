@@ -62,7 +62,7 @@ const typecheckTestFilePatterns = [
 ];
 
 /**
- * Vitest configuration for eslint-plugin-json-schema-validator.
+ * Vitest configuration for eslint-plugin-json-schema-validator-2.
  */
 const vitestConfig: ReturnType<typeof defineConfig> = defineConfig({
     cacheDir: "./.cache/vitest",

@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible bug in eslint-plugin-json-schema-validator
+about: Report a reproducible bug in eslint-plugin-json-schema-validator-2
 title: "Bug: "
 labels:
     - bug
@@ -53,7 +53,7 @@ assignees: []
 - ESLint version:
 - TypeScript version:
 - `@typescript-eslint/*` version:
-- `eslint-plugin-json-schema-validator` version/commit:
+- `eslint-plugin-json-schema-validator-2` version/commit:
 - OS:
 
 ## Additional context

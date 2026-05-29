@@ -14,7 +14,7 @@ const TEST_FIXTURES_ROOT = path.join(
   "../fixtures/integrations/eslint-plugin",
 );
 
-describe("integration with eslint-plugin-json-schema-validator", () => {
+describe("integration with eslint-plugin-json-schema-validator-2", () => {
   it("should lint without errors with flat-config using recommended", async () => {
     const engine = new ESLint({
       cwd: path.join(TEST_FIXTURES_ROOT, "flat-config-test01"),

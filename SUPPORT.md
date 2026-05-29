@@ -1,6 +1,6 @@
 # Support
 
-Thanks for using `eslint-plugin-json-schema-validator`.
+Thanks for using `eslint-plugin-json-schema-validator-2`.
 
 ## How To Get Help
 
@@ -19,7 +19,7 @@ Please include:
 - Node.js version
 - TypeScript version
 - ESLint version
-- `eslint-plugin-json-schema-validator` version
+- `eslint-plugin-json-schema-validator-2` version
 - Minimal reproduction snippet
 - Expected behavior and actual behavior
 

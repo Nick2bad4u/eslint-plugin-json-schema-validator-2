@@ -8,7 +8,7 @@ import recommendedConfig from "./configs/flat/recommended.ts";
 import * as packageMeta from "./meta.ts";
 import { rules as ruleList } from "./utils/rules.ts";
 
-const PLUGIN_NAMESPACE = "json-schema-validator" as const;
+const PLUGIN_NAMESPACE = "json-schema-validator-2" as const;
 
 export type JsonSchemaValidatorConfigName =
   | "base"

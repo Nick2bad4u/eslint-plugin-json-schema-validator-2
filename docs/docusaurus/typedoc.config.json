@@ -14,7 +14,7 @@
     "gitRevision": "main",
     "hostedBaseUrl": "https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/",
     "json": "docs/typedoc.json",
-    "name": "eslint-plugin-json-schema-validator Documentation",
+    "name": "eslint-plugin-json-schema-validator-2 Documentation",
     "out": "site-docs/developer/api",
     "plugin": [
         "typedoc-plugin-markdown",

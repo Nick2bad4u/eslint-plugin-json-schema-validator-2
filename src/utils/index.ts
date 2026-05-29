@@ -129,7 +129,7 @@ export function createRule(
       ...rule.meta,
       docs: {
         ...rule.meta.docs,
-        ruleId: `json-schema-validator/${ruleName}`,
+        ruleId: `json-schema-validator-2/${ruleName}`,
         ruleName,
         url: `https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/${ruleName}`,
       },

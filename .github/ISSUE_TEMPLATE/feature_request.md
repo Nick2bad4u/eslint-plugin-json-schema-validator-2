@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new rule or improvement for eslint-plugin-json-schema-validator
+about: Suggest a new rule or improvement for eslint-plugin-json-schema-validator-2
 title: "Feature: "
 labels:
     - enhancement
