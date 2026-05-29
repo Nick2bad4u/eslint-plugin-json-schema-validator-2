@@ -19,6 +19,10 @@ export interface Fix {
 
 /** Shared settings consumed from ESLint flat config. */
 export interface JsonSchemaValidatorSettings {
+    cache?: {
+        directory?: string;
+        ttl?: false | number;
+    };
     http?: {
         getModulePath?: string;
         requestOptions?: RequestOptions;

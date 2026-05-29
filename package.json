@@ -191,6 +191,7 @@
     "dependencies": {
         "@eslint-community/eslint-utils": "^4.9.1",
         "ajv": "^8.20.0",
+        "ajv-formats": "^3.0.1",
         "debug": "^4.4.3",
         "eslint-json-compat-utils": "^0.2.3",
         "json-schema-migrate-x": "^2.1.0",

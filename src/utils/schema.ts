@@ -25,7 +25,7 @@ const debug = debugBuilder(
     "eslint-plugin-json-schema-validator-2:utils-schema"
 );
 
-const TTL = 1000 * 60 * 60 * 24; // 1 day
+const DEFAULT_CACHE_TTL = 1000 * 60 * 60 * 24 * 30; // 30 days
 const RELOADING = new Set<string>();
 const moduleFilename =
     typeof __filename === "string"
@@ -34,6 +34,7 @@ const moduleFilename =
           fileURLToPath(import.meta.url);
 const moduleDirname =
     typeof __dirname === "string" ? __dirname : path.dirname(moduleFilename);
+const DEFAULT_CACHE_DIRECTORY = path.join(moduleDirname, "../.cached_schemastore");
 
 interface CacheEntry {
     data: unknown;
@@ -137,10 +138,13 @@ function loadJsonFromURL(
     if (!jsonFileName.endsWith(".json")) {
         jsonFileName = `${jsonFileName}.json`;
     }
-    const jsonFilePath = path.join(
-        moduleDirname,
-        `../.cached_schemastore/${jsonFileName}`
+    const cacheSettings = context.settings["json-schema-validator-2"]?.cache;
+    const cacheDirectory = resolveCacheDirectory(
+        cacheSettings?.directory,
+        context
     );
+    const cacheTtl = cacheSettings?.ttl ?? DEFAULT_CACHE_TTL;
+    const jsonFilePath = path.join(cacheDirectory, jsonFileName);
 
     const options = context.settings["json-schema-validator-2"]?.http;
 
@@ -164,7 +168,8 @@ function loadJsonFromURL(
 
     if (isPresent(cacheEntry)) {
         if (
-            cacheEntry.timestamp + TTL < Date.now() && // Reload!
+            cacheTtl !== false &&
+            cacheEntry.timestamp + cacheTtl < Date.now() && // Reload!
             // However, the data can actually be used the next time access it.
             !setHas(RELOADING, jsonFilePath)
         ) {
@@ -338,6 +343,22 @@ function removeEmptyEnum(target: unknown): void {
             removeEmptyEnum(properties[key]);
         }
     }
+}
+
+/**
+ * Resolve the schema cache directory from shared plugin settings.
+ */
+function resolveCacheDirectory(
+    cacheDirectory: string | undefined,
+    context: RuleContext
+): string {
+    if (!isDefined(cacheDirectory) || cacheDirectory === "") {
+        return DEFAULT_CACHE_DIRECTORY;
+    }
+    if (path.isAbsolute(cacheDirectory)) {
+        return cacheDirectory;
+    }
+    return path.resolve(context.cwd, cacheDirectory);
 }
 
 /**

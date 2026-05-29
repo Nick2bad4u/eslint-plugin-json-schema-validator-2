@@ -41,6 +41,7 @@ export default [
 This plugin provides configs:
 
 - `*.configs.base` ... Configuration to enable correct JSON, YAML and TOML parsing.
+- `*.configs.frontmatter` ... Above, plus a processor that extracts leading YAML frontmatter from Markdown, MDX and MDC files as virtual `*.frontmatter.yaml` files.
 - `*.configs.recommended` ... Above, plus rule to validate with JSON Schema.
 
 See [the rule list](../rules/overview.md) to get the `rules` that this plugin provides.
@@ -48,6 +49,7 @@ See [the rule list](../rules/overview.md) to get the `rules` that this plugin pr
 For backward compatibility, the `flat/` prefix can still be used:
 
 - `*.configs["flat/base"]` is an alias for `*.configs.base`
+- `*.configs["flat/frontmatter"]` is an alias for `*.configs.frontmatter`
 - `*.configs["flat/recommended"]` is an alias for `*.configs.recommended`
 
 ### Running ESLint from the command line
@@ -93,23 +95,32 @@ Example **.vscode/settings.json**:
 
 ### Settings
 
-Use `.eslintrc.*` file to configure `settings`. See also: [https://eslint.org/docs/user-guide/configuring/configuration-files#adding-shared-settings](https://eslint.org/docs/user-guide/configuring/configuration-files#adding-shared-settings).
+Use Flat Config `settings` to configure shared plugin behavior. See also: [https://eslint.org/docs/latest/use/configure/configuration-files#configuring-shared-settings](https://eslint.org/docs/latest/use/configure/configuration-files#configuring-shared-settings).
 
-Example **.eslintrc.js**:
+Example **eslint.config.js**:
 
 ```js
-module.exports = {
-  settings: {
-    "json-schema-validator-2": {
-      http: {
-        getModulePath: "",
-        requestOptions: {},
+export default [
+  {
+    settings: {
+      "json-schema-validator-2": {
+        cache: {
+          directory: ".cache/json-schema-validator-2",
+          ttl: 1000 * 60 * 60 * 24 * 30,
+        },
+        http: {
+          getModulePath: "",
+          requestOptions: {},
+        },
       },
     },
   },
-};
+];
 ```
 
+- `cache` ... Settings for remote schema cache files.
+  - `directory` ... Cache directory. Relative paths resolve from the ESLint current working directory.
+  - `ttl` ... Cache time-to-live in milliseconds. Use `false` to keep cached entries without scheduling background refreshes.
 - `http` ... Settings to resolve schema URLs.
   - `getModulePath` ... Module path to `GET` the URL. The default implementation is [./src/utils/http-client/get-modules/http.ts](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/src/utils/http-client/get-modules/http.ts).
   - `requestOptions` ... Options used in the module.
@@ -139,24 +150,26 @@ module.exports = function get(url, options) {
 };
 ```
 
-**.eslintrc.js**:
+**eslint.config.js**:
 
 <!-- eslint-skip -->
 
 ```js
-module.exports = {
-  settings: {
-    "json-schema-validator-2": {
-      http: {
-        getModulePath: require.resolve("./path/to/request-get.js"),
-        requestOptions: {
-          // Example of proxy settings.
-          proxy: "http://my.proxy.com:8080/",
+export default [
+  {
+    settings: {
+      "json-schema-validator-2": {
+        http: {
+          getModulePath: "./path/to/request-get.js",
+          requestOptions: {
+            // Example of proxy settings.
+            proxy: "http://my.proxy.com:8080/",
+          },
         },
       },
     },
   },
-};
+];
 ```
 
 <!--ADVANCED_USAGE_GUIDE_END-->

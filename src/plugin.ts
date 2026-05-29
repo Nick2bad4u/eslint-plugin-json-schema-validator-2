@@ -1,6 +1,7 @@
 import type { ESLint, Linter } from "eslint";
 
 import baseConfig from "./configs/flat/base.js";
+import frontmatterConfig from "./configs/flat/frontmatter.js";
 import recommendedConfig from "./configs/flat/recommended.js";
 import { pluginCore } from "./plugin-core.js";
 
@@ -8,7 +9,9 @@ import { pluginCore } from "./plugin-core.js";
 export type JsonSchemaValidatorConfigName =
     | "base"
     | "flat/base"
+    | "flat/frontmatter"
     | "flat/recommended"
+    | "frontmatter"
     | "recommended";
 
 /** Fully-qualified rule IDs exported by the plugin. */
@@ -33,7 +36,9 @@ type JsonSchemaValidatorPlugin = ESLint.Plugin & {
 const configs: JsonSchemaValidatorConfigs = {
     base: baseConfig,
     "flat/base": baseConfig,
+    "flat/frontmatter": frontmatterConfig,
     "flat/recommended": recommendedConfig,
+    frontmatter: frontmatterConfig,
     recommended: recommendedConfig,
 };
 

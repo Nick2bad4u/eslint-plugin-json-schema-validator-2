@@ -1,0 +1,18 @@
+{
+    "additionalProperties": false,
+    "properties": {
+        "email": {
+            "format": "email",
+            "type": "string"
+        },
+        "website": {
+            "format": "uri",
+            "type": "string"
+        }
+    },
+    "required": [
+        "email",
+        "website"
+    ],
+    "type": "object"
+}

@@ -2,6 +2,7 @@ import type { RegExpEngine } from "ajv/dist/types/index.js";
 import type { UnknownArray, UnknownRecord } from "type-fest";
 
 import { Ajv, type ErrorObject, type ValidateFunction } from "ajv";
+import { formatNames, fullFormats } from "ajv-formats/dist/formats.js";
 import v6Schema from "ajv/lib/refs/json-schema-draft-06.json" with { type: "json" };
 import { draft7 as migrateToDraft7 } from "json-schema-migrate-x";
 import {
@@ -55,6 +56,9 @@ const ajv = new Ajv({
 });
 // Ajv.addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json"))
 ajv.addMetaSchema(v6Schema);
+for (const formatName of formatNames) {
+    ajv.addFormat(formatName, fullFormats[formatName]);
+}
 
 /**
  * Validation failure reported by a compiled JSON Schema validator.

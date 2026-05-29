@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as tomlParser from "toml-eslint-parser";
 import { safeCastTo } from "ts-extras";
+import * as yamlParser from "yaml-eslint-parser";
 
 import rule from "../../../src/rules/no-invalid";
 import { loadTestCases } from "../../utils/utils";
@@ -13,6 +14,14 @@ type TestedRuleModule = Parameters<RuleTester["run"]>[1];
 
 // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.dirname is not available across the configured Node range.
 const TEST_DIR = fileURLToPath(new URL(".", import.meta.url));
+const STATIC_JSON_MODULE_PATH = path.resolve(
+    TEST_DIR,
+    "../utils/http-client/get-modules/static-json.mjs"
+);
+const TEST_CACHE_DIR = path.resolve(
+    TEST_DIR,
+    "../../../.temp/no-invalid-test-cache"
+);
 
 const tester = new RuleTester({
     languageOptions: {
@@ -300,6 +309,130 @@ singleQuote = true`,
                             useSchemastoreCatalog: false,
                         },
                     ],
+                },
+                {
+                    code: '{ "job": { "runsOn": 42, "uses": 42 } }',
+                    errors: [
+                        '"job" must match exactly one schema in oneOf.',
+                        '"job.runsOn" must be string.',
+                        '"job.uses" must be string.',
+                    ],
+                    filename: path.join(TEST_DIR, "workflow.json"),
+                    options: [
+                        {
+                            schemas: [
+                                {
+                                    fileMatch: ["test/src/rules/workflow.json"],
+                                    schema: {
+                                        properties: {
+                                            job: {
+                                                oneOf: [
+                                                    {
+                                                        properties: {
+                                                            runsOn: {
+                                                                type: "string",
+                                                            },
+                                                        },
+                                                        required: ["runsOn"],
+                                                        type: "object",
+                                                    },
+                                                    {
+                                                        properties: {
+                                                            uses: {
+                                                                type: "string",
+                                                            },
+                                                        },
+                                                        required: ["uses"],
+                                                        type: "object",
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        type: "object",
+                                    },
+                                },
+                            ],
+                            useSchemastoreCatalog: false,
+                        },
+                    ],
+                },
+                {
+                    code: '{ "job": { "runsOn": 42, "uses": 42 } }',
+                    errors: [
+                        '"job.runsOn" must be string.',
+                        '"job.uses" must be string.',
+                    ],
+                    filename: path.join(TEST_DIR, "workflow.json"),
+                    options: [
+                        {
+                            reportMode: "most-specific",
+                            schemas: [
+                                {
+                                    fileMatch: ["test/src/rules/workflow.json"],
+                                    schema: {
+                                        properties: {
+                                            job: {
+                                                oneOf: [
+                                                    {
+                                                        properties: {
+                                                            runsOn: {
+                                                                type: "string",
+                                                            },
+                                                        },
+                                                        required: ["runsOn"],
+                                                        type: "object",
+                                                    },
+                                                    {
+                                                        properties: {
+                                                            uses: {
+                                                                type: "string",
+                                                            },
+                                                        },
+                                                        required: ["uses"],
+                                                        type: "object",
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                        type: "object",
+                                    },
+                                },
+                            ],
+                            useSchemastoreCatalog: false,
+                        },
+                    ],
+                },
+                {
+                    code: [
+                        "# yaml-language-server: $schema=https://example.com/yaml-comment.schema.json",
+                        "email: not-email",
+                        "website: nope",
+                    ].join("\n"),
+                    errors: [
+                        '"email" must match format "email".',
+                        '"website" must match format "uri".',
+                    ],
+                    filename: path.join(TEST_DIR, "remote-comment.yaml"),
+                    languageOptions: {
+                        parser: yamlParser,
+                    },
+                    options: [
+                        {
+                            useSchemastoreCatalog: false,
+                        },
+                    ],
+                    settings: {
+                        "json-schema-validator-2": {
+                            cache: {
+                                directory: TEST_CACHE_DIR,
+                                ttl: false,
+                            },
+                            http: {
+                                getModulePath: STATIC_JSON_MODULE_PATH,
+                                requestOptions: {},
+                            },
+                        },
+                    },
                 },
             ],
             valid: [

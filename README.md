@@ -34,8 +34,12 @@ export default [
 The plugin exposes these configs:
 
 - `jsonSchemaValidator.configs.base` registers the JSON, YAML, and TOML parsers.
+- `jsonSchemaValidator.configs.frontmatter` registers the structured-data parsers
+  plus a Markdown-family YAML frontmatter processor.
 - `jsonSchemaValidator.configs.recommended` adds `json-schema-validator-2/no-invalid`.
 - `jsonSchemaValidator.configs["flat/base"]` is a compatibility alias for `base`.
+- `jsonSchemaValidator.configs["flat/frontmatter"]` is a compatibility alias for
+  `frontmatter`.
 - `jsonSchemaValidator.configs["flat/recommended"]` is a compatibility alias for `recommended`.
 
 ## Rules
@@ -51,6 +55,10 @@ catalog entry, `json-schema-validator-2/no-invalid` downloads that schema and
 validates the file without extra configuration. Set
 `useSchemastoreCatalog: false` only when you want to opt out for a specific
 override.
+
+Standard JSON Schema formats from `ajv-formats` are enabled by default, so
+schemas using formats such as `email`, `uri`, `uuid`, and `date-time` validate
+without extra setup.
 
 Use rule options when a file does not advertise a `$schema` field, when you need
 to add local or remote custom schemas, or when you need to merge multiple schema
@@ -140,6 +148,85 @@ export default [
 When a file has its own `$schema` property and you also want matching custom or
 SchemaStore schemas to apply, enable `mergeSchemas`. Use `true` to merge every
 source, or pass an ordered list such as `["$schema", "options", "catalog"]`.
+
+YAML files can also advertise a schema with a language-server directive comment:
+
+```yaml
+# yaml-language-server: $schema=./schemas/config.schema.json
+enabled: true
+```
+
+The rule uses a normal YAML `$schema` property first. The directive comment is a
+fallback for YAML files that cannot include `$schema` in the validated data.
+
+Use `reportMode: "most-specific"` when broad composition errors are drowning out
+more useful nested errors:
+
+```js
+export default [
+  ...jsonSchemaValidator.configs.base,
+  {
+    rules: {
+      "json-schema-validator-2/no-invalid": [
+        "error",
+        {
+          reportMode: "most-specific",
+        },
+      ],
+    },
+  },
+];
+```
+
+Remote SchemaStore and `$schema` downloads are cached under the plugin cache
+directory by default. Configure the shared cache if your CI needs a persistent
+or workspace-local cache:
+
+```js
+export default [
+  {
+    settings: {
+      "json-schema-validator-2": {
+        cache: {
+          directory: ".cache/json-schema-validator-2",
+          ttl: 1000 * 60 * 60 * 24 * 30,
+        },
+      },
+    },
+  },
+];
+```
+
+Set `ttl: false` to keep using cached remote schemas without scheduling a
+background refresh.
+
+## Markdown frontmatter
+
+Use `configs.frontmatter` when you want to validate leading YAML frontmatter in
+Markdown, MDX, or MDC files. The processor exposes the frontmatter as a virtual
+`*.frontmatter.yaml` file, so configure schemas against that filename:
+
+```js
+export default [
+  ...jsonSchemaValidator.configs.frontmatter,
+  {
+    rules: {
+      "json-schema-validator-2/no-invalid": [
+        "error",
+        {
+          schemas: [
+            {
+              fileMatch: ["**/*.frontmatter.yaml"],
+              schema: "./schemas/frontmatter.schema.json",
+            },
+          ],
+          useSchemastoreCatalog: false,
+        },
+      ],
+    },
+  },
+];
+```
 
 ## Related Packages
 

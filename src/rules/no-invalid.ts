@@ -35,6 +35,8 @@ import {
 /* eslint-enable import-x/max-dependencies -- Re-enable dependency counting after parser integration imports. */
 
 const CATALOG_URL = "https://www.schemastore.org/api/json/catalog.json";
+const YAML_SCHEMA_COMMENT_PATTERN =
+    /^\s*yaml-language-server:\s*\$schema=(?<schema>\S+)\s*$/v;
 /* eslint-disable perfectionist/sort-arrays -- Order encodes schema merge precedence. */
 const SCHEMA_KINDS = [
     "$schema",
@@ -52,8 +54,11 @@ interface OptionSchema {
     schema: SchemaObject | string;
 }
 
+type ReportMode = "all" | "most-specific";
+
 interface RuleObjectOption {
     mergeSchemas?: boolean | SchemaKind[];
+    reportMode?: ReportMode;
     schemas?: OptionSchema[];
     useSchemastoreCatalog?: boolean;
 }
@@ -94,6 +99,9 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
             return {};
         }
         const activeValidator = validator;
+        const reportMode = parseReportModeOption(
+            getRuleObjectOption(context)?.reportMode
+        );
 
         let existsExports = false;
 
@@ -104,7 +112,10 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
             data: unknown,
             resolveLoc: (error: ValidateError) => JSONAST.SourceLocation | null
         ) {
-            const errors = activeValidator(data);
+            const errors = filterValidationErrors(
+                activeValidator(data),
+                reportMode
+            );
             for (const error of errors) {
                 const loc = resolveLoc(error);
 
@@ -264,6 +275,13 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
                                     },
                                 ],
                             },
+                            reportMode: {
+                                enum: [
+                                    "all",
+                                    "most-specific",
+                                ],
+                                type: "string",
+                            },
                             schemas: {
                                 items: {
                                     additionalProperties: true, // It also accepts unrelated properties.
@@ -393,6 +411,26 @@ function errorDataToLoc(
 }
 
 /**
+ * Filter validation errors by the configured reporting mode.
+ */
+function filterValidationErrors(
+    errors: readonly ValidateError[],
+    reportMode: ReportMode
+): ValidateError[] {
+    if (reportMode === "all") {
+        return [...errors];
+    }
+    return errors.filter(
+        (error) =>
+            !errors.some(
+                (candidate) =>
+                    candidate !== error &&
+                    isAncestorPath(error.path, candidate.path)
+            )
+    );
+}
+
+/**
  * Find and normalize a document $schema path.
  */
 function findSchemaPath(
@@ -405,6 +443,9 @@ function findSchemaPath(
         schema = findSchemaPathFromJSON(node);
     } else if (isYAMLProgram(sourceCode, node)) {
         schema = findSchemaPathFromYAML(node);
+        if (typeof schema !== "string") {
+            schema = findSchemaPathFromYAMLComments(sourceCode);
+        }
     } else if (isTOMLProgram(sourceCode, node)) {
         schema = findSchemaPathFromTOML(node);
     }
@@ -478,6 +519,20 @@ function findSchemaPathFromYAML(node: YAML.YAMLProgram): unknown {
             pair.key.value === "$schema"
         ) {
             return getStaticYAMLValue(pair.value);
+        }
+    }
+    return null;
+}
+
+/**
+ * Find schema path from a YAML language-server directive comment.
+ */
+function findSchemaPathFromYAMLComments(sourceCode: SourceCode): null | string {
+    for (const comment of sourceCode.getAllComments()) {
+        const match = YAML_SCHEMA_COMMENT_PATTERN.exec(comment.value);
+        const schema = match?.groups?.["schema"];
+        if (isPresent(schema)) {
+            return schema;
         }
     }
     return null;
@@ -657,6 +712,19 @@ function getSchemaValidators(context: RuleContext): null | Validator[] {
 }
 
 /**
+ * Check whether one validation path is an ancestor of another.
+ */
+function isAncestorPath(
+    ancestor: readonly string[],
+    descendant: readonly string[]
+): boolean {
+    return (
+        ancestor.length < descendant.length &&
+        ancestor.every((segment, index) => descendant[index] === segment)
+    );
+}
+
+/**
  * Check whether an unknown caught value has a Node.js error code.
  */
 function isErrorWithCode(error: unknown): error is Error & { code: string } {
@@ -730,6 +798,13 @@ function isRecord(value: unknown): value is UnknownRecord {
 }
 
 /**
+ * Check whether a value is a report mode.
+ */
+function isReportMode(value: unknown): value is ReportMode {
+    return value === "all" || value === "most-specific";
+}
+
+/**
  * Check whether a value is a rule options object.
  */
 function isRuleObjectOption(value: unknown): value is RuleObjectOption {
@@ -737,9 +812,10 @@ function isRuleObjectOption(value: unknown): value is RuleObjectOption {
         return false;
     }
 
-    const { mergeSchemas, schemas, useSchemastoreCatalog } = value;
+    const { mergeSchemas, reportMode, schemas, useSchemastoreCatalog } = value;
     return (
         (!isDefined(mergeSchemas) || isMergeSchemasOption(mergeSchemas)) &&
+        (!isDefined(reportMode) || isReportMode(reportMode)) &&
         (!isDefined(schemas) || isOptionSchemas(schemas)) &&
         (!isDefined(useSchemastoreCatalog) ||
             typeof useSchemastoreCatalog === "boolean")
@@ -860,6 +936,13 @@ function parseMergeSchemasOption(option: unknown): null | SchemaKind[] {
     return schemaKinds.toSorted(
         (a, b) => SCHEMA_KINDS.indexOf(a) - SCHEMA_KINDS.indexOf(b)
     );
+}
+
+/**
+ * Get reportMode option.
+ */
+function parseReportModeOption(option: unknown): ReportMode {
+    return isReportMode(option) ? option : "all";
 }
 
 /**

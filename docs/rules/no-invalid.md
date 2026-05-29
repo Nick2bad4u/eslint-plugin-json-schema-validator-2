@@ -54,6 +54,7 @@ This rule validates the file with JSON Schema and reports errors.
       ],
       useSchemastoreCatalog: true,
       mergeSchemas: true, // or ["$schema", "options", "catalog"]
+      reportMode: "all", // or "most-specific"
     },
   ],
 }
@@ -64,6 +65,11 @@ This rule validates the file with JSON Schema and reports errors.
   - `schema` ... An object that defines a JSON schema. Or the path of the JSON schema file or URL.
 - `useSchemastoreCatalog` ... If `true`, it will automatically configure some schemas defined in [https://www.schemastore.org/api/json/catalog.json](https://www.schemastore.org/api/json/catalog.json). Default `true`
 - `mergeSchemas` ... If `true`, it will merge all schemas defined in `schemas`, at the `$schema` field within files, and the catalogue. If an array is given, it will merge only schemas from the given sources. Default `false`
+- `reportMode` ... Controls which validation errors are reported. Use `"all"` to keep every Ajv error, or `"most-specific"` to suppress ancestor-path errors when deeper errors point at the same failing data. Default `"all"`
+
+Standard JSON Schema formats from `ajv-formats` are enabled by default. Formats
+such as `email`, `uri`, `uuid`, and `date-time` validate without additional
+configuration.
 
 This option can also be given a JSON schema file or URL. This is useful for configuring with the `/* eslint */` directive comments.
 
@@ -90,6 +96,70 @@ module.exports = {
     },
   ],
 };
+```
+
+### YAML language-server schema comments
+
+YAML files can use a language-server directive comment when the validated data
+cannot include a `$schema` property:
+
+```yaml
+# yaml-language-server: $schema=./schemas/config.schema.json
+enabled: true
+```
+
+The rule prefers a normal YAML `$schema` property when one exists. The
+`yaml-language-server` directive is used only as a fallback.
+
+### Schema cache settings
+
+Remote schemas are cached by default. Configure the shared plugin settings when
+you need a specific cache directory or time-to-live:
+
+```js
+export default [
+  {
+    settings: {
+      "json-schema-validator-2": {
+        cache: {
+          directory: ".cache/json-schema-validator-2",
+          ttl: 1000 * 60 * 60 * 24 * 30,
+        },
+      },
+    },
+  },
+];
+```
+
+`ttl` is measured in milliseconds. Set `ttl: false` to keep using cached remote
+schemas without scheduling a background refresh.
+
+### Markdown frontmatter
+
+Use `configs.frontmatter` to validate leading YAML frontmatter in Markdown, MDX
+or MDC files. The processor exposes the frontmatter as a virtual
+`*.frontmatter.yaml` file, so match schemas against that filename:
+
+```js
+export default [
+  ...jsonSchemaValidator.configs.frontmatter,
+  {
+    rules: {
+      "json-schema-validator-2/no-invalid": [
+        "error",
+        {
+          schemas: [
+            {
+              fileMatch: ["**/*.frontmatter.yaml"],
+              schema: "./schemas/frontmatter.schema.json",
+            },
+          ],
+          useSchemastoreCatalog: false,
+        },
+      ],
+    },
+  },
+];
 ```
 
 ### Use with `.vue`

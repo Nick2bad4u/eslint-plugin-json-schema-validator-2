@@ -47,4 +47,59 @@ describe("integration with eslint-plugin-json-schema-validator-2", () => {
             results.reduce((sum, result) => sum + result.errorCount, 0)
         ).toBe(0);
     });
+
+    it("should validate Markdown frontmatter through the frontmatter processor config", async () => {
+        expect.assertions(3);
+
+        const engine = new ESLint({
+            cwd: TEST_FIXTURES_ROOT,
+            overrideConfig: [
+                ...plugin.configs.frontmatter,
+                {
+                    files: ["**/*.frontmatter.yaml"],
+                    rules: {
+                        "json-schema-validator-2/no-invalid": [
+                            "error",
+                            {
+                                schemas: [
+                                    {
+                                        fileMatch: ["**/*.frontmatter.yaml"],
+                                        schema: {
+                                            additionalProperties: false,
+                                            properties: {
+                                                title: {
+                                                    type: "string",
+                                                },
+                                            },
+                                            required: ["title"],
+                                            type: "object",
+                                        },
+                                    },
+                                ],
+                                useSchemastoreCatalog: false,
+                            },
+                        ],
+                    },
+                },
+            ],
+            overrideConfigFile: true,
+        });
+
+        const results = await engine.lintText(
+            [
+                "---",
+                "title: 42",
+                "---",
+                "",
+                "# Demo",
+            ].join("\n"),
+            { filePath: path.join(TEST_FIXTURES_ROOT, "docs/demo.md") }
+        );
+
+        expect(results).toHaveLength(1);
+        expect(results[0]?.messages).toHaveLength(1);
+        expect(results[0]?.messages[0]?.message).toBe(
+            '"title" must be string.'
+        );
+    });
 });

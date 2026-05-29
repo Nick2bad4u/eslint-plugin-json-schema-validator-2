@@ -1,0 +1,3 @@
+# yaml-language-server: $schema=./schema.json
+email: not-email
+website: nope

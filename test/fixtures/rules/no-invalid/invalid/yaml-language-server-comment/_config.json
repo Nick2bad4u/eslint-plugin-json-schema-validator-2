@@ -1,0 +1,7 @@
+{
+    "options": [
+        {
+            "useSchemastoreCatalog": false
+        }
+    ]
+}
