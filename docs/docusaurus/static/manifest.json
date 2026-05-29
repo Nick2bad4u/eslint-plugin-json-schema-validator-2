@@ -25,13 +25,13 @@
         {
             "purpose": "any",
             "sizes": "192x192",
-            "src": "img/logo_192x192.png",
+            "src": "img/logo-192x192.png",
             "type": "image/png"
         },
         {
             "purpose": "any",
             "sizes": "512x512",
-            "src": "img/logo.png",
+            "src": "img/logo-512x512.png",
             "type": "image/png"
         },
         {
@@ -54,7 +54,7 @@
             "icons": [
                 {
                     "sizes": "192x192",
-                    "src": "img/logo_192x192.png",
+                    "src": "img/logo-192x192.png",
                     "type": "image/png"
                 }
             ],
@@ -67,7 +67,7 @@
             "icons": [
                 {
                     "sizes": "192x192",
-                    "src": "img/logo_192x192.png",
+                    "src": "img/logo-192x192.png",
                     "type": "image/png"
                 }
             ],
@@ -80,7 +80,7 @@
             "icons": [
                 {
                     "sizes": "192x192",
-                    "src": "img/logo_192x192.png",
+                    "src": "img/logo-192x192.png",
                     "type": "image/png"
                 }
             ],
