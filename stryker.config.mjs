@@ -1,6 +1,10 @@
 // @ts-check
-const processEnvironment = globalThis.process.env;
-const isCI = (processEnvironment.CI ?? "").toLowerCase() === "true";
+/// <reference types="node" />
+
+const processEnvironment = /** @type {NodeJS.ProcessEnv} */ (
+    globalThis.process.env
+);
+const isCI = (processEnvironment["CI"] ?? "").toLowerCase() === "true";
 
 /** @type {import("@stryker-mutator/api/core").PartialStrykerOptions} */
 const config = {
@@ -54,7 +58,11 @@ const config = {
         "!src/**/*.*.ts",
     ],
     packageManager: "npm",
-    plugins: ["@stryker-mutator/*", "@stryker-ignorer/*"],
+    plugins: [
+        "@stryker-ignorer/console-all",
+        "@stryker-mutator/typescript-checker",
+        "@stryker-mutator/vitest-runner",
+    ],
     reporters: [
         "clear-text",
         "html",

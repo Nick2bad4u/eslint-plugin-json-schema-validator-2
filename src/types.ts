@@ -1,20 +1,41 @@
 import type { AST as ES, Rule, Scope } from "eslint";
 import type { Comment as ESTreeComment } from "estree";
-/* eslint @typescript-eslint/naming-convention: off, @typescript-eslint/no-explicit-any: off -- for type */
 import type { JSONSchema4 } from "json-schema";
 import type { AST as JSON } from "jsonc-eslint-parser";
+import type { RequestOptions } from "node:https";
 import type { AST as TOML } from "toml-eslint-parser";
 import type { Arrayable } from "type-fest";
 import type { AST } from "vue-eslint-parser";
 import type { AST as YAML } from "yaml-eslint-parser";
 
+/** Comment nodes supported by the configured parsers. */
+export type Comment = ESTreeComment | TOML.Comment | YAML.Comment;
+
+/** Text replacement returned by an ESLint fixer. */
+export interface Fix {
+    range: [number, number];
+    text: string;
+}
+
+/** Shared settings consumed from ESLint flat config. */
 export interface JsonSchemaValidatorSettings {
     http?: {
         getModulePath?: string;
-        requestOptions?: any;
+        requestOptions?: RequestOptions;
     };
 }
 
+/** AST nodes supported by this plugin. */
+export type Node =
+    | AST.ESLintNode
+    | JSON.JSONNode
+    | TOML.TOMLNode
+    | YAML.YAMLNode;
+
+/** AST node or token accepted by SourceCode helpers. */
+export type NodeOrToken = Node | Token;
+
+/** Rule metadata shape before compatibility fields are expanded. */
 export interface PartialRuleMetaData {
     deprecated?: boolean;
     docs: {
@@ -30,6 +51,7 @@ export interface PartialRuleMetaData {
     type: "layout" | "problem" | "suggestion";
 }
 
+/** Rule module shape used by the compatibility wrapper. */
 export interface PartialRuleModule {
     create: (
         context: RuleContext,
@@ -38,13 +60,14 @@ export interface PartialRuleModule {
     meta: PartialRuleMetaData;
 }
 
+/** Minimal ESLint rule context surface used by this plugin. */
 export interface RuleContext {
     cwd: string;
     filename: string;
     getAncestors: () => Node[];
     getPhysicalFilename?: () => string;
     id: string;
-    options: any[];
+    options: unknown[];
     parserPath: string;
     parserServices: {
         customBlock?: AST.VElement;
@@ -58,8 +81,31 @@ export interface RuleContext {
     sourceCode: SourceCode;
 }
 
-export type RuleListener = Record<string, ((node: never) => void) | undefined>;
+/** Fixer API subset used by this plugin. */
+export interface RuleFixer {
+    insertTextAfter: (nodeOrToken: NodeOrToken, text: string) => Fix;
 
+    insertTextAfterRange: (range: [number, number], text: string) => Fix;
+
+    insertTextBefore: (nodeOrToken: NodeOrToken, text: string) => Fix;
+
+    insertTextBeforeRange: (range: [number, number], text: string) => Fix;
+
+    remove: (nodeOrToken: NodeOrToken) => Fix;
+
+    removeRange: (range: [number, number]) => Fix;
+
+    replaceText: (nodeOrToken: NodeOrToken, text: string) => Fix;
+
+    replaceTextRange: (range: [number, number], text: string) => Fix;
+}
+/** Visitor map returned by plugin rules. */
+export type RuleListener = Record<
+    string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ESLint visitors are intentionally bivariant at the rule boundary.
+    ((...args: any[]) => void) | undefined
+>;
+/** Complete metadata exposed for a rule. */
 export interface RuleMetaData {
     deprecated?: boolean;
     docs: {
@@ -78,44 +124,13 @@ export interface RuleMetaData {
     type: "layout" | "problem" | "suggestion";
 }
 
+/** Complete rule module exposed to ESLint. */
 export interface RuleModule {
     create: (context: Rule.RuleContext) => RuleListener;
     meta: RuleMetaData;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace -- for type
-export declare namespace SourceCode {
-    export function splitLines(text: string): string[];
-}
-export type Comment = ESTreeComment | TOML.Comment | YAML.Comment;
-export interface Fix {
-    range: [number, number];
-    text: string;
-}
-export type Node =
-    | AST.ESLintNode
-    | JSON.JSONNode
-    | TOML.TOMLNode
-    | YAML.YAMLNode;
-export type NodeOrToken = Node | Token;
-export interface RuleFixer {
-    insertTextAfter: (nodeOrToken: NodeOrToken, text: string) => Fix;
-
-    insertTextAfterRange: (range: [number, number], text: string) => Fix;
-
-    insertTextBefore: (nodeOrToken: NodeOrToken, text: string) => Fix;
-
-    insertTextBeforeRange: (range: [number, number], text: string) => Fix;
-
-    remove: (nodeOrToken: NodeOrToken) => Fix;
-
-    removeRange: (range: [number, number]) => Fix;
-
-    replaceText: (nodeOrToken: NodeOrToken, text: string) => Fix;
-
-    replaceTextRange: (range: [number, number], text: string) => Fix;
-}
-
+/** SourceCode API subset used by this plugin. */
 export interface SourceCode {
     ast: JSON.JSONProgram | TOML.TOMLProgram | YAML.YAMLProgram;
     commentsExistBetween: (left: NodeOrToken, right: NodeOrToken) => boolean;
@@ -238,6 +253,7 @@ export interface SourceCode {
     visitorKeys: Record<string, string[]>;
 }
 
+/** Tokens supported by the configured parsers. */
 export type Token = Comment | ES.Token | TOML.Token | YAML.Token;
 
 type CursorWithCountOptions =

@@ -1,7 +1,7 @@
 import type { RequestOptions } from "node:https";
 
 import { createRequire } from "node:module";
-import path from "node:path";
+import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createSyncFn } from "synckit";
 import { safeCastTo } from "ts-extras";
@@ -11,7 +11,10 @@ const moduleUrl =
         ? pathToFileURL(__filename).href
         : import.meta.url;
 const moduleFilename =
-    typeof __filename === "string" ? __filename : import.meta.filename;
+    typeof __filename === "string"
+        ? __filename
+        : // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.filename is not available across the configured Node range
+          fileURLToPath(import.meta.url);
 const require = createRequire(moduleUrl);
 const ext = path.extname(moduleFilename);
 const sourceRuntimeWorkerPath = fileURLToPath(
@@ -27,29 +30,31 @@ const resolveIfAvailable = (workerPath: string): null | string => {
 };
 
 const resolveWorkerPath = (): string => {
-    if (ext === ".ts" || ext === ".mts") {
+    if ((ext === ".ts" || ext === ".mts") && sourceRuntimeWorkerPath !== "") {
         const builtWorkerPath = resolveIfAvailable(sourceRuntimeWorkerPath);
 
-        if (builtWorkerPath) {
+        if (builtWorkerPath !== null) {
             return builtWorkerPath;
         }
     }
 
     const sameDirectoryWorkerPath = fileURLToPath(
-        new URL(`./worker${ext}`, moduleUrl)
+        new URL(`worker${ext}`, moduleUrl)
     );
     const sameDirectoryWorker = resolveIfAvailable(sameDirectoryWorkerPath);
 
-    if (sameDirectoryWorker) {
+    if (sameDirectoryWorker !== null) {
         return sameDirectoryWorker;
     }
 
     return require.resolve(
-        fileURLToPath(new URL(`./utils/http-client/worker${ext}`, moduleUrl))
+        fileURLToPath(new URL(`utils/http-client/worker${ext}`, moduleUrl))
     );
 };
 
-const getSync = createSyncFn(resolveWorkerPath());
+const getSync = safeCastTo<
+    (url: string, options?: RequestOptions, httpModulePath?: string) => string
+>(createSyncFn(resolveWorkerPath()));
 
 /**
  * Synchronously GET Method
@@ -59,5 +64,6 @@ export function syncGet(
     options?: RequestOptions,
     httpModulePath?: string
 ): string {
-    return safeCastTo<string>(getSync(url, options, httpModulePath));
+    // eslint-disable-next-line n/no-sync -- synckit intentionally exposes sync schema loading to ESLint rules
+    return getSync(url, options, httpModulePath);
 }

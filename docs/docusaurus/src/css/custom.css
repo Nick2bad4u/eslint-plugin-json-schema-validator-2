@@ -20,7 +20,7 @@
     --ifm-color-primary-lightest: #e0f2fe;
 }
 
-.navbar__title {
+.navbar .navbar__title {
     letter-spacing: 0;
 }
 

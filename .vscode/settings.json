@@ -33,6 +33,10 @@
         "github-actions-workflow"
     ],
     "javascript.validate.enable": false,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "nick2bad4u",
+        "projectKey": "Nick2bad4u_eslint-plugin-json-schema-validator-2"
+    },
     "stylelint.validate": [
         "css",
         "html",

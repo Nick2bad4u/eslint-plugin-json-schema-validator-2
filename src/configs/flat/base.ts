@@ -4,13 +4,14 @@ import * as jsoncParser from "jsonc-eslint-parser";
 import * as tomlParser from "toml-eslint-parser";
 import * as yamlParser from "yaml-eslint-parser";
 
-import plugin from "../../plugin.ts";
+import { pluginCore } from "../../plugin-core.js";
 
+/** Base flat config that wires parsers for structured data files. */
 const base: Linter.Config[] = [
     {
         plugins: {
             get "json-schema-validator-2"(): ESLint.Plugin {
-                return plugin;
+                return pluginCore;
             },
         },
     },

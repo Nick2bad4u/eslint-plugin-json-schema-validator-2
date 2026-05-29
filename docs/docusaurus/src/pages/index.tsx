@@ -2,12 +2,16 @@ import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import Layout from "@theme/Layout";
 
+import { GitHubStats } from "../components/git-hub-stats";
 import styles from "./index.module.css";
 
 const packageName = "eslint-plugin-json-schema-validator-2";
 const description =
     "Validate JSON, YAML, TOML, JavaScript exports, and Vue custom blocks with JSON Schema during ESLint runs.";
 
+/**
+ * Renders the documentation site home page.
+ */
 export default function Home(): React.JSX.Element {
     return (
         <Layout description={description} title={packageName}>
@@ -18,6 +22,7 @@ export default function Home(): React.JSX.Element {
                             {packageName}
                         </Heading>
                         <p className={styles["subtitle"]}>{description}</p>
+                        <GitHubStats />
                         <div className={styles["actions"]}>
                             <Link
                                 className="button button--primary"

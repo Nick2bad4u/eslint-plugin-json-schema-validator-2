@@ -3,20 +3,41 @@ import type { AST as JSON } from "jsonc-eslint-parser";
 import {
     arrayFirst,
     arrayJoin,
+    assertNever,
     isPresent,
     safeCastTo,
     setHas,
 } from "ts-extras";
 
-import type { GetNodeFromPath, NodeData } from "./common.ts";
+import type { NodeData } from "./common.js";
 
+interface JsonNodeGetters {
+    JSONArrayExpression: (
+        node: JSON.JSONArrayExpression,
+        paths: string[]
+    ) => NodeData<JSON.JSONNode>;
+    JSONExpressionStatement: (
+        node: JSON.JSONExpressionStatement,
+        paths: string[]
+    ) => NodeData<JSON.JSONNode>;
+    JSONObjectExpression: (
+        node: JSON.JSONObjectExpression,
+        paths: string[]
+    ) => NodeData<JSON.JSONNode>;
+    Program: (
+        node: JSON.JSONProgram,
+        paths: string[]
+    ) => NodeData<JSON.JSONNode>;
+}
 type TraverseTarget =
     | JSON.JSONArrayExpression
     | JSON.JSONExpressionStatement
     | JSON.JSONObjectExpression
     | JSON.JSONProgram;
 
-const TRAVERSE_TARGET_TYPE = new Set<string>(
+const TRAVERSE_TARGET_TYPE: ReadonlySet<JSON.JSONNode["type"]> = new Set<
+    JSON.JSONNode["type"]
+>(
     safeCastTo<TraverseTarget["type"][]>([
         "JSONArrayExpression",
         "JSONExpressionStatement",
@@ -25,54 +46,51 @@ const TRAVERSE_TARGET_TYPE = new Set<string>(
     ])
 );
 
-const GET_JSON_NODES: Record<
-    TraverseTarget["type"],
-    GetNodeFromPath<JSON.JSONNode>
-> = {
+const GET_JSON_NODES: JsonNodeGetters = {
     JSONArrayExpression(node: JSON.JSONArrayExpression, paths: string[]) {
         const path = String(paths.shift());
-        for (let index = 0; index < node.elements.length; index++) {
-            if (String(index) !== path) {
-                continue;
-            }
-            const element = node.elements[index];
+        for (const [index, element] of node.elements.entries()) {
+            if (String(index) === path) {
+                if (element) {
+                    return { value: element };
+                }
+                return {
+                    key: (sourceCode): [number, number] => {
+                        const before = node.elements
+                            .slice(0, index)
+                            .toReversed()
+                            .find((n) => isPresent(n));
+                        let tokenIndex = before
+                            ? node.elements.indexOf(before)
+                            : -1;
+                        let token = before
+                            ? sourceCode.getTokenAfter(before)
+                            : sourceCode.getFirstToken(node);
+                        while (tokenIndex < index) {
+                            tokenIndex += 1;
+                            token = sourceCode.getTokenAfter(
+                                getRequiredToken(token)
+                            );
+                        }
+                        const currentToken = getRequiredToken(token);
+                        const previousToken = getRequiredToken(
+                            sourceCode.getTokenBefore(currentToken)
+                        );
 
-            if (element) {
-                return { value: element };
+                        return [
+                            getRequiredRange(previousToken)[1],
+                            arrayFirst(getRequiredRange(currentToken)),
+                        ];
+                    },
+                    value: null,
+                };
             }
-            return {
-                key: (sourceCode) => {
-                    const before = node.elements
-                        .slice(0, index)
-                        .reverse()
-                        .find((n) => isPresent(n));
-                    let tokenIndex = before
-                        ? node.elements.indexOf(before)
-                        : -1;
-                    let token = before
-                        ? sourceCode.getTokenAfter(before)!
-                        : sourceCode.getFirstToken(node);
-                    while (tokenIndex < index) {
-                        tokenIndex++;
-                        token = sourceCode.getTokenAfter(token)!;
-                    }
-
-                    return [
-                        sourceCode.getTokenBefore(token)!.range![1],
-                        arrayFirst(token.range!),
-                    ];
-                },
-                value: null,
-            };
         }
         throw new Error(
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
         );
     },
-    JSONExpressionStatement(
-        node: JSON.JSONExpressionStatement,
-        _paths: string[]
-    ) {
+    JSONExpressionStatement(node: JSON.JSONExpressionStatement) {
         return { value: node.expression };
     },
     JSONObjectExpression(node: JSON.JSONObjectExpression, paths: string[]) {
@@ -90,37 +108,96 @@ const GET_JSON_NODES: Record<
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
         );
     },
-    Program(node: JSON.JSONProgram, _paths: string[]) {
+    Program(node: JSON.JSONProgram) {
         return { value: arrayFirst(node.body) };
     },
 };
 /**
- * Get node from path
+ * Get node from path.
+ *
+ * @throws When a path segment cannot be resolved in the parsed JSON AST.
  */
 export function getJSONNodeFromPath(
     node: JSON.JSONProgram,
-    [...paths]: string[]
+    paths: string[]
 ): NodeData<JSON.JSONNode> {
+    const remainingPaths = [...paths];
     let data: NodeData<JSON.JSONNode> = {
-        key: (sourceCode) => {
+        key: (sourceCode): [number, number] => {
             const dataNode = arrayFirst(node.body).expression;
             if (
                 dataNode.type === "JSONObjectExpression" ||
                 dataNode.type === "JSONArrayExpression"
             ) {
-                return sourceCode.getFirstToken(dataNode).range!;
+                return getRequiredRange(sourceCode.getFirstToken(dataNode));
             }
             return dataNode.range;
         },
         value: node,
     };
-    while (paths.length > 0 && data.value) {
+    while (remainingPaths.length > 0 && data.value) {
         if (!isTraverseTarget(data.value)) {
             throw new Error(`Unexpected node type: ${data.value.type}`);
         }
-        data = GET_JSON_NODES[data.value.type](data.value as never, paths);
+        data = getJSONNodeFromTraverseTarget(data.value, remainingPaths);
     }
     return data;
+}
+
+/**
+ * Gets node data from a JSON traverse target.
+ *
+ * @throws When called with an unsupported parser node.
+ */
+/* eslint-disable new-cap -- Parser dispatch uses ESTree-style uppercase node-type property names. */
+function getJSONNodeFromTraverseTarget(
+    node: TraverseTarget,
+    paths: string[]
+): NodeData<JSON.JSONNode> {
+    switch (node.type) {
+        case "JSONArrayExpression": {
+            return GET_JSON_NODES.JSONArrayExpression(node, paths);
+        }
+        case "JSONExpressionStatement": {
+            return GET_JSON_NODES.JSONExpressionStatement(node, paths);
+        }
+        case "JSONObjectExpression": {
+            return GET_JSON_NODES.JSONObjectExpression(node, paths);
+        }
+        case "Program": {
+            return GET_JSON_NODES.Program(node, paths);
+        }
+        default: {
+            return assertNever(node);
+        }
+    }
+}
+/* eslint-enable new-cap -- Re-enable after parser node dispatch. */
+
+/**
+ * Gets a concrete source range or throws for malformed parser token stores.
+ *
+ * @throws When a parser token lacks a source range.
+ */
+function getRequiredRange(token: {
+    range?: [number, number] | undefined;
+}): [number, number] {
+    if (!isPresent(token.range)) {
+        throw new Error("Unexpected state: missing JSON token range");
+    }
+    return token.range;
+}
+
+/**
+ * Gets a token or throws for malformed parser token stores.
+ *
+ * @throws When the parser token store cannot provide the requested token.
+ */
+function getRequiredToken<T>(token: null | T): T {
+    if (!isPresent(token)) {
+        throw new Error("Unexpected state: missing JSON token");
+    }
+    return token;
 }
 
 /**

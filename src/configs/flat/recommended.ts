@@ -1,7 +1,8 @@
 import type { Linter } from "eslint";
 
-import base from "./base.ts";
+import base from "./base.js";
 
+/** Recommended flat config that enables the validation rule. */
 const recommended: Linter.Config[] = [
     ...base,
     {

@@ -1,106 +1,68 @@
 // @ts-check
 
-const SCHEME_RE = /^[a-zA-Z][a-zA-Z+.-]*:/u;
+const SCHEME_RE = /^[A-Za-z][+\-.A-Za-z]*:/v;
 
 /**
  * @typedef {{ marker: "`" | "~"; length: number }} FenceState
  */
 
 /**
- * Returns whether the character at `index` is escaped by an odd number of
- * preceding backslashes.
+ * Prefixes bare intra-doc Markdown file links with `./`.
+ *
+ * This function is designed to operate on TypeDoc's markdown renderer output,
+ * where links are mostly simple inline links. It intentionally avoids parsing
+ * inside fenced code blocks and inline code spans.
  *
  * @param {string} input
- * @param {number} index
- */
-function isEscaped(input, index) {
-    let backslashCount = 0;
-    let i = index - 1;
-
-    while (i >= 0 && input.charAt(i) === "\\") {
-        backslashCount += 1;
-        i -= 1;
-    }
-
-    return backslashCount % 2 === 1;
-}
-
-/**
- * Finds the opening `[` which matches the `]` at `closeBracketIndex`.
  *
- * Handles nested brackets and backslash escapes.
- *
- * @param {string} line
- * @param {number} closeBracketIndex
+ * @returns {string}
  */
-function findInlineLinkLabelOpenBracket(line, closeBracketIndex) {
-    let depth = 0;
+export function prefixBareMarkdownFileLinksInMarkdown(input) {
+    const newline = input.includes("\r\n") ? "\r\n" : "\n";
+    const lines = input.split(/\r?\n/v);
 
-    for (let i = closeBracketIndex - 1; i >= 0; i -= 1) {
-        const ch = line.charAt(i);
+    /** @type {null | FenceState} */
+    let fenceState = null;
 
-        const isBracket = ch === "[" || ch === "]";
-        const escapedBracket = isBracket && isEscaped(line, i);
-        if (!escapedBracket) {
-            if (ch === "]") {
-                depth += 1;
-            } else if (ch === "[") {
-                if (depth === 0) {
-                    return i;
-                }
-
-                depth -= 1;
+    const outLines = lines.map((line) => {
+        // Only treat runs of a single marker character as fences.
+        const fenceMatch = /^\s*(?<marker>[`~])\k<marker>{2,}/v.exec(line);
+        if (fenceMatch) {
+            const [matchText] = fenceMatch;
+            const run = matchText.trimStart();
+            const { groups } = fenceMatch;
+            const typedGroups =
+                /** @type {undefined | { marker: string | undefined }} */ (
+                    groups
+                );
+            const markerChar = typedGroups?.marker ?? run.charAt(0);
+            /** @type {"`" | "~"} */
+            let marker = "~";
+            if (markerChar === "`") {
+                marker = "`";
             }
+            const { length } = run;
+
+            if (fenceState === null) {
+                fenceState = { length, marker };
+            } else if (
+                marker === fenceState.marker &&
+                length >= fenceState.length
+            ) {
+                fenceState = null;
+            }
+
+            return line;
         }
-    }
 
-    return -1;
-}
+        if (fenceState !== null) {
+            return line;
+        }
 
-/**
- * Prefixes bare relative Markdown file link destinations with `./` so
- * Docusaurus treats them as file paths.
- *
- * @param {string} url - The inline link destination (may contain whitespace).
- */
-function prefixIfBareRelativeMarkdownFile(url) {
-    const trimmedStart = url.trimStart();
-    const leadingWs = url.slice(0, url.length - trimmedStart.length);
+        return prefixInlineMarkdownLinksInLine(line);
+    });
 
-    const trimmedEnd = url.trimEnd();
-    const trailingWs = url.slice(trimmedEnd.length);
-
-    const trimmed = url.slice(leadingWs.length, url.length - trailingWs.length);
-
-    // Ignore fragments, absolute paths, already-relative paths, protocol-relative URLs.
-    if (
-        trimmed.startsWith("#") ||
-        trimmed.startsWith("/") ||
-        trimmed.startsWith("./") ||
-        trimmed.startsWith("../") ||
-        trimmed.startsWith("//")
-    ) {
-        return url;
-    }
-
-    // Ignore any explicit scheme (http:, https:, mailto:, vscode:, etc.).
-    if (SCHEME_RE.test(trimmed)) {
-        return url;
-    }
-
-    const hashIndex = trimmed.indexOf("#");
-    const beforeHash = hashIndex === -1 ? trimmed : trimmed.slice(0, hashIndex);
-
-    const queryIndex = beforeHash.indexOf("?");
-    const pathname =
-        queryIndex === -1 ? beforeHash : beforeHash.slice(0, queryIndex);
-
-    // Only touch markdown-file links.
-    if (!pathname.endsWith(".md") && !pathname.endsWith(".mdx")) {
-        return url;
-    }
-
-    return `${leadingWs}./${trimmed}${trailingWs}`;
+    return outLines.join(newline);
 }
 
 /**
@@ -154,84 +116,100 @@ function findInlineLinkClosingParen(input, startIndex) {
 }
 
 /**
- * Splits a Markdown inline link payload into destination + remainder.
+ * Finds the opening `[` which matches the `]` at `closeBracketIndex`.
  *
- * The payload is the text inside `(...)` for an inline link.
+ * Handles nested brackets and backslash escapes.
  *
- * - Destination may be `&lt;...>` or a raw destination.
- * - Remainder (if any) includes the title and its leading whitespace.
- *
- * @param {string} payload
- *
- * @returns {{ destination: string; remainder: string }}
+ * @param {string} line
+ * @param {number} closeBracketIndex
  */
-function splitInlineLinkDestination(payload) {
-    const core = payload.trim();
-    if (core.length === 0) {
-        return { destination: "", remainder: "" };
-    }
-
-    // Destination in angle brackets: <...>
-    if (core.startsWith("<")) {
-        let i = 1;
-        while (i < core.length) {
-            const ch = core.charAt(i);
-
-            if (ch === "\\") {
-                i += 2;
-            } else if (ch === ">") {
-                return {
-                    destination: core.slice(0, i + 1),
-                    remainder: core.slice(i + 1),
-                };
-            } else {
-                i += 1;
-            }
-        }
-
-        // Unclosed `<...`; treat whole thing as destination.
-        return { destination: core, remainder: "" };
-    }
-
-    // Raw destination: ends at first whitespace at depth 0.
+function findInlineLinkLabelOpenBracket(line, closeBracketIndex) {
     let depth = 0;
-    let i = 0;
-    while (i < core.length) {
-        const ch = core.charAt(i);
 
-        switch (ch) {
-            case "(": {
+    for (let i = closeBracketIndex - 1; i >= 0; i -= 1) {
+        const ch = line.charAt(i);
+
+        const isBracket = ch === "[" || ch === "]";
+        const escapedBracket = isBracket && isEscaped(line, i);
+        if (!escapedBracket) {
+            if (ch === "]") {
                 depth += 1;
-                i += 1;
-
-                break;
-            }
-            case ")": {
-                if (depth > 0) {
-                    depth -= 1;
+            } else if (ch === "[") {
+                if (depth === 0) {
+                    return i;
                 }
-                i += 1;
 
-                break;
-            }
-            case "\\": {
-                i += 2;
-
-                break;
-            }
-            default: {
-                if (depth === 0 && /\s/u.test(ch)) {
-                    return {
-                        destination: core.slice(0, i),
-                        remainder: core.slice(i),
-                    };
-                }
-                i += 1;
+                depth -= 1;
             }
         }
     }
 
-    return { destination: core, remainder: "" };
+    return -1;
+}
+
+/**
+ * Returns whether the character at `index` is escaped by an odd number of
+ * preceding backslashes.
+ *
+ * @param {string} input
+ * @param {number} index
+ */
+function isEscaped(input, index) {
+    let backslashCount = 0;
+    let i = index - 1;
+
+    while (i >= 0 && input.charAt(i) === "\\") {
+        backslashCount += 1;
+        i -= 1;
+    }
+
+    return backslashCount % 2 === 1;
+}
+
+/**
+ * Prefixes bare relative Markdown file link destinations with `./` so
+ * Docusaurus treats them as file paths.
+ *
+ * @param {string} url - The inline link destination (may contain whitespace).
+ */
+function prefixIfBareRelativeMarkdownFile(url) {
+    const trimmedStart = url.trimStart();
+    const leadingWs = url.slice(0, url.length - trimmedStart.length);
+
+    const trimmedEnd = url.trimEnd();
+    const trailingWs = url.slice(trimmedEnd.length);
+
+    const trimmed = url.slice(leadingWs.length, url.length - trailingWs.length);
+
+    // Ignore fragments, absolute paths, already-relative paths, protocol-relative URLs.
+    if (
+        trimmed.startsWith("#") ||
+        trimmed.startsWith("/") ||
+        trimmed.startsWith("./") ||
+        trimmed.startsWith("../") ||
+        trimmed.startsWith("//")
+    ) {
+        return url;
+    }
+
+    // Ignore any explicit scheme (http:, https:, mailto:, vscode:, etc.).
+    if (SCHEME_RE.test(trimmed)) {
+        return url;
+    }
+
+    const hashIndex = trimmed.indexOf("#");
+    const beforeHash = hashIndex === -1 ? trimmed : trimmed.slice(0, hashIndex);
+
+    const queryIndex = beforeHash.indexOf("?");
+    const pathname =
+        queryIndex === -1 ? beforeHash : beforeHash.slice(0, queryIndex);
+
+    // Only touch markdown-file links.
+    if (!pathname.endsWith(".md") && !pathname.endsWith(".mdx")) {
+        return url;
+    }
+
+    return `${leadingWs}./${trimmed}${trailingWs}`;
 }
 
 /**
@@ -350,60 +328,82 @@ function prefixInlineMarkdownLinksInLine(line) {
 }
 
 /**
- * Prefixes bare intra-doc Markdown file links with `./`.
+ * Splits a Markdown inline link payload into destination + remainder.
  *
- * This function is designed to operate on TypeDoc's markdown renderer output,
- * where links are mostly simple inline links. It intentionally avoids parsing
- * inside fenced code blocks and inline code spans.
+ * The payload is the text inside `(...)` for an inline link.
  *
- * @param {string} input
+ * - Destination may be `&lt;...>` or a raw destination.
+ * - Remainder (if any) includes the title and its leading whitespace.
  *
- * @returns {string}
+ * @param {string} payload
+ *
+ * @returns {{ destination: string; remainder: string }}
  */
-export function prefixBareMarkdownFileLinksInMarkdown(input) {
-    const newline = input.includes("\r\n") ? "\r\n" : "\n";
-    const lines = input.split(/\r?\n/u);
+function splitInlineLinkDestination(payload) {
+    const core = payload.trim();
+    if (core.length === 0) {
+        return { destination: "", remainder: "" };
+    }
 
-    /** @type {null | FenceState} */
-    let fenceState = null;
+    // Destination in angle brackets: <...>
+    if (core.startsWith("<")) {
+        let i = 1;
+        while (i < core.length) {
+            const ch = core.charAt(i);
 
-    const outLines = lines.map((line) => {
-        // Only treat runs of a single marker character as fences.
-        const fenceMatch = /^\s*(?<marker>[`~])\k<marker>{2,}/u.exec(line);
-        if (fenceMatch) {
-            const [matchText] = fenceMatch;
-            const run = matchText.trimStart();
-            const { groups } = fenceMatch;
-            const typedGroups =
-                /** @type {undefined | { marker: string | undefined }} */ (
-                    groups
-                );
-            const markerChar = typedGroups?.marker ?? run.charAt(0);
-            /** @type {"`" | "~"} */
-            let marker = "~";
-            if (markerChar === "`") {
-                marker = "`";
+            if (ch === "\\") {
+                i += 2;
+            } else if (ch === ">") {
+                return {
+                    destination: core.slice(0, i + 1),
+                    remainder: core.slice(i + 1),
+                };
+            } else {
+                i += 1;
             }
-            const { length } = run;
-
-            if (fenceState === null) {
-                fenceState = { length, marker };
-            } else if (
-                marker === fenceState.marker &&
-                length >= fenceState.length
-            ) {
-                fenceState = null;
-            }
-
-            return line;
         }
 
-        if (fenceState !== null) {
-            return line;
+        // Unclosed `<...`; treat whole thing as destination.
+        return { destination: core, remainder: "" };
+    }
+
+    // Raw destination: ends at first whitespace at depth 0.
+    let depth = 0;
+    let i = 0;
+    while (i < core.length) {
+        const ch = core.charAt(i);
+
+        switch (ch) {
+            case "(": {
+                depth += 1;
+                i += 1;
+
+                break;
+            }
+            case ")": {
+                if (depth > 0) {
+                    depth -= 1;
+                }
+                i += 1;
+
+                break;
+            }
+            case "\\": {
+                i += 2;
+
+                break;
+            }
+            default: {
+                if (depth === 0 && /\s/v.test(ch)) {
+                    return {
+                        destination: core.slice(0, i),
+                        remainder: core.slice(i),
+                    };
+                }
+                i += 1;
+            }
         }
+    }
 
-        return prefixInlineMarkdownLinksInLine(line);
-    });
-
-    return outLines.join(newline);
+    return { destination: core, remainder: "" };
 }

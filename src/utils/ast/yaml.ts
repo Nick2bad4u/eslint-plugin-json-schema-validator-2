@@ -1,16 +1,15 @@
-import type { AST as YAML } from "yaml-eslint-parser";
-
 import {
     arrayFirst,
     arrayJoin,
+    assertNever,
     isPresent,
     safeCastTo,
     setHas,
 } from "ts-extras";
-import { getStaticYAMLValue } from "yaml-eslint-parser";
+import { getStaticYAMLValue, type AST as YAML } from "yaml-eslint-parser";
 
-import type { Token } from "../../types.ts";
-import type { GetNodeFromPath, NodeData } from "./common.ts";
+import type { Token } from "../../types.js";
+import type { NodeData } from "./common.js";
 
 type TraverseTarget =
     | YAML.YAMLAlias
@@ -19,8 +18,36 @@ type TraverseTarget =
     | YAML.YAMLProgram
     | YAML.YAMLSequence
     | YAML.YAMLWithMeta;
+interface YamlNodeGetters {
+    Program: (
+        node: YAML.YAMLProgram,
+        paths: string[]
+    ) => NodeData<YAML.YAMLNode>;
+    YAMLAlias: (
+        node: YAML.YAMLAlias,
+        paths: string[]
+    ) => NodeData<YAML.YAMLNode>;
+    YAMLDocument: (
+        node: YAML.YAMLDocument,
+        paths: string[]
+    ) => NodeData<YAML.YAMLNode>;
+    YAMLMapping: (
+        node: YAML.YAMLMapping,
+        paths: string[]
+    ) => NodeData<YAML.YAMLNode>;
+    YAMLSequence: (
+        node: YAML.YAMLSequence,
+        paths: string[]
+    ) => NodeData<YAML.YAMLNode>;
+    YAMLWithMeta: (
+        node: YAML.YAMLWithMeta,
+        paths: string[]
+    ) => NodeData<YAML.YAMLNode>;
+}
 
-const TRAVERSE_TARGET_TYPE = new Set<string>(
+const TRAVERSE_TARGET_TYPE: ReadonlySet<YAML.YAMLNode["type"]> = new Set<
+    YAML.YAMLNode["type"]
+>(
     safeCastTo<TraverseTarget["type"][]>([
         "Program",
         "YAMLAlias",
@@ -31,10 +58,7 @@ const TRAVERSE_TARGET_TYPE = new Set<string>(
     ])
 );
 
-const GET_YAML_NODES: Record<
-    TraverseTarget["type"],
-    GetNodeFromPath<YAML.YAMLNode>
-> = {
+const GET_YAML_NODES: YamlNodeGetters = {
     Program(node: YAML.YAMLProgram, paths: string[]) {
         if (node.body.length <= 1) {
             const document = arrayFirst(node.body);
@@ -44,15 +68,10 @@ const GET_YAML_NODES: Record<
             throw new Error("Unexpected state: empty YAML program");
         }
         const path = String(paths.shift());
-        for (let index = 0; index < node.body.length; index++) {
-            if (String(index) !== path) {
-                continue;
-            }
-            const document = node.body[index];
-            if (document) {
+        for (const [index, document] of node.body.entries()) {
+            if (String(index) === path) {
                 return { value: document };
             }
-            break;
         }
         throw new Error(
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
@@ -62,27 +81,27 @@ const GET_YAML_NODES: Record<
         paths.length = 0; // Consume all
         return { value: node };
     },
-    YAMLDocument(node: YAML.YAMLDocument, _paths: string[]) {
+    YAMLDocument(node: YAML.YAMLDocument) {
         if (node.content) {
             return { value: node.content };
         }
         return {
-            key: () => node.range,
+            key: (): [number, number] => getRequiredRange(node),
             value: null,
         };
     },
     YAMLMapping(node: YAML.YAMLMapping, paths: string[]) {
         const path = String(paths.shift());
         for (const pair of node.pairs) {
-            const key = String(pair.key ? getStaticYAMLValue(pair.key) : null);
+            const key = getYAMLPathKey(pair.key);
 
             if (key === path) {
                 return {
-                    key: (sourceCode) => {
+                    key: (sourceCode): [number, number] => {
                         if (pair.key) {
                             return pair.key.range;
                         }
-                        return sourceCode.getFirstToken(pair).range!;
+                        return getRequiredRange(sourceCode.getFirstToken(pair));
                     },
                     value: pair.value,
                 };
@@ -94,40 +113,39 @@ const GET_YAML_NODES: Record<
     },
     YAMLSequence(node: YAML.YAMLSequence, paths: string[]) {
         const path = String(paths.shift());
-        for (let index = 0; index < node.entries.length; index++) {
-            if (String(index) !== path) {
-                continue;
+        for (const [index, entry] of node.entries.entries()) {
+            if (String(index) === path) {
+                if (entry) {
+                    return { value: entry };
+                }
+                return {
+                    key: (sourceCode): [number, number] => {
+                        const before = node.entries
+                            .slice(0, index)
+                            .toReversed()
+                            .find((n) => isPresent(n));
+                        let hyphenTokenElementIndex: number;
+                        let hyphenToken: null | Token;
+                        if (before) {
+                            hyphenTokenElementIndex =
+                                node.entries.indexOf(before) + 1;
+                            hyphenToken = sourceCode.getTokenAfter(before);
+                        } else {
+                            hyphenTokenElementIndex = 0;
+                            hyphenToken = sourceCode.getFirstToken(node);
+                        }
+                        // If it is preceded by consecutive blank elements, it must be moved to the target.
+                        while (hyphenTokenElementIndex < index) {
+                            hyphenTokenElementIndex += 1;
+                            hyphenToken = sourceCode.getTokenAfter(
+                                getRequiredToken(hyphenToken)
+                            );
+                        }
+                        return getRequiredRange(getRequiredToken(hyphenToken));
+                    },
+                    value: null,
+                };
             }
-            const entry = node.entries[index];
-
-            if (entry) {
-                return { value: entry };
-            }
-            return {
-                key: (sourceCode) => {
-                    const before = node.entries
-                        .slice(0, index)
-                        .reverse()
-                        .find((n) => isPresent(n));
-                    let hyphenTokenElementIndex: number;
-                    let hyphenToken: Token;
-                    if (before) {
-                        hyphenTokenElementIndex =
-                            node.entries.indexOf(before) + 1;
-                        hyphenToken = sourceCode.getTokenAfter(before)!;
-                    } else {
-                        hyphenTokenElementIndex = 0;
-                        hyphenToken = sourceCode.getFirstToken(node);
-                    }
-                    // If it is preceded by consecutive blank elements, it must be moved to the target.
-                    while (hyphenTokenElementIndex < index) {
-                        hyphenTokenElementIndex++;
-                        hyphenToken = sourceCode.getTokenAfter(hyphenToken)!;
-                    }
-                    return hyphenToken.range!;
-                },
-                value: null,
-            };
         }
         throw new Error(
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
@@ -142,42 +160,143 @@ const GET_YAML_NODES: Record<
 };
 
 /**
- * Get node from path
+ * Get node from path.
+ *
+ * @throws When a path segment cannot be resolved in the parsed YAML AST.
  */
 export function getYAMLNodeFromPath(
     node: YAML.YAMLProgram,
-    [...paths]: string[]
+    paths: string[]
 ): NodeData<YAML.YAMLNode> {
+    const remainingPaths = [...paths];
     let data: NodeData<YAML.YAMLNode> = {
-        key: (sourceCode) => {
+        key: (sourceCode): [number, number] => {
             const doc = arrayFirst(node.body);
             if (!doc) {
-                return (sourceCode.getFirstToken(node) || node).range!;
+                return getNodeRange(sourceCode.getFirstToken(node), node);
             }
             if (node.body.length > 1) {
-                return (sourceCode.getFirstToken(doc) || doc).range!;
+                return getNodeRange(sourceCode.getFirstToken(doc), doc);
             }
             const dataNode = doc.content;
-            if (dataNode == null) {
-                return (sourceCode.getFirstToken(doc) || doc).range!;
+            if (!isPresent(dataNode)) {
+                return getNodeRange(sourceCode.getFirstToken(doc), doc);
             }
             if (
                 dataNode.type === "YAMLMapping" ||
                 dataNode.type === "YAMLSequence"
             ) {
-                return sourceCode.getFirstToken(dataNode).range!;
+                return getNodeRange(
+                    sourceCode.getFirstToken(dataNode),
+                    dataNode
+                );
             }
             return dataNode.range;
         },
         value: node,
     };
-    while (paths.length > 0 && data.value) {
+    while (remainingPaths.length > 0 && data.value) {
         if (!isTraverseTarget(data.value)) {
             throw new Error(`Unexpected node type: ${data.value.type}`);
         }
-        data = GET_YAML_NODES[data.value.type](data.value as never, paths);
+        data = getYAMLNodeFromTraverseTarget(data.value, remainingPaths);
     }
     return data;
+}
+
+/**
+ * Gets the first token range when present, otherwise falls back to the parser
+ * node range. Empty YAML documents can contain comments without tokens.
+ */
+function getNodeRange(
+    token: null | { range?: [number, number] | undefined },
+    node: { range?: [number, number] | undefined }
+): [number, number] {
+    if (isPresent(token?.range)) {
+        return token.range;
+    }
+    return getRequiredRange(node);
+}
+
+/**
+ * Gets a concrete source range or throws for malformed parser token stores.
+ *
+ * @throws When a parser token lacks a source range.
+ */
+function getRequiredRange(token: {
+    range?: [number, number] | undefined;
+}): [number, number] {
+    if (!isPresent(token.range)) {
+        throw new Error("Unexpected state: missing YAML token range");
+    }
+    return token.range;
+}
+
+/**
+ * Gets a token or throws for malformed parser token stores.
+ *
+ * @throws When the parser token store cannot provide the requested token.
+ */
+function getRequiredToken<T>(token: null | T): T {
+    if (!isPresent(token)) {
+        throw new Error("Unexpected state: missing YAML token");
+    }
+    return token;
+}
+
+/**
+ * Gets node data from a YAML traverse target.
+ *
+ * @throws When called with an unsupported parser node.
+ */
+/* eslint-disable new-cap -- Parser dispatch uses ESTree-style uppercase node-type property names. */
+function getYAMLNodeFromTraverseTarget(
+    node: TraverseTarget,
+    paths: string[]
+): NodeData<YAML.YAMLNode> {
+    switch (node.type) {
+        case "Program": {
+            return GET_YAML_NODES.Program(node, paths);
+        }
+        case "YAMLAlias": {
+            return GET_YAML_NODES.YAMLAlias(node, paths);
+        }
+        case "YAMLDocument": {
+            return GET_YAML_NODES.YAMLDocument(node, paths);
+        }
+        case "YAMLMapping": {
+            return GET_YAML_NODES.YAMLMapping(node, paths);
+        }
+        case "YAMLSequence": {
+            return GET_YAML_NODES.YAMLSequence(node, paths);
+        }
+        case "YAMLWithMeta": {
+            return GET_YAML_NODES.YAMLWithMeta(node, paths);
+        }
+        default: {
+            return assertNever(node);
+        }
+    }
+}
+/* eslint-enable new-cap -- Re-enable after parser node dispatch. */
+
+/**
+ * Converts scalar YAML keys to path keys.
+ */
+function getYAMLPathKey(
+    node: null | YAML.YAMLContent | YAML.YAMLWithMeta
+): null | string {
+    if (!isPresent(node)) {
+        return "null";
+    }
+    const value = getStaticYAMLValue(node);
+    if (typeof value === "string") {
+        return value;
+    }
+    if (typeof value === "boolean" || typeof value === "number") {
+        return String(value);
+    }
+    return value === null ? "null" : null;
 }
 
 /**

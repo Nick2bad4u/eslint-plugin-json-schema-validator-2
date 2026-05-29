@@ -1,11 +1,17 @@
-import type { AST as TOML } from "toml-eslint-parser";
 import type { ValueOf } from "type-fest";
 
-import { getStaticTOMLValue } from "toml-eslint-parser";
-import { arrayFirst, arrayJoin, isEmpty, safeCastTo } from "ts-extras";
-import { setHas } from "ts-extras";
+import { getStaticTOMLValue, type AST as TOML } from "toml-eslint-parser";
+import {
+    arrayFirst,
+    arrayJoin,
+    assertNever,
+    isEmpty,
+    isPresent,
+    safeCastTo,
+    setHas,
+} from "ts-extras";
 
-import type { GetNodeFromPath, NodeData } from "./common.ts";
+import type { NodeData } from "./common.js";
 
 const MatchType = {
     beginsMatch: "beginsMatch",
@@ -16,27 +22,29 @@ const MatchType = {
 
 type MatchType = ValueOf<typeof MatchType>;
 
+interface TomlNodeGetters {
+    TOMLArray: (
+        node: TOML.TOMLArray,
+        paths: string[]
+    ) => NodeData<TOML.TOMLNode>;
+    TOMLInlineTable: (
+        node: TOML.TOMLInlineTable,
+        paths: string[]
+    ) => NodeData<TOML.TOMLNode>;
+}
 type TraverseTarget = TOML.TOMLArray | TOML.TOMLInlineTable;
 
-const TRAVERSE_TARGET_TYPE = new Set<string>(
-    safeCastTo<TraverseTarget["type"][]>(["TOMLArray", "TOMLInlineTable"])
-);
+const TRAVERSE_TARGET_TYPE: ReadonlySet<TOML.TOMLNode["type"]> = new Set<
+    TOML.TOMLNode["type"]
+>(safeCastTo<TraverseTarget["type"][]>(["TOMLArray", "TOMLInlineTable"]));
 
-const GET_TOML_NODES: Record<
-    TraverseTarget["type"],
-    GetNodeFromPath<TOML.TOMLNode>
-> = {
+const GET_TOML_NODES: TomlNodeGetters = {
     TOMLArray(node: TOML.TOMLArray, paths: string[]) {
         const path = String(paths.shift());
-        for (let index = 0; index < node.elements.length; index++) {
-            if (String(index) !== path) {
-                continue;
+        for (const [index, element] of node.elements.entries()) {
+            if (String(index) === path) {
+                return { value: element };
             }
-            const element = node.elements[index];
-            if (!element) {
-                break;
-            }
-            return { value: element };
         }
         throw new Error(
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
@@ -55,9 +63,7 @@ const GET_TOML_NODES: Record<
                 return { value: body.key };
             }
             if (m === MatchType.beginsMatch) {
-                for (let index = 0; index < keys.length; index++) {
-                    paths.shift();
-                }
+                paths.splice(0, keys.length);
                 return { key: () => body.key.range, value: body.value };
             }
         }
@@ -66,52 +72,38 @@ const GET_TOML_NODES: Record<
 };
 
 /**
- * Get node from path
+ * Get node from path.
+ *
+ * @throws When a path segment cannot be resolved in the parsed TOML AST.
  */
 export function getTOMLNodeFromPath(
     node: TOML.TOMLProgram,
     paths: string[]
 ): NodeData<TOML.TOMLNode> {
-    const topLevelTable = arrayFirst(node.body);
-    if (isEmpty(paths)) {
+    const remainingPaths = [...paths];
+    const topLevelTable = getTopLevelTable(node);
+    if (isEmpty(remainingPaths)) {
         return {
-            key: (sourceCode) =>
-                (sourceCode.getFirstToken(topLevelTable) || topLevelTable)
-                    .range!,
+            key: (sourceCode): [number, number] =>
+                getRequiredRange(sourceCode.getFirstToken(topLevelTable)),
             value: topLevelTable,
         };
     }
 
     for (const body of topLevelTable.body) {
         if (body.type === "TOMLKeyValue") {
-            const result = getTOMLNodeFromPathForKeyValue(body, paths);
+            const result = getTOMLNodeFromPathForKeyValue(body, remainingPaths);
             if (result) {
                 return result;
             }
         } else {
-            // Table
-            const m = getMatchType(paths, body.resolvedKey);
-            if (m === MatchType.match) {
-                return { value: body.key };
-            }
-            if (m === MatchType.subMatch) {
-                return { value: body.key };
-            }
-            if (m === MatchType.beginsMatch) {
-                const nextKeys = paths.slice(body.resolvedKey.length);
-                for (const keyVal of body.body) {
-                    const result = getTOMLNodeFromPathForKeyValue(
-                        keyVal,
-                        nextKeys
-                    );
-                    if (result) {
-                        return result;
-                    }
-                }
+            const result = getTOMLNodeFromPathForTable(body, remainingPaths);
+            if (result) {
+                return result;
             }
         }
     }
-    throw new Error(`Unexpected state: [${arrayJoin(paths, ", ")}]`);
+    throw new Error(`Unexpected state: [${arrayJoin(remainingPaths, ", ")}]`);
 }
 
 /**
@@ -127,26 +119,43 @@ function getMatchType(paths: string[], keys: (number | string)[]): MatchType {
             : MatchType.beginsMatch;
     }
 
-    return paths.every((path, index) => String(path) === String(keys[index]))
+    return paths.every((path, index) => path === String(keys[index]))
         ? MatchType.subMatch
         : MatchType.notMatch;
 }
 
 /**
- * Get node from path for content node
+ * Gets a concrete source range or throws for malformed parser token stores.
+ *
+ * @throws When a parser token lacks a source range.
+ */
+function getRequiredRange(token: {
+    range?: [number, number] | undefined;
+}): [number, number] {
+    if (!isPresent(token.range)) {
+        throw new Error("Unexpected state: missing TOML token range");
+    }
+    return token.range;
+}
+
+/**
+ * Get node from path for content node.
+ *
+ * @throws When a path segment cannot be resolved in the parsed TOML AST.
  */
 function getTOMLNodeFromPathForContent(
     node: TOML.TOMLContentNode,
-    [...paths]: string[]
+    paths: string[]
 ): NodeData<TOML.TOMLNode> {
+    const remainingPaths = [...paths];
     let data: NodeData<TOML.TOMLNode> = {
         value: node,
     };
-    while (paths.length > 0 && data.value) {
+    while (remainingPaths.length > 0 && data.value) {
         if (!isTraverseTarget(data.value)) {
             throw new Error(`Unexpected node type: ${data.value.type}`);
         }
-        data = GET_TOML_NODES[data.value.type](data.value as never, paths);
+        data = getTOMLNodeFromTraverseTarget(data.value, remainingPaths);
     }
     return data;
 }
@@ -171,6 +180,63 @@ function getTOMLNodeFromPathForKeyValue(
         return getTOMLNodeFromPathForContent(node.value, nextKeys);
     }
     return null;
+}
+
+/**
+ * Gets node data from a TOML traverse target.
+ *
+ * @throws When called with an unsupported parser node.
+ */
+
+/**
+ * Gets node data from a TOML table.
+ */
+function getTOMLNodeFromPathForTable(
+    node: TOML.TOMLTable,
+    paths: string[]
+): NodeData<TOML.TOMLNode> | null {
+    const matchType = getMatchType(paths, node.resolvedKey);
+    if (matchType === MatchType.match || matchType === MatchType.subMatch) {
+        return { value: node.key };
+    }
+    if (matchType !== MatchType.beginsMatch) {
+        return null;
+    }
+
+    const nextKeys = paths.slice(node.resolvedKey.length);
+    for (const keyVal of node.body) {
+        const result = getTOMLNodeFromPathForKeyValue(keyVal, nextKeys);
+        if (result) {
+            return result;
+        }
+    }
+    return null;
+}
+
+function getTOMLNodeFromTraverseTarget(
+    node: TraverseTarget,
+    paths: string[]
+): NodeData<TOML.TOMLNode> {
+    switch (node.type) {
+        case "TOMLArray": {
+            const getTomlArrayNode = GET_TOML_NODES.TOMLArray;
+            return getTomlArrayNode(node, paths);
+        }
+        case "TOMLInlineTable": {
+            const getTomlInlineTableNode = GET_TOML_NODES.TOMLInlineTable;
+            return getTomlInlineTableNode(node, paths);
+        }
+        default: {
+            return assertNever(node);
+        }
+    }
+}
+
+/**
+ * Gets the top-level TOML table.
+ */
+function getTopLevelTable(node: TOML.TOMLProgram): TOML.TOMLTopLevelTable {
+    return arrayFirst(node.body);
 }
 
 /**

@@ -4,83 +4,83 @@
         "line": 3,
         "column": 5,
         "endLine": 3,
-        "endColumn": 14
+        "endColumn": 12
     },
     {
         "message": "\"extends\" must match exactly one schema in oneOf.",
         "line": 3,
         "column": 5,
         "endLine": 3,
-        "endColumn": 14
+        "endColumn": 12
     },
     {
         "message": "\"extends[0]\" must be string.",
         "line": 3,
-        "column": 17,
+        "column": 15,
         "endLine": 3,
-        "endColumn": 17
+        "endColumn": 15
     },
     {
         "message": "\"plugins[1]\" must be string.",
         "line": 4,
-        "column": 24,
+        "column": 21,
         "endLine": 4,
-        "endColumn": 25
+        "endColumn": 22
     },
     {
         "message": "\"plugins[2]\" must be string.",
         "line": 4,
-        "column": 26,
+        "column": 23,
         "endLine": 4,
-        "endColumn": 27
+        "endColumn": 24
     },
     {
         "message": "\"overrides[0].files\" must be string.",
         "line": 7,
         "column": 13,
         "endLine": 7,
-        "endColumn": 20
+        "endColumn": 18
     },
     {
         "message": "\"overrides[0].files\" must NOT have fewer than 1 items.",
         "line": 7,
         "column": 13,
         "endLine": 7,
-        "endColumn": 20
+        "endColumn": 18
     },
     {
         "message": "\"overrides[0].files\" must match exactly one schema in oneOf.",
         "line": 7,
         "column": 13,
         "endLine": 7,
-        "endColumn": 20
+        "endColumn": 18
     },
     {
         "message": "\"overrides[0].extends\" must be string.",
         "line": 8,
         "column": 13,
         "endLine": 8,
-        "endColumn": 22
+        "endColumn": 20
     },
     {
         "message": "\"overrides[0].extends\" must match exactly one schema in oneOf.",
         "line": 8,
         "column": 13,
         "endLine": 8,
-        "endColumn": 22
+        "endColumn": 20
     },
     {
         "message": "\"overrides[0].extends[1]\" must be string.",
         "line": 8,
-        "column": 32,
+        "column": 29,
         "endLine": 8,
-        "endColumn": 33
+        "endColumn": 30
     },
     {
         "message": "Unexpected property \"overrides[0].unknown\"",
         "line": 9,
         "column": 13,
         "endLine": 9,
-        "endColumn": 22
+        "endColumn": 20
     }
 ]

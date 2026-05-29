@@ -1,5 +1,8 @@
 type RuleDocHeadingTransformer = (
-    tree: import("unist").Node,
+    tree: {
+        readonly children?: readonly unknown[];
+        readonly type: string;
+    },
     file: import("vfile").VFile
 ) => void;
 

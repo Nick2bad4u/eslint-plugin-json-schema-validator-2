@@ -1,24 +1,21 @@
-import type { RuleDefinition } from "@eslint/core";
 import type { ESLint, Linter } from "eslint";
 
-import type { RuleModule } from "./types.ts";
+import baseConfig from "./configs/flat/base.js";
+import recommendedConfig from "./configs/flat/recommended.js";
+import { pluginCore } from "./plugin-core.js";
 
-import baseConfig from "./configs/flat/base.ts";
-import recommendedConfig from "./configs/flat/recommended.ts";
-import * as packageMeta from "./meta.ts";
-import { rules as ruleList } from "./utils/rules.ts";
-
-const PLUGIN_NAMESPACE = "json-schema-validator-2" as const;
-
+/** Names of the flat configs exported by the plugin. */
 export type JsonSchemaValidatorConfigName =
     | "base"
     | "flat/base"
     | "flat/recommended"
     | "recommended";
 
+/** Fully-qualified rule IDs exported by the plugin. */
 export type JsonSchemaValidatorRuleId =
-    `${typeof PLUGIN_NAMESPACE}/${JsonSchemaValidatorRuleName}`;
+    `json-schema-validator-2/${JsonSchemaValidatorRuleName}`;
 
+/** Short rule names exported by the plugin. */
 export type JsonSchemaValidatorRuleName = "no-invalid";
 
 type JsonSchemaValidatorConfigs = Record<
@@ -28,14 +25,11 @@ type JsonSchemaValidatorConfigs = Record<
 
 type JsonSchemaValidatorPlugin = ESLint.Plugin & {
     configs: JsonSchemaValidatorConfigs;
-    meta: {
-        name: string;
-        namespace: typeof PLUGIN_NAMESPACE;
-        version: string;
-    };
-    rules: Record<JsonSchemaValidatorRuleName, RuleDefinition>;
+    meta: typeof pluginCore.meta;
+    rules: typeof pluginCore.rules;
 };
 
+/** Flat configs exposed through the plugin object. */
 const configs: JsonSchemaValidatorConfigs = {
     base: baseConfig,
     "flat/base": baseConfig,
@@ -43,26 +37,16 @@ const configs: JsonSchemaValidatorConfigs = {
     recommended: recommendedConfig,
 };
 
-const rules = ruleList.reduce<Record<JsonSchemaValidatorRuleName, RuleModule>>(
-    (registry, rule) => {
-        registry[rule.meta.docs.ruleName as JsonSchemaValidatorRuleName] = rule;
-
-        return registry;
-    },
-    {} as Record<JsonSchemaValidatorRuleName, RuleModule>
-) as Record<JsonSchemaValidatorRuleName, RuleDefinition>;
-
+/** ESLint plugin object. */
 const plugin: JsonSchemaValidatorPlugin = {
+    ...pluginCore,
     configs,
-    meta: {
-        name: packageMeta.name,
-        namespace: PLUGIN_NAMESPACE,
-        version: packageMeta.version,
-    },
-    processors: {},
-    rules,
 };
 
+/** Plugin package metadata exposed for ESLint. */
 export const meta: JsonSchemaValidatorPlugin["meta"] = plugin.meta;
-export { configs, rules };
+
+/** Rule registry exposed through the plugin object. */
+export const rules: JsonSchemaValidatorPlugin["rules"] = plugin.rules;
+export { configs };
 export default plugin;

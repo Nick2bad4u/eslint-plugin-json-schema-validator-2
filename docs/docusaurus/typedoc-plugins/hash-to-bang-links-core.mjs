@@ -17,55 +17,13 @@ const URL_LIKE_SCHEMES = new Set([
 ]);
 
 /**
- * @param {string} moduleSource
+ * @param {Comment} comment
  */
-function isUrlLike(moduleSource) {
-    // Cheap and safe heuristic: enough to avoid rewriting `...#...` anchors.
-    if (moduleSource.includes("://")) {
-        return true;
+export function convertHashLinksToBangLinksInComment(comment) {
+    convertHashLinksToBangLinksInParts(comment.summary);
+    for (const tag of comment.blockTags) {
+        convertHashLinksToBangLinksInParts(tag.content);
     }
-
-    // Detect common URI schemes that do not use `://`, while avoiding false
-    // positives such as Windows paths (e.g. `C:\\path\\to\\file`).
-    const firstColon = moduleSource.indexOf(":");
-    if (firstColon <= 0) {
-        return false;
-    }
-
-    const scheme = moduleSource.slice(0, firstColon);
-
-    // Windows drive letter followed by `:` (e.g. `C:`) with a path segment is
-    // not a URL.
-    if (
-        /^[A-Za-z]$/u.test(scheme) &&
-        /[\\/]/u.test(moduleSource.slice(firstColon + 1))
-    ) {
-        return false;
-    }
-
-    const lowerScheme = scheme.toLowerCase();
-
-    // Restrict to well-known URL-like schemes so that specifiers such as
-    // `node:fs` continue to be treated as module-like, not URL-like.
-    return URL_LIKE_SCHEMES.has(lowerScheme);
-}
-
-/**
- * Determines whether a `#` in a link target is likely being used as a
- * module/export separator (repo convention) rather than as a TypeDoc
- * declaration-reference instance member separator.
- *
- * @param {string} moduleSource
- */
-function isModuleSourceLike(moduleSource) {
-    return (
-        moduleSource.includes("/") ||
-        moduleSource.includes("\\") ||
-        moduleSource.startsWith("@") ||
-        moduleSource.includes("-") ||
-        // Supports things like `node:fs` or other specifiers.
-        moduleSource.includes(":")
-    );
 }
 
 /**
@@ -144,11 +102,53 @@ export function convertHashLinksToBangLinksInParts(parts) {
 }
 
 /**
- * @param {Comment} comment
+ * Determines whether a `#` in a link target is likely being used as a
+ * module/export separator (repo convention) rather than as a TypeDoc
+ * declaration-reference instance member separator.
+ *
+ * @param {string} moduleSource
  */
-export function convertHashLinksToBangLinksInComment(comment) {
-    convertHashLinksToBangLinksInParts(comment.summary);
-    for (const tag of comment.blockTags) {
-        convertHashLinksToBangLinksInParts(tag.content);
+function isModuleSourceLike(moduleSource) {
+    return (
+        moduleSource.includes("/") ||
+        moduleSource.includes("\\") ||
+        moduleSource.startsWith("@") ||
+        moduleSource.includes("-") ||
+        // Supports things like `node:fs` or other specifiers.
+        moduleSource.includes(":")
+    );
+}
+
+/**
+ * @param {string} moduleSource
+ */
+function isUrlLike(moduleSource) {
+    // Cheap and safe heuristic: enough to avoid rewriting `...#...` anchors.
+    if (moduleSource.includes("://")) {
+        return true;
     }
+
+    // Detect common URI schemes that do not use `://`, while avoiding false
+    // positives such as Windows paths (e.g. `C:\\path\\to\\file`).
+    const firstColon = moduleSource.indexOf(":");
+    if (firstColon <= 0) {
+        return false;
+    }
+
+    const scheme = moduleSource.slice(0, firstColon);
+
+    // Windows drive letter followed by `:` (e.g. `C:`) with a path segment is
+    // not a URL.
+    if (
+        /^[A-Za-z]$/v.test(scheme) &&
+        /\/|\\/v.test(moduleSource.slice(firstColon + 1))
+    ) {
+        return false;
+    }
+
+    const lowerScheme = scheme.toLowerCase();
+
+    // Restrict to well-known URL-like schemes so that specifiers such as
+    // `node:fs` continue to be treated as module-like, not URL-like.
+    return URL_LIKE_SCHEMES.has(lowerScheme);
 }

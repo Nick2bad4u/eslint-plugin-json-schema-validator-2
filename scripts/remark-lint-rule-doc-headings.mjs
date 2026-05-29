@@ -6,10 +6,18 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-/** @typedef {import("mdast").Heading} Heading */
-/** @typedef {import("mdast").Root} Root */
-/** @typedef {import("unist").Node} Node */
 /** @typedef {import("vfile").VFile} VFile */
+/** @typedef {{ offset?: number }} MarkdownPoint */
+/** @typedef {{ end?: MarkdownPoint; start?: MarkdownPoint }} MarkdownPosition */
+/** @typedef {{
+    children?: unknown[];
+    depth?: number;
+    position?: MarkdownPosition;
+    type: string;
+    value?: unknown;
+}} MarkdownNode */
+/** @typedef {MarkdownNode & { depth: number }} Heading */
+/** @typedef {MarkdownNode & { children: unknown[]; type: "root" }} Root */
 
 /**
  * @typedef {object} PackageMetadata
@@ -379,7 +387,7 @@ const getHeadingsByDepth = (tree, depth) =>
  *
  * @param {RemarkLintRuleDocHeadingsOptions} [options]
  *
- * @returns {(tree: Node, file: VFile) => void}
+ * @returns {(tree: MarkdownNode, file: VFile) => void}
  */
 export default function remarkLintRuleDocHeadings(options = {}) {
     const headingToggles = {

@@ -1,5 +1,7 @@
+import type { RequestOptions } from "node:https";
+
+/** Custom async HTTP GET module loaded from plugin settings. */
 export type GetModule = (
     url: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
-    options?: any
+    options?: RequestOptions
 ) => Promise<string>;

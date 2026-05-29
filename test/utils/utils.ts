@@ -1,24 +1,48 @@
-import type { RuleTester } from "eslint";
-
-import { Linter } from "eslint";
+import { Linter, type RuleTester } from "eslint";
 import * as espree from "espree";
 import * as jsoncESLintParser from "jsonc-eslint-parser";
-/* globals process, require -- test */
-import fs from "node:fs";
-import path from "node:path";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import semver from "semver";
 import * as tomlESLintParser from "toml-eslint-parser";
+import { safeCastTo } from "ts-extras";
 import * as vueESLintParser from "vue-eslint-parser";
 import * as yamlESLintParser from "yaml-eslint-parser";
 
-import plugin from "../../src/index.ts";
+import plugin from "../../src/plugin";
+
+type FixtureConfig = Partial<RuleTester.InvalidTestCase> &
+    Partial<RuleTester.ValidTestCase> & {
+        code?: string;
+        filename?: string;
+        options?: unknown[];
+    };
+
+type LoadedInvalidTestCase = RuleTester.InvalidTestCase & {
+    code: string;
+    filename: string;
+    options?: unknown[];
+};
+
+type LoadedValidTestCase = RuleTester.ValidTestCase & {
+    code: string;
+    filename: string;
+    options?: unknown[];
+};
+
+const INPUT_FILE_PATTERN = /input\.(?:js|json5?|toml|vue|ya?ml)$/v;
+const INPUT_REQUIREMENTS_PATTERN = /input\.\w+$/v;
+const INLINE_HASH_COMMENT_PATTERN = /^#(?<config>[^\n]+)\n/v;
+const INLINE_BLOCK_COMMENT_PATTERN = /^\/\*(?<config>.*?)\*\//v;
+const INLINE_HTML_COMMENT_PATTERN = /^<!--(?<config>.*?)-->/v;
 
 /**
  * Load test cases
  */
 export function loadTestCases(
     ruleName: string,
-    _options?: any,
+    _options?: unknown,
     additionals?: {
         invalid?: RuleTester.InvalidTestCase[];
         valid?: (RuleTester.ValidTestCase | string)[];
@@ -28,53 +52,60 @@ export function loadTestCases(
     valid: RuleTester.ValidTestCase[];
 } {
     const validFixtureRoot = path.resolve(
-        import.meta.dirname,
+        // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.dirname is not available across the configured Node range.
+        fileURLToPath(new URL(".", import.meta.url)),
         `../fixtures/rules/${ruleName}/valid/`
     );
     const invalidFixtureRoot = path.resolve(
-        import.meta.dirname,
+        // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.dirname is not available across the configured Node range.
+        fileURLToPath(new URL(".", import.meta.url)),
         `../fixtures/rules/${ruleName}/invalid/`
     );
 
     const valid = listupInput(validFixtureRoot).map((inputFile) =>
-        getConfig(ruleName, inputFile)
+        safeCastTo<RuleTester.ValidTestCase>(getConfig(ruleName, inputFile))
     );
 
-    const invalid = listupInput(invalidFixtureRoot).map((inputFile) => {
+    const invalid: RuleTester.InvalidTestCase[] = listupInput(
+        invalidFixtureRoot
+    ).map((inputFile) => {
         const config = getConfig(ruleName, inputFile);
-        const errorFile = inputFile.replace(
-            /input\.(?:js|json5?|toml|vue|ya?ml)$/v,
-            "errors.json"
-        );
-        let errors;
+        const errorFile = inputFile.replace(INPUT_FILE_PATTERN, "errors.json");
+        let errors: RuleTester.InvalidTestCase["errors"];
         try {
             // WriteFixtures(ruleName, inputFile, { force: true });
-            errors = fs.readFileSync(errorFile, "utf8");
+            errors = parseJsonValue(
+                fs.readFileSync(errorFile, "utf8")
+            ) as RuleTester.InvalidTestCase["errors"];
         } catch {
             writeFixtures(ruleName, inputFile);
-            errors = fs.readFileSync(errorFile, "utf8");
+            errors = parseJsonValue(
+                fs.readFileSync(errorFile, "utf8")
+            ) as RuleTester.InvalidTestCase["errors"];
         }
-        config.errors = JSON.parse(errors);
 
-        return config;
+        return {
+            ...config,
+            errors,
+        } satisfies LoadedInvalidTestCase;
     });
 
-    if (additionals) {
-        if (additionals.valid) {
-            valid.push(...additionals.valid);
+    if (additionals !== undefined) {
+        if (additionals.valid !== undefined) {
+            valid.push(...additionals.valid.map(normalizeValidTestCase));
         }
-        if (additionals.invalid) {
+        if (additionals.invalid !== undefined) {
             invalid.push(...additionals.invalid);
         }
     }
     for (const test of valid) {
-        if (!test.code) {
-            throw new Error(`Empty code: ${test.filename}`);
+        if (test.code === "") {
+            throw new Error(`Empty code: ${test.filename ?? "<inline>"}`);
         }
     }
     for (const test of invalid) {
-        if (!test.code) {
-            throw new Error(`Empty code: ${test.filename}`);
+        if (test.code === "") {
+            throw new Error(`Empty code: ${test.filename ?? "<inline>"}`);
         }
     }
     return {
@@ -132,12 +163,13 @@ export function unIndentCodeAndOutput([code]: readonly string[]): (
     };
 }
 
-function getConfig(ruleName: string, inputFile: string) {
+function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
     const filename = inputFile.slice(inputFile.indexOf(ruleName));
     const code0 = fs.readFileSync(inputFile, "utf8");
-    let code, config;
+    let code: string;
+    let config: FixtureConfig | undefined;
     let configFile: string = inputFile.replace(
-        /input\.(?:js|json5?|toml|vue|ya?ml)$/v,
+        INPUT_FILE_PATTERN,
         "config.json"
     );
     const hashComment =
@@ -152,9 +184,9 @@ function getConfig(ruleName: string, inputFile: string) {
         configFile = path.join(path.dirname(inputFile), "_config.json");
     }
     if (fs.existsSync(configFile)) {
-        config = JSON.parse(fs.readFileSync(configFile));
+        config = readFixtureConfig(configFile);
     }
-    if (config && typeof config === "object") {
+    if (config !== undefined) {
         code = hashComment
             ? `# ${filename}\n${code0}`
             : blockComment
@@ -169,28 +201,33 @@ function getConfig(ruleName: string, inputFile: string) {
     }
     // Inline config
     const configStr = hashComment
-        ? /^#([^\n]+)\n/v.exec(code0)
+        ? INLINE_HASH_COMMENT_PATTERN.exec(code0)
         : blockComment
-          ? /^\/\*(.*?)\*\//v.exec(code0)
-          : /^<!--(.*?)-->/v.exec(code0);
-    if (configStr) {
-        const configJson = configStr[1];
+          ? INLINE_BLOCK_COMMENT_PATTERN.exec(code0)
+          : INLINE_HTML_COMMENT_PATTERN.exec(code0);
+    if (configStr === null) {
+        fs.writeFileSync(inputFile, `/* {} */\n${code0}`, "utf8");
+        throw new Error("missing config");
+    } else {
+        const configJson = configStr.groups?.["config"];
         if (configJson === undefined) {
             throw new Error(`missing inline config in @ ${inputFile}`);
         }
         code = hashComment
-            ? code0.replace(/^#([^\n]+)\n/v, `# ${filename}\n`)
+            ? code0.replace(INLINE_HASH_COMMENT_PATTERN, `# ${filename}\n`)
             : blockComment
-              ? code0.replace(/^\/\*(.*?)\*\//v, `# ${filename}\n`)
-              : code0.replace(/^<!--(.*?)-->/v, `<!--${filename}-->`);
+              ? code0.replace(INLINE_BLOCK_COMMENT_PATTERN, `# ${filename}\n`)
+              : code0.replace(
+                    INLINE_HTML_COMMENT_PATTERN,
+                    `<!--${filename}-->`
+                );
         try {
-            config = JSON.parse(configJson);
-        } catch (error: any) {
-            throw new Error(`${error.message} in @ ${inputFile}`);
+            config = parseJsonValue(configJson) as FixtureConfig;
+        } catch (error: unknown) {
+            throw new Error(`Invalid inline config in @ ${inputFile}`, {
+                cause: error,
+            });
         }
-    } else {
-        fs.writeFileSync(inputFile, `/* {} */\n${code0}`, "utf8");
-        throw new Error("missing config");
     }
 
     return {
@@ -204,14 +241,28 @@ function getConfig(ruleName: string, inputFile: string) {
 /**
  * Get number of minimum indent
  */
-function getMinIndent(lines: string[]) {
+function getMinIndent(lines: readonly string[]): number {
     const lineIndents = lines
         .filter((line) => line.trim())
-        .map((line) => / */v.exec(line)![0].length);
+        .map((line) => {
+            const indent = /^ */v.exec(line);
+            if (indent === null) {
+                return 0;
+            }
+
+            return indent[0].length;
+        });
     return Math.min(...lineIndents);
 }
 
-function getParser(fileName: string) {
+function getParser(
+    fileName: string
+):
+    | typeof espree
+    | typeof jsoncESLintParser
+    | typeof tomlESLintParser
+    | typeof vueESLintParser
+    | typeof yamlESLintParser {
     if (fileName.endsWith(".vue")) {
         return vueESLintParser;
     }
@@ -227,51 +278,111 @@ function getParser(fileName: string) {
     return jsoncESLintParser;
 }
 
+function hasUnsupportedRequirements(
+    requirements: Record<string, string>
+): boolean {
+    return Object.entries(requirements).some(([pkgName, pkgVersion]) => {
+        const version =
+            pkgName === "node" ? process.version : readPackageVersion(pkgName);
+
+        return !semver.satisfies(version, pkgVersion);
+    });
+}
+
+function isInputFixture(filename: string): boolean {
+    return (
+        filename.endsWith("input.js") ||
+        filename.endsWith("input.json") ||
+        filename.endsWith("input.json5") ||
+        filename.endsWith("input.yaml") ||
+        filename.endsWith("input.yml") ||
+        filename.endsWith("input.toml") ||
+        filename.endsWith("input.vue")
+    );
+}
+
+function isSafePackageName(pkgName: string): boolean {
+    if (pkgName === "" || path.isAbsolute(pkgName) || pkgName.includes("..")) {
+        return false;
+    }
+
+    return pkgName
+        .split("/")
+        .every((segment) => segment !== "" && !segment.startsWith("."));
+}
+
 function* itrListupInput(rootDir: string): IterableIterator<string> {
     for (const filename of fs.readdirSync(rootDir)) {
-        if (filename.startsWith("_")) {
-            // Ignore
-            continue;
-        }
-        const abs = path.join(rootDir, filename);
-        if (
-            filename.endsWith("input.js") ||
-            filename.endsWith("input.json") ||
-            filename.endsWith("input.json5") ||
-            filename.endsWith("input.yaml") ||
-            filename.endsWith("input.yml") ||
-            filename.endsWith("input.toml") ||
-            filename.endsWith("input.vue")
-        ) {
-            const requirementsPath = path.join(
-                rootDir,
-                filename.replace(/input\.\w+$/v, "requirements.json")
-            );
-            const requirements = fs.existsSync(requirementsPath)
-                ? JSON.parse(fs.readFileSync(requirementsPath))
-                : {};
+        if (!filename.startsWith("_")) {
+            const abs = path.join(rootDir, filename);
+            if (isInputFixture(filename)) {
+                const requirementsPath = path.join(
+                    rootDir,
+                    filename.replace(
+                        INPUT_REQUIREMENTS_PATTERN,
+                        "requirements.json"
+                    )
+                );
+                const requirements = readRequirements(requirementsPath);
 
-            if (
-                Object.entries(requirements).some(([pkgName, pkgVersion]) => {
-                    const version =
-                        pkgName === "node"
-                            ? process.version
-                            : // eslint-disable-next-line @typescript-eslint/no-require-imports -- test
-                              require(`${pkgName}/package.json`).version;
-                    return !semver.satisfies(version, pkgVersion as string);
-                })
-            ) {
-                continue;
+                if (!hasUnsupportedRequirements(requirements)) {
+                    yield abs;
+                }
+            } else if (fs.statSync(abs).isDirectory()) {
+                yield* itrListupInput(abs);
             }
-            yield abs;
-        } else if (fs.statSync(abs).isDirectory()) {
-            yield* itrListupInput(abs);
         }
     }
 }
 
-function listupInput(rootDir: string) {
+function listupInput(rootDir: string): string[] {
     return [...itrListupInput(rootDir)];
+}
+
+function normalizeValidTestCase(
+    testCase: RuleTester.ValidTestCase | string
+): RuleTester.ValidTestCase {
+    return typeof testCase === "string" ? { code: testCase } : testCase;
+}
+
+function parseJsonValue(text: string): unknown {
+    return JSON.parse(text) as unknown;
+}
+
+function readFixtureConfig(configFile: string): FixtureConfig {
+    return parseJsonValue(fs.readFileSync(configFile, "utf8")) as FixtureConfig;
+}
+
+function readPackageVersion(pkgName: string): string {
+    if (!isSafePackageName(pkgName)) {
+        throw new Error(`Invalid package requirement name: ${pkgName}`);
+    }
+
+    const packageJsonPath = fileURLToPath(
+        import.meta.resolve(`${pkgName}/package.json`)
+    );
+    const packageJson = parseJsonValue(
+        fs.readFileSync(packageJsonPath, "utf8")
+    ) as {
+        version?: unknown;
+    };
+
+    if (typeof packageJson.version !== "string") {
+        throw new TypeError(`Package ${pkgName} does not expose a version.`);
+    }
+
+    return packageJson.version;
+}
+
+function readRequirements(requirementsPath: string): Record<string, string> {
+    if (!fs.existsSync(requirementsPath)) {
+        return {};
+    }
+
+    return parseJsonValue(fs.readFileSync(requirementsPath, "utf8")) as Record<
+        string,
+        string
+    >;
 }
 
 function writeFixtures(
@@ -280,35 +391,30 @@ function writeFixtures(
     { force }: { force?: boolean } = {}
 ) {
     const linter = new Linter();
-    const errorFile = inputFile.replace(
-        /input\.(?:js|json5?|toml|vue|ya?ml)$/v,
-        "errors.json"
-    );
+    const errorFile = inputFile.replace(INPUT_FILE_PATTERN, "errors.json");
 
     const config = getConfig(ruleName, inputFile);
 
-    const result = linter.verify(
-        config.code,
-        {
-            files: [`**/*${path.extname(config.filename)}`],
-            languageOptions: {
-                ecmaVersion: 2020,
-                parser: getParser(inputFile),
-                sourceType: "module",
-            },
-            plugins: {
-                "my-eslint-plugin": plugin,
-            },
-            rules: {
-                [`my-eslint-plugin/${ruleName}`]: [
-                    "error",
-                    ...(config.options || []),
-                ],
-            },
-        } as any,
-        config.filename
-    );
-    if (force || !fs.existsSync(errorFile)) {
+    const linterConfig = safeCastTo<Linter.Config>({
+        files: [`**/*${path.extname(config.filename)}`],
+        languageOptions: {
+            ecmaVersion: 2020,
+            parser: getParser(inputFile),
+            sourceType: "module",
+        },
+        plugins: {
+            "my-eslint-plugin": plugin,
+        },
+        rules: {
+            [`my-eslint-plugin/${ruleName}`]: [
+                "error",
+                ...(config.options ?? []),
+            ],
+        },
+    });
+
+    const result = linter.verify(config.code, linterConfig, config.filename);
+    if ((force ?? false) || !fs.existsSync(errorFile)) {
         fs.writeFileSync(
             errorFile,
             `${JSON.stringify(

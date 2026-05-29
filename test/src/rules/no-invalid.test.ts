@@ -1,11 +1,18 @@
 import { RuleTester } from "eslint";
 import * as espree from "espree";
 import * as jsonParser from "jsonc-eslint-parser";
-import path from "node:path";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import * as tomlParser from "toml-eslint-parser";
+import { safeCastTo } from "ts-extras";
 
-import rule from "../../../src/rules/no-invalid.ts";
-import { loadTestCases } from "../../utils/utils.ts";
+import rule from "../../../src/rules/no-invalid";
+import { loadTestCases } from "../../utils/utils";
+
+type TestedRuleModule = Parameters<RuleTester["run"]>[1];
+
+// eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.dirname is not available across the configured Node range.
+const TEST_DIR = fileURLToPath(new URL(".", import.meta.url));
 
 const tester = new RuleTester({
     languageOptions: {
@@ -16,9 +23,10 @@ const tester = new RuleTester({
     },
 });
 
+// eslint-disable-next-line vitest/require-hook -- RuleTester registers its own Vitest test cases at module load time.
 tester.run(
     "no-invalid",
-    rule as any,
+    safeCastTo<TestedRuleModule>(rule),
     loadTestCases(
         "no-invalid",
         {},
@@ -59,7 +67,7 @@ tester.run(
                         '"extends" must match exactly one schema in oneOf.',
                         '"extends[0]" must be string.',
                     ],
-                    filename: path.join(import.meta.dirname, ".eslintrc.js"),
+                    filename: path.join(TEST_DIR, ".eslintrc.js"),
                     languageOptions: {
                         parser: espree,
                     },
@@ -83,7 +91,7 @@ tester.run(
                         '"extends" must match exactly one schema in oneOf.',
                         '"extends[0]" must be string.',
                     ],
-                    filename: path.join(import.meta.dirname, ".eslintrc.json"),
+                    filename: path.join(TEST_DIR, ".eslintrc.json"),
                     options: [
                         {
                             mergeSchemas: true,
@@ -117,7 +125,7 @@ tester.run(
                         '"extends" must match exactly one schema in oneOf.',
                         '"extends[0]" must be string.',
                     ],
-                    filename: path.join(import.meta.dirname, "version.json"),
+                    filename: path.join(TEST_DIR, "version.json"),
                     options: [
                         {
                             mergeSchemas: true,
@@ -146,7 +154,7 @@ tester.run(
                         "Root must have required property 'inherit'.",
                         "Root must match a schema in anyOf.",
                     ],
-                    filename: path.join(import.meta.dirname, "version.json"),
+                    filename: path.join(TEST_DIR, "version.json"),
                     options: [
                         {
                             mergeSchemas: ["catalog", "options"],
@@ -175,7 +183,7 @@ tester.run(
                         '"extends" must match exactly one schema in oneOf.',
                         '"extends[0]" must be string.',
                     ],
-                    filename: path.join(import.meta.dirname, "version.json"),
+                    filename: path.join(TEST_DIR, "version.json"),
                     options: [
                         {
                             mergeSchemas: ["$schema", "options"],
@@ -203,7 +211,7 @@ tester.run(
                         '"extends" must match exactly one schema in oneOf.',
                         '"extends[0]" must be string.',
                     ],
-                    filename: path.join(import.meta.dirname, "version.json"),
+                    filename: path.join(TEST_DIR, "version.json"),
                     options: [
                         {
                             mergeSchemas: ["$schema", "catalog"],
@@ -227,7 +235,7 @@ tester.run(
                 {
                     code: '{ "extends": [ 103 ], "$schema": "https://www.schemastore.org/eslintrc" }',
                     errors: ["Root must have required property 'foo'."],
-                    filename: path.join(import.meta.dirname, "version.json"),
+                    filename: path.join(TEST_DIR, "version.json"),
                     options: [
                         {
                             mergeSchemas: ["options", "catalog"],
@@ -255,7 +263,7 @@ tester.run(
                         '"extends" must match exactly one schema in oneOf.',
                         '"extends[0]" must be string.',
                     ],
-                    filename: path.join(import.meta.dirname, "version.json"),
+                    filename: path.join(TEST_DIR, "version.json"),
                     options: [
                         {
                             mergeSchemas: ["options", "catalog"],
@@ -277,10 +285,7 @@ singleQuote = true`,
                         "Root must be string.",
                         "Root must match exactly one schema in oneOf.",
                     ],
-                    filename: path.join(
-                        import.meta.dirname,
-                        ".prettierrc.toml"
-                    ),
+                    filename: path.join(TEST_DIR, ".prettierrc.toml"),
                     languageOptions: {
                         parser: tomlParser,
                     },
@@ -300,7 +305,7 @@ singleQuote = true`,
             valid: [
                 {
                     code: 'module.exports = { "extends": [ require.resolve("eslint-config-foo") ] }',
-                    filename: path.join(import.meta.dirname, ".eslintrc.js"),
+                    filename: path.join(TEST_DIR, ".eslintrc.js"),
                     languageOptions: {
                         parser: espree,
                     },

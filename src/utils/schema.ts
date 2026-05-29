@@ -1,15 +1,25 @@
+import type { UnknownRecord } from "type-fest";
+
 import debugBuilder from "debug";
 import { draft7 as migrateToDraft7 } from "json-schema-migrate-x";
-import fs from "node:fs";
-import path from "node:path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { objectKeys, safeCastTo } from "ts-extras";
+import {
+    isDefined,
+    isEmpty,
+    isPresent,
+    keyIn,
+    objectKeys,
+    setHas,
+} from "ts-extras";
 
-import type { RuleContext } from "../types.ts";
-import type { SchemaObject } from "./types.ts";
+import type { RuleContext } from "../types.js";
+import type { SchemaObject } from "./types.js";
 
-import * as meta from "../meta.ts";
-import { get, syncGet } from "./http-client/index.ts";
+import * as meta from "../meta.js";
+import { get } from "./http-client/http.js";
+import { syncGet } from "./http-client/sync-http.js";
 
 const debug = debugBuilder(
     "eslint-plugin-json-schema-validator-2:utils-schema"
@@ -18,14 +28,22 @@ const debug = debugBuilder(
 const TTL = 1000 * 60 * 60 * 24; // 1 day
 const RELOADING = new Set<string>();
 const moduleFilename =
-    typeof __filename === "string" ? __filename : import.meta.filename;
+    typeof __filename === "string"
+        ? __filename
+        : // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.filename is not available across the configured Node range.
+          fileURLToPath(import.meta.url);
 const moduleDirname =
     typeof __dirname === "string" ? __dirname : path.dirname(moduleFilename);
+
+interface CacheEntry {
+    data: unknown;
+    timestamp: number;
+}
 
 /**
  * Load json data
  */
-export function loadJson<T>(jsonPath: string, context: RuleContext): null | T {
+export function loadJson(jsonPath: string, context: RuleContext): unknown {
     return loadJsonInternal(jsonPath, context);
 }
 /**
@@ -35,21 +53,86 @@ export function loadSchema(
     schemaPath: string,
     context: RuleContext
 ): null | SchemaObject {
-    return loadJsonInternal(schemaPath, context, (schema_) => {
-        const schema = schema_ as SchemaObject;
-        migrateToDraft7(schema);
-        return schema;
-    });
+    const loadedSchema = loadJsonInternalWithEdit(
+        schemaPath,
+        context,
+        (schema_) => {
+            if (!isSchemaObject(schema_)) {
+                context.report({
+                    loc: { column: 0, line: 1 },
+                    message: `Could not be parsed JSON schema: "${schemaPath}"`,
+                });
+                return null;
+            }
+            const schema = schema_;
+            migrateToDraft7(schema);
+            return schema;
+        }
+    );
+    return loadedSchema === null || isSchemaObject(loadedSchema)
+        ? loadedSchema
+        : null;
+}
+
+/**
+ * Resolve a nested property path from unknown JSON-like data.
+ */
+function getNestedProperty(value: unknown, keys: readonly string[]): unknown {
+    let current = value;
+    for (const key of keys) {
+        if (!isRecord(current)) {
+            return undefined;
+        }
+        current = current[key];
+    }
+    return current;
+}
+
+/**
+ * Check whether parsed cache data has the expected wrapper shape.
+ */
+function isCacheEntry(value: unknown): value is CacheEntry {
+    return (
+        isRecord(value) &&
+        keyIn(value, "data") &&
+        typeof value["timestamp"] === "number"
+    );
+}
+
+/**
+ * Check whether a value is an object record.
+ */
+function isRecord(value: unknown): value is UnknownRecord {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Check whether a schema path points at a remote HTTP(S) URL.
+ */
+function isRemoteSchemaUrl(schemaPath: string): boolean {
+    try {
+        const url = new URL(schemaPath);
+        return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Check whether a parsed value can be treated as a schema object.
+ */
+function isSchemaObject(value: unknown): value is SchemaObject {
+    return isRecord(value);
 }
 
 /**
  * Load schema data from url
  */
-function loadJsonFromURL<T>(
+function loadJsonFromURL(
     jsonPath: string,
     context: RuleContext,
-    edit?: (json: unknown) => T
-): null | T {
+    edit?: (json: unknown) => unknown
+): unknown {
     let jsonFileName = jsonPath.replace(/^https?:\/\//v, "");
     if (!jsonFileName.endsWith(".json")) {
         jsonFileName = `${jsonFileName}.json`;
@@ -59,47 +142,54 @@ function loadJsonFromURL<T>(
         `../.cached_schemastore/${jsonFileName}`
     );
 
-    const options = context.settings?.["json-schema-validator-2"]?.http;
+    const options = context.settings["json-schema-validator-2"]?.http;
 
     const httpRequestOptions = options?.requestOptions ?? {};
     const httpGetModulePath = resolvePath(options?.getModulePath, context);
 
+    // eslint-disable-next-line n/no-sync, security/detect-non-literal-fs-filename -- ESLint rules are synchronous and cache schemas under a deterministic plugin-owned path.
     fs.mkdirSync(path.dirname(jsonFilePath), { recursive: true });
 
-    let data, timestamp;
+    let cacheEntry: CacheEntry | undefined;
     try {
+        // eslint-disable-next-line n/no-sync, security/detect-non-literal-fs-filename -- ESLint rules load schema cache synchronously during rule creation.
         const jsonText = fs.readFileSync(jsonFilePath);
-        ({ data, timestamp } = safeCastTo<{
-            data: SchemaObject;
-            timestamp: number;
-        }>(JSON.parse(jsonText)));
+        const cacheData: unknown = JSON.parse(jsonText.toString("utf8"));
+        if (isCacheEntry(cacheData)) {
+            cacheEntry = cacheData;
+        }
     } catch {
         // Ignore missing or invalid local cache entries.
     }
 
-    if (data != null && typeof timestamp === "number") {
+    if (isPresent(cacheEntry)) {
         if (
-            timestamp + TTL < Date.now() && // Reload!
+            cacheEntry.timestamp + TTL < Date.now() && // Reload!
             // However, the data can actually be used the next time access it.
-            !RELOADING.has(jsonFilePath)
+            !setHas(RELOADING, jsonFilePath)
         ) {
             RELOADING.add(jsonFilePath);
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises -- ignore
-            get(jsonPath, httpRequestOptions, httpGetModulePath).then(
-                (json) => {
+            void (async () => {
+                try {
+                    const json = await get(
+                        jsonPath,
+                        httpRequestOptions,
+                        httpGetModulePath
+                    );
                     postProcess(jsonPath, jsonFilePath, json, context, edit);
+                } finally {
                     RELOADING.delete(jsonFilePath);
                 }
-            );
+            })();
         }
-        return data as never;
+        return isDefined(edit) ? edit(cacheEntry.data) : cacheEntry.data;
     }
 
     let json: string;
     try {
         json = syncGet(jsonPath, httpRequestOptions, httpGetModulePath);
     } catch (error) {
-        debug((error as Error).message);
+        debug(error instanceof Error ? error.message : String(error));
         // Context.report({
         //     loc: { line: 1, column: 0 },
         //     message: `Could not be resolved: "${schemaPath}"`,
@@ -113,12 +203,20 @@ function loadJsonFromURL<T>(
 /**
  * Load json data. Can insert a data editing process.
  */
-function loadJsonInternal<T>(
+function loadJsonInternal(
     jsonPath: string,
     context: RuleContext,
-    edit?: (json: unknown) => T
-): null | T {
-    if (jsonPath.startsWith("https://") || jsonPath.startsWith("https://")) {
+    edit?: (json: unknown) => unknown
+): unknown {
+    return loadJsonInternalWithEdit(jsonPath, context, edit);
+}
+
+function loadJsonInternalWithEdit(
+    jsonPath: string,
+    context: RuleContext,
+    edit: ((json: unknown) => unknown) | undefined
+): unknown {
+    if (isRemoteSchemaUrl(jsonPath)) {
         return loadJsonFromURL(normalizeSchemaUrl(jsonPath), context, edit);
     }
     if (jsonPath.startsWith("vscode://")) {
@@ -129,27 +227,36 @@ function loadJsonInternal<T>(
             url = `${url}.json`;
         }
         return loadJsonFromURL(url, context, (orig) => {
-            const result = edit?.(orig) ?? (orig as T);
+            const result = isDefined(edit) ? edit(orig) : orig;
             if (jsonPath === "vscode://schemas/settings/machine") {
                 // Adjust `vscode://schemas/settings/machine` resource to avoid bugs.
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
-                const target = (result as any)?.properties?.[
-                    "workbench.externalUriOpeners"
-                ]?.additionalProperties?.anyOf;
+                const target = getNestedProperty(result, [
+                    "properties",
+                    "workbench.externalUriOpeners",
+                    "additionalProperties",
+                    "anyOf",
+                ]);
                 removeEmptyEnum(target);
             } else if (jsonPath === "vscode://schemas/launch") {
                 // Adjust `vscode://schemas/launch` resource to avoid bugs.
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
-                const target = (result as any)?.properties?.compounds?.items
-                    ?.properties?.configurations?.items?.oneOf;
+                const target = getNestedProperty(result, [
+                    "properties",
+                    "compounds",
+                    "items",
+                    "properties",
+                    "configurations",
+                    "items",
+                    "oneOf",
+                ]);
                 removeEmptyEnum(target);
             }
             return result;
         });
     }
+    // eslint-disable-next-line n/no-sync, security/detect-non-literal-fs-filename -- ESLint rule creation must synchronously load local schema files configured by the user.
     const json = fs.readFileSync(path.resolve(context.cwd, jsonPath));
-    const data = JSON.parse(json);
-    return edit ? edit(data) : data;
+    const data: unknown = JSON.parse(json.toString("utf8"));
+    return isDefined(edit) ? edit(data) : data;
 }
 
 /**
@@ -172,16 +279,16 @@ function normalizeSchemaUrl(url: string): string {
 /**
  * Post process
  */
-function postProcess<T>(
+function postProcess(
     schemaUrl: string,
     jsonFilePath: string,
     json: string,
     context: RuleContext,
-    edit: ((json: unknown) => T) | undefined
-): null | T {
-    let data: T;
+    edit: ((json: unknown) => unknown) | undefined
+): unknown {
+    let parsedJson: unknown;
     try {
-        data = JSON.parse(json);
+        parsedJson = JSON.parse(json);
     } catch {
         context.report({
             loc: { column: 0, line: 1 },
@@ -190,10 +297,9 @@ function postProcess<T>(
         return null;
     }
 
-    if (edit) {
-        data = edit(data);
-    }
+    const data = isDefined(edit) ? edit(parsedJson) : parsedJson;
 
+    // eslint-disable-next-line n/no-sync, security/detect-non-literal-fs-filename -- Schema cache writes are deterministic and must complete before rule validation returns data.
     fs.writeFileSync(
         jsonFilePath,
         schemaStringify({
@@ -206,28 +312,30 @@ function postProcess<T>(
 }
 
 /** Remove empty `enum:` schema */
-function removeEmptyEnum(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
-    target: any
-) {
-    if (!target) return;
+function removeEmptyEnum(target: unknown): void {
+    if (!isPresent(target)) return;
     if (Array.isArray(target)) {
         for (const e of target) {
             removeEmptyEnum(e);
         }
         return;
     }
-    if (Array.isArray(target.enum) && target.enum.length === 0) {
-        delete target.enum;
+    if (!isRecord(target)) {
         return;
     }
+    const schemaEnum = target["enum"];
+    if (Array.isArray(schemaEnum) && isEmpty(schemaEnum)) {
+        delete target["enum"];
+        return;
+    }
+    const { properties } = target;
     if (
-        target.type === "object" &&
-        target.properties &&
-        typeof target.properties === "object"
+        target["type"] === "object" &&
+        isPresent(properties) &&
+        isRecord(properties)
     ) {
-        for (const key of objectKeys(target.properties)) {
-            removeEmptyEnum(target.properties[key]);
+        for (const key of objectKeys(properties)) {
+            removeEmptyEnum(properties[key]);
         }
     }
 }
@@ -235,8 +343,11 @@ function removeEmptyEnum(
 /**
  * Resolve module path
  */
-function resolvePath(modulePath: string | void, context: RuleContext) {
-    if (!modulePath) {
+function resolvePath(
+    modulePath: string | undefined,
+    context: RuleContext
+): string | undefined {
+    if (!isDefined(modulePath) || modulePath === "") {
         return undefined;
     }
     if (modulePath.startsWith(".")) {
@@ -248,13 +359,6 @@ function resolvePath(modulePath: string | void, context: RuleContext) {
 /**
  * JSON Schema to string
  */
-function schemaStringify(schema: SchemaObject) {
-    return JSON.stringify(
-        schema,
-        (_key, value) =>
-            // If (key === "description" && typeof value === "string") {
-            //     return undefined
-            // }
-            value
-    );
+function schemaStringify(schema: SchemaObject): string {
+    return JSON.stringify(schema);
 }

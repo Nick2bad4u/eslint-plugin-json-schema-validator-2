@@ -1,7 +1,10 @@
 import { safeCastTo } from "ts-extras";
 
-import type { RuleModule } from "../types.ts";
+import type { RuleModule } from "../types.js";
 
-import noInvalid from "../rules/no-invalid.ts";
+import noInvalid from "../rules/no-invalid.js";
 
-export const rules = safeCastTo<RuleModule[]>([noInvalid]);
+/**
+ * Plugin rule modules exposed to the ESLint plugin entrypoint.
+ */
+export const rules: RuleModule[] = safeCastTo<RuleModule[]>([noInvalid]);

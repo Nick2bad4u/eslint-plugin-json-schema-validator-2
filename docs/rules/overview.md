@@ -3,8 +3,6 @@ title: Overview
 description: Rule documentation overview for eslint-plugin-json-schema-validator-2.
 ---
 
-# Rule Overview
-
 `eslint-plugin-json-schema-validator-2` focuses on validating structured project
 data against JSON Schema during normal ESLint runs.
 

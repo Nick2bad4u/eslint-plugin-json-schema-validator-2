@@ -3,8 +3,6 @@ title: Getting Started
 description: Configure eslint-plugin-json-schema-validator-2 with ESLint Flat Config.
 ---
 
-# Getting Started
-
 Use the plugin from `eslint.config.js`:
 
 ```js

@@ -1,25 +1,17 @@
-import request from "request";
-
 /**
  * @param {string} url
- * @param {{ proxy?: string | undefined; [key: string]: unknown }} [options]
+ * @param {RequestInit} [options]
  *
- * @returns {Promise<unknown>}
+ * @returns {Promise<string>}
  */
-export default function get(url, options = {}) {
-    const proxy =
-        options.proxy ||
-        process.env["http_proxy"] ||
-        process.env["npm_config_https_proxy"];
+export default async function get(url, options = {}) {
+    const response = await fetch(url, options);
 
-    return new Promise((resolve, reject) => {
-        request.get(url, { ...options, proxy }, (error, _response, body) => {
-            if (error) {
-                reject(error);
-                return;
-            }
+    if (!response.ok) {
+        throw new Error(
+            `Request failed with status ${String(response.status)}.`
+        );
+    }
 
-            resolve(body);
-        });
-    });
+    return response.text();
 }

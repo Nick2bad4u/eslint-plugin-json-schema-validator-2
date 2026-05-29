@@ -6,11 +6,12 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { themes as prismThemes } from "prism-react-renderer";
 
+const environment = globalThis.process.env;
 const baseUrl =
-    process.env["DOCUSAURUS_BASE_URL"] ??
+    environment["DOCUSAURUS_BASE_URL"] ??
     "/eslint-plugin-json-schema-validator-2/";
 const enableExperimentalFaster =
-    process.env["DOCUSAURUS_ENABLE_EXPERIMENTAL"] === "true";
+    environment["DOCUSAURUS_ENABLE_EXPERIMENTAL"] === "true";
 
 const organizationName = "Nick2bad4u";
 const projectName = "eslint-plugin-json-schema-validator-2";
@@ -24,8 +25,9 @@ const projectKeywords =
     "eslint, eslint-plugin, json schema, schemastore, yaml, toml, flat config";
 const socialCardImagePath = "img/logo.png";
 const socialCardImageUrl = new URL(socialCardImagePath, siteUrl).toString();
-const modernEnhancementsClientModule = fileURLToPath(
-    new URL("src/js/modernEnhancements.ts", import.meta.url)
+const currentYear = new Date().getFullYear().toString();
+const modernEnhancementsClientModulePath = fileURLToPath(
+    new URL("src/js/modern-enhancements.ts", import.meta.url)
 );
 
 const requireFromDocsWorkspace = createRequire(import.meta.url);
@@ -42,21 +44,30 @@ const vscodeLanguageServerTypesEsmEntry = resolveOptionalModule(
     "vscode-languageserver-types/lib/esm/main.js"
 );
 
+const getWebpackWarningMessage = (warning: unknown): string | undefined => {
+    if (
+        typeof warning !== "object" ||
+        warning === null ||
+        !("message" in warning)
+    ) {
+        return undefined;
+    }
+
+    const { message } = warning;
+    return typeof message === "string" ? message : undefined;
+};
+
 const suppressKnownWebpackWarningsPlugin: PluginModule = () => ({
     configureWebpack() {
         return {
             ignoreWarnings: [
                 (warning: unknown) => {
-                    const message =
-                        typeof warning === "object" && warning !== null
-                            ? Reflect.get(warning, "message")
-                            : undefined;
+                    const message = getWebpackWarningMessage(warning);
 
                     return (
-                        typeof message === "string" &&
-                        message.includes(
+                        message?.includes(
                             "Critical dependency: require function is used in a way in which dependencies cannot be statically extracted"
-                        )
+                        ) === true
                     );
                 },
             ],
@@ -98,7 +109,8 @@ const futureConfig = {
 
 const config = {
     baseUrl,
-    clientModules: [modernEnhancementsClientModule],
+    baseUrlIssueBanner: true,
+    clientModules: [modernEnhancementsClientModulePath],
     deploymentBranch: "gh-pages",
     favicon: "img/favicon.ico",
     future: futureConfig,
@@ -150,6 +162,34 @@ const config = {
         suppressKnownWebpackWarningsPlugin,
         "docusaurus-plugin-image-zoom",
         [
+            "@docusaurus/plugin-pwa",
+            {
+                debug: process.env["DOCUSAURUS_PWA_DEBUG"] === "true",
+                offlineModeActivationStrategies: [
+                    "appInstalled",
+                    "standalone",
+                    "queryString",
+                ],
+                pwaHead: [
+                    {
+                        content: "#0b1120",
+                        name: "theme-color",
+                        tagName: "meta",
+                    },
+                    {
+                        href: "manifest.json",
+                        rel: "manifest",
+                        tagName: "link",
+                    },
+                    {
+                        href: "img/logo.png",
+                        rel: "apple-touch-icon",
+                        tagName: "link",
+                    },
+                ],
+            },
+        ],
+        [
             "@docusaurus/plugin-content-docs",
             {
                 editUrl: `https://github.com/${organizationName}/${projectName}/blob/main/docs/`,
@@ -173,7 +213,7 @@ const config = {
                     blogTitle: `${packageName} Blog`,
                     editUrl: `https://github.com/${organizationName}/${projectName}/blob/main/docs/docusaurus/`,
                     feedOptions: {
-                        copyright: `Copyright ${new Date().getFullYear()} Nick2bad4u`,
+                        copyright: `Copyright ${currentYear} Nick2bad4u`,
                         description: projectBlogDescription,
                         language: "en",
                         title: `${packageName} Blog`,
@@ -218,7 +258,7 @@ const config = {
             respectPrefersColorScheme: true,
         },
         footer: {
-            copyright: `Copyright ${new Date().getFullYear()} Nick2bad4u. Built with Docusaurus.`,
+            copyright: `Copyright ${currentYear} Nick2bad4u. Built with Docusaurus.`,
             links: [
                 {
                     items: [
@@ -233,6 +273,10 @@ const config = {
                         {
                             label: "Rule Reference",
                             to: "/docs/rules/no-invalid",
+                        },
+                        {
+                            label: "API",
+                            to: "/docs/developer/api",
                         },
                     ],
                     title: "Docs",

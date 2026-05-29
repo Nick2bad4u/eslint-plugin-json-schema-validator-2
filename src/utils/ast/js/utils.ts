@@ -1,10 +1,16 @@
-import type { Variable } from "eslint-scope";
+import type { Scope } from "eslint";
 import type { AST } from "vue-eslint-parser";
 
 import * as eslintUtils from "@eslint-community/eslint-utils";
-import { arrayFirst, isEmpty } from "ts-extras";
+import {
+    arrayFirst,
+    isDefined,
+    isEmpty,
+    isPresent,
+    safeCastTo,
+} from "ts-extras";
 
-import type { RuleContext } from "../../../types.ts";
+import type { RuleContext } from "../../../types.js";
 
 /**
  * Find the node that initial value.
@@ -21,17 +27,15 @@ export function findInitNode(
         const def = arrayFirst(variable.defs);
         if (
             def?.type === "Variable" &&
-            def.parent?.type === "VariableDeclaration" &&
             def.parent.kind === "const" &&
-            def.node.type === "VariableDeclarator" &&
-            def.node.init
+            isPresent(def.node.init)
         ) {
-            let init = def.node.init as AST.ESLintExpression;
+            let init: AST.ESLintExpression = toESLintExpression(def.node.init);
             const reads = variable.references
                 .filter((ref) => ref.isRead())
-                .map((ref) => ref.identifier as AST.ESLintIdentifier);
+                .map((ref) => toESLintIdentifier(ref.identifier));
             if (init.type === "Identifier") {
-                const data = findInitNode(context, init);
+                const data = findInitNode(context, toESLintIdentifier(init));
                 if (!data) {
                     return null;
                 }
@@ -61,7 +65,7 @@ export function getStaticPropertyName(
         if (!node.computed && key.type === "Identifier") {
             return key.name;
         }
-    } else if (node.type === "MemberExpression") {
+    } else {
         key = node.property;
         if (!node.computed) {
             if (key.type === "Identifier") {
@@ -69,8 +73,6 @@ export function getStaticPropertyName(
             }
             return null;
         }
-    } else {
-        return null;
     }
     if (key.type === "Literal" || key.type === "TemplateLiteral") {
         return getStringLiteralValue(key);
@@ -107,31 +109,9 @@ export function getStaticValue(
     if (!staticValue) {
         return null;
     }
-    return staticValue.optional === undefined
-        ? { value: staticValue.value }
-        : { optional: staticValue.optional, value: staticValue.value };
-}
-
-/**
- * Gets the string of a given node.
- */
-export function getStringLiteralValue(
-    node: AST.ESLintLiteral | AST.ESLintTemplateLiteral
-): null | string {
-    if (node.type === "Literal") {
-        if (node.value == null && node.bigint != null) {
-            return String(node.bigint);
-        }
-        return String(node.value);
-    }
-    if (
-        node.type === "TemplateLiteral" &&
-        isEmpty(node.expressions) &&
-        node.quasis.length === 1
-    ) {
-        return arrayFirst(node.quasis)?.value.cooked ?? null;
-    }
-    return null;
+    return isDefined(staticValue.optional)
+        ? { optional: staticValue.optional, value: staticValue.value }
+        : { value: staticValue.value };
 }
 
 /**
@@ -140,10 +120,12 @@ export function getStringLiteralValue(
 function findVariable(
     context: RuleContext,
     node: AST.ESLintIdentifier
-): null | Variable {
+): null | Scope.Variable {
     const scope = getScope(context, node);
     return scope
-        ? (eslintUtils.findVariable(scope, node) as null | Variable)
+        ? safeCastTo<null | Scope.Variable>(
+              eslintUtils.findVariable(scope, node)
+          )
         : null;
 }
 
@@ -156,7 +138,7 @@ function getScope(context: RuleContext, currentNode: AST.ESLintNode) {
     const scopeManager = context.sourceCode.scopeManager;
 
     let node: AST.Node | null = currentNode;
-    for (; node; node = node.parent || null) {
+    for (; node; node = node.parent ?? null) {
         const scope = scopeManager.acquire(
             // @ts-expect-error -- incompatible with Vue AST typings
             node,
@@ -171,5 +153,41 @@ function getScope(context: RuleContext, currentNode: AST.ESLintNode) {
         }
     }
 
-    return scopeManager.scopes[0];
+    return arrayFirst(scopeManager.scopes);
+}
+
+/**
+ * Gets the string of a given node.
+ */
+function getStringLiteralValue(
+    node: AST.ESLintLiteral | AST.ESLintTemplateLiteral
+): null | string {
+    if (node.type === "Literal") {
+        if (!isPresent(node.value) && isPresent(node.bigint)) {
+            return node.bigint;
+        }
+        return typeof node.value === "string" ? node.value : String(node.value);
+    }
+    if (isEmpty(node.expressions) && node.quasis.length === 1) {
+        return arrayFirst(node.quasis)?.value.cooked ?? null;
+    }
+    return null;
+}
+
+/**
+ * Converts parser-service expressions to the Vue parser expression shape used
+ * by this module.
+ */
+function toESLintExpression(expression: unknown): AST.ESLintExpression {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- eslint-scope uses ESTree nodes, while this module is intentionally parser-bound to vue-eslint-parser-compatible nodes.
+    return expression as AST.ESLintExpression;
+}
+
+/**
+ * Converts parser-service identifiers to the Vue parser identifier shape used
+ * by this module.
+ */
+function toESLintIdentifier(identifier: unknown): AST.ESLintIdentifier {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- eslint-scope uses ESTree nodes, while this module is intentionally parser-bound to vue-eslint-parser-compatible nodes.
+    return identifier as AST.ESLintIdentifier;
 }

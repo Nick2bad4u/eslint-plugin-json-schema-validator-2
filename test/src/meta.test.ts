@@ -1,20 +1,30 @@
-import assert from "node:assert";
-import { describe, it } from "vitest";
+import * as fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
-import pkg from "../../package.json" with { type: "json" };
-import plugin from "../../src/index.ts";
+import plugin from "../../src/plugin";
 
-const { version } = pkg;
+const packageJson = JSON.parse(
+    fs.readFileSync(
+        fileURLToPath(new URL("../../package.json", import.meta.url))
+    ) as unknown as string
+) as { version: string };
+
 const expectedMeta = {
     name: "eslint-plugin-json-schema-validator-2",
     namespace: "json-schema-validator-2",
-    version,
+    version: packageJson.version,
 };
 
 describe("test for meta object", () => {
     it("a plugin should have a meta object.", () => {
-        assert.strictEqual(plugin.meta.name, expectedMeta.name);
-        assert.strictEqual(plugin.meta.namespace, expectedMeta.namespace);
-        assert.strictEqual(plugin.meta.version, expectedMeta.version);
+        expect.assertions(4);
+
+        expect(plugin.meta.name).toBe(expectedMeta.name);
+        expect(plugin.meta.namespace).toBe(expectedMeta.namespace);
+        expect(plugin.meta.version).toBe(expectedMeta.version);
+        expect(plugin.meta.name).not.toBe(
+            "eslint-plugin-json-schema-validator"
+        );
     });
 });
