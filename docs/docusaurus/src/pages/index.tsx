@@ -152,18 +152,12 @@ export default function Home(): React.JSX.Element {
                                         className={styles["heroBadge"]}
                                         key={badge.label}
                                     >
-                                        <p
-                                            className={
-                                                styles["heroBadgeLabel"]
-                                            }
-                                        >
+                                        <p className={styles["heroBadgeLabel"]}>
                                             {badge.label}
                                         </p>
                                         <p
                                             className={
-                                                styles[
-                                                    "heroBadgeDescription"
-                                                ]
+                                                styles["heroBadgeDescription"]
                                             }
                                         >
                                             {badge.description}

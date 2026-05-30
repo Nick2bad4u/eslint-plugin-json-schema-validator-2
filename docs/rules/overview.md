@@ -8,8 +8,8 @@ data against JSON Schema during normal ESLint runs.
 
 The current rule catalog is intentionally small:
 
-| Rule | Purpose | Preset |
-| --- | --- | --- |
+| Rule                                                    | Purpose                                                                                 | Preset        |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------- |
 | [`json-schema-validator-2/no-invalid`](./no-invalid.md) | Validate structured data against `$schema`, SchemaStore, and configured custom schemas. | `recommended` |
 
 Use the

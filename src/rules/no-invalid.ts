@@ -280,10 +280,7 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
                                 ],
                             },
                             reportMode: {
-                                enum: [
-                                    "all",
-                                    "most-specific",
-                                ],
+                                enum: ["all", "most-specific"],
                                 type: "string",
                             },
                             schemas: {
@@ -689,11 +686,7 @@ function getSchemaValidators(context: RuleContext): null | Validator[] {
         return null;
     }
 
-    const schemaPath = findSchemaPath(
-        context,
-        context.sourceCode,
-        ast
-    );
+    const schemaPath = findSchemaPath(context, context.sourceCode, ast);
     if (!isPresent(schemaPath)) {
         return null;
     }
@@ -919,7 +912,10 @@ function optionSchemaToValidator(
     context: RuleContext
 ): null | Validator {
     if (typeof schemaData.schema === "string") {
-        const schemaValidator = schemaPathToValidator(schemaData.schema, context);
+        const schemaValidator = schemaPathToValidator(
+            schemaData.schema,
+            context
+        );
         if (isPresent(schemaValidator)) {
             return schemaValidator;
         }

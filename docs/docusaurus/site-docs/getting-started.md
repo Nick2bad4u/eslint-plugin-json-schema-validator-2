@@ -15,9 +15,7 @@ Enable the recommended Flat Config preset:
 ```js
 import jsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 
-export default [
-  ...jsonSchemaValidator.configs.recommended,
-];
+export default [...jsonSchemaValidator.configs.recommended];
 ```
 
 The recommended preset registers parsers for JSON, YAML, and TOML files and
@@ -36,23 +34,23 @@ property or when you need to override SchemaStore detection:
 
 ```js
 export default [
-  ...jsonSchemaValidator.configs.base,
-  {
-    rules: {
-      "json-schema-validator-2/no-invalid": [
-        "error",
-        {
-          schemas: [
-            {
-              fileMatch: ["config/*.json"],
-              schema: "./schemas/config.schema.json",
-            },
-          ],
-          useSchemastoreCatalog: false,
-        },
-      ],
+ ...jsonSchemaValidator.configs.base,
+ {
+  rules: {
+   "json-schema-validator-2/no-invalid": [
+    "error",
+    {
+     schemas: [
+      {
+       fileMatch: ["config/*.json"],
+       schema: "./schemas/config.schema.json",
+      },
+     ],
+     useSchemastoreCatalog: false,
     },
+   ],
   },
+ },
 ];
 ```
 
@@ -76,17 +74,17 @@ already identify the failing value:
 
 ```js
 export default [
-  ...jsonSchemaValidator.configs.base,
-  {
-    rules: {
-      "json-schema-validator-2/no-invalid": [
-        "error",
-        {
-          reportMode: "most-specific",
-        },
-      ],
+ ...jsonSchemaValidator.configs.base,
+ {
+  rules: {
+   "json-schema-validator-2/no-invalid": [
+    "error",
+    {
+     reportMode: "most-specific",
     },
+   ],
   },
+ },
 ];
 ```
 
@@ -95,16 +93,16 @@ shared settings when CI or local tooling needs a specific location:
 
 ```js
 export default [
-  {
-    settings: {
-      "json-schema-validator-2": {
-        cache: {
-          directory: ".cache/json-schema-validator-2",
-          ttl: 1000 * 60 * 60 * 24 * 30,
-        },
-      },
+ {
+  settings: {
+   "json-schema-validator-2": {
+    cache: {
+     directory: ".cache/json-schema-validator-2",
+     ttl: 1000 * 60 * 60 * 24 * 30,
     },
+   },
   },
+ },
 ];
 ```
 
@@ -119,22 +117,22 @@ or MDC files. The processor exposes the frontmatter as a virtual
 
 ```js
 export default [
-  ...jsonSchemaValidator.configs.frontmatter,
-  {
-    rules: {
-      "json-schema-validator-2/no-invalid": [
-        "error",
-        {
-          schemas: [
-            {
-              fileMatch: ["**/*.frontmatter.yaml"],
-              schema: "./schemas/frontmatter.schema.json",
-            },
-          ],
-          useSchemastoreCatalog: false,
-        },
-      ],
+ ...jsonSchemaValidator.configs.frontmatter,
+ {
+  rules: {
+   "json-schema-validator-2/no-invalid": [
+    "error",
+    {
+     schemas: [
+      {
+       fileMatch: ["**/*.frontmatter.yaml"],
+       schema: "./schemas/frontmatter.schema.json",
+      },
+     ],
+     useSchemastoreCatalog: false,
     },
+   ],
   },
+ },
 ];
 ```

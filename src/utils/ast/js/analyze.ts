@@ -1,4 +1,4 @@
-import type { ArrayElement, UnknownRecord  } from "type-fest";
+import type { ArrayElement, UnknownRecord } from "type-fest";
 import type { AST } from "vue-eslint-parser";
 
 import { arrayAt, arrayFirst, isPresent, keyIn, setHas } from "ts-extras";
@@ -71,7 +71,9 @@ type BinaryOperator =
 type BitwiseOperands =
     | { kind: "bigint"; left: bigint; right: bigint }
     | { kind: "number"; left: number; right: number };
-type ObjectExpressionProperty = ArrayElement<AST.ESLintObjectExpression["properties"]>;
+type ObjectExpressionProperty = ArrayElement<
+    AST.ESLintObjectExpression["properties"]
+>;
 type StaticObject = UnknownRecord;
 
 type SubPathData = Pick<PathData, "children" | "data">;

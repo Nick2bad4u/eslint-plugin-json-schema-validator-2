@@ -51,12 +51,10 @@ const IGNORED_CUSTOM_BLOCK_ATTRIBUTES = [
  *
  * @param ruleName - RuleName
  * @param rule - Rule module
+ *
  * @throws If the rule metadata does not match the registered rule name.
  */
-export function createRule(
-    ruleName: string,
-    rule: RuleDefinition
-): RuleModule {
+export function createRule(ruleName: string, rule: RuleDefinition): RuleModule {
     const expectedRuleId = `json-schema-validator-2/${ruleName}`;
     if (
         rule.meta.docs.ruleName !== ruleName ||

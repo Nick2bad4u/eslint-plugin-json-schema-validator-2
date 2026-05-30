@@ -9,13 +9,15 @@ import { dirname, join } from "node:path";
 /** @typedef {import("vfile").VFile} VFile */
 /** @typedef {{ offset?: number }} MarkdownPoint */
 /** @typedef {{ end?: MarkdownPoint; start?: MarkdownPoint }} MarkdownPosition */
-/** @typedef {{
-    children?: unknown[];
-    depth?: number;
-    position?: MarkdownPosition;
-    type: string;
-    value?: unknown;
-}} MarkdownNode */
+/**
+ * @typedef {{
+ *     children?: unknown[];
+ *     depth?: number;
+ *     position?: MarkdownPosition;
+ *     type: string;
+ *     value?: unknown;
+ * }} MarkdownNode
+ */
 /** @typedef {MarkdownNode & { depth: number }} Heading */
 /** @typedef {MarkdownNode & { children: unknown[]; type: "root" }} Root */
 

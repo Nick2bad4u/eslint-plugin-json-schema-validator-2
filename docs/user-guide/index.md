@@ -27,15 +27,15 @@ Example **eslint.config.js**:
 ```js
 import eslintPluginJsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 export default [
-  // add more generic rule sets here, such as:
-  // js.configs.recommended,
-  ...eslintPluginJsonSchemaValidator.configs.recommended,
-  {
-    rules: {
-      // override/add rules settings here, such as:
-      // 'json-schema-validator-2/no-invalid': 'warn'
-    },
+ // add more generic rule sets here, such as:
+ // js.configs.recommended,
+ ...eslintPluginJsonSchemaValidator.configs.recommended,
+ {
+  rules: {
+   // override/add rules settings here, such as:
+   // 'json-schema-validator-2/no-invalid': 'warn'
   },
+ },
 ];
 ```
 
@@ -81,15 +81,15 @@ Example **.vscode/settings.json**:
 
 ```json
 {
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "json",
-    "jsonc",
-    "json5",
-    "yaml",
-    "toml"
-  ]
+ "eslint.validate": [
+  "javascript",
+  "javascriptreact",
+  "json",
+  "jsonc",
+  "json5",
+  "yaml",
+  "toml"
+ ]
 }
 ```
 
@@ -107,20 +107,20 @@ Example **eslint.config.js**:
 
 ```js
 export default [
-  {
-    settings: {
-      "json-schema-validator-2": {
-        cache: {
-          directory: ".cache/json-schema-validator-2",
-          ttl: 1000 * 60 * 60 * 24 * 30,
-        },
-        http: {
-          getModulePath: "",
-          requestOptions: {},
-        },
-      },
+ {
+  settings: {
+   "json-schema-validator-2": {
+    cache: {
+     directory: ".cache/json-schema-validator-2",
+     ttl: 1000 * 60 * 60 * 24 * 30,
     },
+    http: {
+     getModulePath: "",
+     requestOptions: {},
+    },
+   },
   },
+ },
 ];
 ```
 
@@ -144,15 +144,15 @@ const request = require("request");
  * GET Method using request module.
  */
 module.exports = function get(url, options) {
-  return new Promise((resolve, reject) => {
-    request.get(url, options, (error, _res, body) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(body);
-    });
+ return new Promise((resolve, reject) => {
+  request.get(url, options, (error, _res, body) => {
+   if (error) {
+    reject(error);
+    return;
+   }
+   resolve(body);
   });
+ });
 };
 ```
 
@@ -162,19 +162,19 @@ module.exports = function get(url, options) {
 
 ```js
 export default [
-  {
-    settings: {
-      "json-schema-validator-2": {
-        http: {
-          getModulePath: "./path/to/request-get.js",
-          requestOptions: {
-            // Example of proxy settings.
-            proxy: "http://my.proxy.com:8080/",
-          },
-        },
-      },
+ {
+  settings: {
+   "json-schema-validator-2": {
+    http: {
+     getModulePath: "./path/to/request-get.js",
+     requestOptions: {
+      // Example of proxy settings.
+      proxy: "http://my.proxy.com:8080/",
+     },
     },
+   },
   },
+ },
 ];
 ```
 

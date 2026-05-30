@@ -34,7 +34,10 @@ const moduleFilename =
           fileURLToPath(import.meta.url);
 const moduleDirname =
     typeof __dirname === "string" ? __dirname : path.dirname(moduleFilename);
-const DEFAULT_CACHE_DIRECTORY = path.join(moduleDirname, "../.cached_schemastore");
+const DEFAULT_CACHE_DIRECTORY = path.join(
+    moduleDirname,
+    "../.cached_schemastore"
+);
 
 interface CacheEntry {
     data: unknown;

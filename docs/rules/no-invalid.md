@@ -26,18 +26,18 @@ blocks when `eslint-plugin-vue` is installed.
 // File name is ".eslintrc.json"
 /* eslint json-schema-validator-2/no-invalid: 'error' */
 {
-  overrides: [
-    {
-      files: ["good"],
-      /* ✓ GOOD */
-      extends: ["foo"],
-    },
-    {
-      files: ["bad"],
-      /* ✗ BAD */
-      extends: [42],
-    },
-  ],
+ overrides: [
+  {
+   files: ["good"],
+   /* ✓ GOOD */
+   extends: ["foo"],
+  },
+  {
+   files: ["bad"],
+   /* ✗ BAD */
+   extends: [42],
+  },
+ ],
 }
 ```
 
@@ -45,22 +45,22 @@ blocks when `eslint-plugin-vue` is installed.
 
 ```json5
 {
-  "json-schema-validator-2/no-invalid": [
-    "error",
+ "json-schema-validator-2/no-invalid": [
+  "error",
+  {
+   schemas: [
     {
-      schemas: [
-        {
-          fileMatch: [".eslintrc.json"],
-          schema: {
-            /* JSON Schema Definition */
-          }, // or string
-        },
-      ],
-      useSchemastoreCatalog: true,
-      mergeSchemas: true, // or ["$schema", "options", "catalog"]
-      reportMode: "all", // or "most-specific"
+     fileMatch: [".eslintrc.json"],
+     schema: {
+      /* JSON Schema Definition */
+     }, // or string
     },
-  ],
+   ],
+   useSchemastoreCatalog: true,
+   mergeSchemas: true, // or ["$schema", "options", "catalog"]
+   reportMode: "all", // or "most-specific"
+  },
+ ],
 }
 ```
 
@@ -93,18 +93,18 @@ This option can also be given a JSON schema file or URL. This is useful for conf
 */
 
 module.exports = {
-  overrides: [
-    {
-      files: ["good"],
-      /* ✓ GOOD */
-      extends: ["foo"],
-    },
-    {
-      files: ["bad"],
-      /* ✗ BAD */
-      extends: [42],
-    },
-  ],
+ overrides: [
+  {
+   files: ["good"],
+   /* ✓ GOOD */
+   extends: ["foo"],
+  },
+  {
+   files: ["bad"],
+   /* ✗ BAD */
+   extends: [42],
+  },
+ ],
 };
 ```
 
@@ -128,16 +128,16 @@ you need a specific cache directory or time-to-live:
 
 ```js
 export default [
-  {
-    settings: {
-      "json-schema-validator-2": {
-        cache: {
-          directory: ".cache/json-schema-validator-2",
-          ttl: 1000 * 60 * 60 * 24 * 30,
-        },
-      },
+ {
+  settings: {
+   "json-schema-validator-2": {
+    cache: {
+     directory: ".cache/json-schema-validator-2",
+     ttl: 1000 * 60 * 60 * 24 * 30,
     },
+   },
   },
+ },
 ];
 ```
 
@@ -152,23 +152,23 @@ or MDC files. The processor exposes the frontmatter as a virtual
 
 ```js
 export default [
-  ...jsonSchemaValidator.configs.frontmatter,
-  {
-    rules: {
-      "json-schema-validator-2/no-invalid": [
-        "error",
-        {
-          schemas: [
-            {
-              fileMatch: ["**/*.frontmatter.yaml"],
-              schema: "./schemas/frontmatter.schema.json",
-            },
-          ],
-          useSchemastoreCatalog: false,
-        },
-      ],
+ ...jsonSchemaValidator.configs.frontmatter,
+ {
+  rules: {
+   "json-schema-validator-2/no-invalid": [
+    "error",
+    {
+     schemas: [
+      {
+       fileMatch: ["**/*.frontmatter.yaml"],
+       schema: "./schemas/frontmatter.schema.json",
+      },
+     ],
+     useSchemastoreCatalog: false,
     },
+   ],
   },
+ },
 ];
 ```
 
@@ -194,9 +194,9 @@ To match a custom block, use a glob like this:
 
 ```json5
 {
-  // If you want to match the <i18n> block.
-  fileMatch: ["**/*blockType=i18n*"],
-  schema: { type: "object" /* JSON Schema Definition */ },
+ // If you want to match the <i18n> block.
+ fileMatch: ["**/*blockType=i18n*"],
+ schema: { type: "object" /* JSON Schema Definition */ },
 }
 ```
 
