@@ -5,7 +5,11 @@ import frontmatterConfig from "./configs/flat/frontmatter.js";
 import recommendedConfig from "./configs/flat/recommended.js";
 import { pluginCore } from "./plugin-core.js";
 
-/** Names of the flat configs exported by the plugin. */
+/**
+ * Names of the flat configs exported by the plugin.
+ *
+ * @ignore
+ */
 export type JsonSchemaValidatorConfigName =
     | "base"
     | "flat/base"
@@ -14,11 +18,19 @@ export type JsonSchemaValidatorConfigName =
     | "frontmatter"
     | "recommended";
 
-/** Fully-qualified rule IDs exported by the plugin. */
+/**
+ * Fully-qualified rule IDs exported by the plugin.
+ *
+ * @ignore
+ */
 export type JsonSchemaValidatorRuleId =
     `json-schema-validator-2/${JsonSchemaValidatorRuleName}`;
 
-/** Short rule names exported by the plugin. */
+/**
+ * Short rule names exported by the plugin.
+ *
+ * @ignore
+ */
 export type JsonSchemaValidatorRuleName = "no-invalid";
 
 type JsonSchemaValidatorConfigs = Record<

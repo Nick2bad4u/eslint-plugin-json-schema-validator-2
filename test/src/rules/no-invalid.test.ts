@@ -12,6 +12,21 @@ import { loadTestCases } from "../../utils/utils";
 
 type TestedRuleModule = Parameters<RuleTester["run"]>[1];
 
+const parserWithoutServices = {
+    parseForESLint(code: string) {
+        return {
+            ast: espree.parse(code, {
+                comment: true,
+                ecmaVersion: 2020,
+                loc: true,
+                range: true,
+                sourceType: "module",
+                tokens: true,
+            }),
+        };
+    },
+};
+
 // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.dirname is not available across the configured Node range.
 const TEST_DIR = fileURLToPath(new URL(".", import.meta.url));
 const STATIC_JSON_MODULE_PATH = path.resolve(
@@ -436,6 +451,13 @@ singleQuote = true`,
                 },
             ],
             valid: [
+                {
+                    code: "const value = 1;",
+                    filename: path.join(TEST_DIR, "CODE_OF_CONDUCT.md"),
+                    languageOptions: {
+                        parser: parserWithoutServices,
+                    },
+                },
                 {
                     code: 'module.exports = { "extends": [ require.resolve("eslint-config-foo") ] }',
                     filename: path.join(TEST_DIR, ".eslintrc.js"),

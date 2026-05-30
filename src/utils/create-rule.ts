@@ -160,7 +160,7 @@ function createCustomBlockRule(
     blockContext: RuleContext,
     langFallback: string
 ): RuleListener {
-    const customBlock = blockContext.sourceCode.parserServices.customBlock;
+    const customBlock = blockContext.sourceCode.parserServices?.customBlock;
     if (!isPresent(customBlock)) {
         return {};
     }

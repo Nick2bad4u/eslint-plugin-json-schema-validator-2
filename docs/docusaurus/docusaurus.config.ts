@@ -282,7 +282,7 @@ const config = {
                         },
                         {
                             label: "API",
-                            to: "/docs/developer/api",
+                            to: "/docs/developer/api/variables/default",
                         },
                     ],
                     title: "Docs",

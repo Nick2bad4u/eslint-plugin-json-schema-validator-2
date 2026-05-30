@@ -30,6 +30,7 @@
         "*.mjs",
         "*.js",
         "*.mjs",
+        "scripts/check-dev-audit.mjs",
         "test/_internal/**/*.d.ts"
     ]
 }

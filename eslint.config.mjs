@@ -50,6 +50,31 @@ const config = [
         },
     },
     {
+        files: ["scripts/check-dev-audit.mjs"],
+        languageOptions: {
+            parserOptions: {
+                project: ["./tsconfig.js.json"],
+                projectService: false,
+            },
+        },
+        name: "Local Runtime Scripts JavaScript",
+        rules: {
+            "@typescript-eslint/dot-notation": "off",
+            "@typescript-eslint/explicit-module-boundary-types": "off",
+            "@typescript-eslint/no-unsafe-argument": "off",
+            "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unsafe-call": "off",
+            "@typescript-eslint/no-unsafe-member-access": "off",
+            "n/hashbang": "off",
+            "n/no-process-env": "off",
+            "n/no-process-exit": "off",
+            "n/no-sync": "off",
+            "no-console": "off",
+            "no-continue": "off",
+            "perfectionist/sort-imports": "off",
+        },
+    },
+    {
         files: ["test/src/utils/http-client/get-modules/*.mjs"],
         name: "Local HTTP Client Test Runtime Modules",
         rules: {

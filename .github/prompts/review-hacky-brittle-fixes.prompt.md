@@ -14,12 +14,12 @@ Repeat the following until you run out of high-confidence findings:
 
 1. Map the next highest-risk area such as `src/rules`, `src/_internal`, `test/`, docs, configs, scripts, or plugin entrypoints.
 2. Identify brittle, hacky, legacy, or overfit implementations such as:
-	- one-off workarounds or special-case branches
-	- regex or string parsing where AST-aware or utility-based logic would be safer
-	- magic constants, hidden assumptions, or copy-pasted compatibility shims
-	- unsafe casts, brittle assertions, or weak type narrowing
-	- fragile autofix logic, import insertion, or fixer ordering
-	- tests that only lock in the current hack instead of the intended contract
+   - one-off workarounds or special-case branches
+   - regex or string parsing where AST-aware or utility-based logic would be safer
+   - magic constants, hidden assumptions, or copy-pasted compatibility shims
+   - unsafe casts, brittle assertions, or weak type narrowing
+   - fragile autofix logic, import insertion, or fixer ordering
+   - tests that only lock in the current hack instead of the intended contract
 3. Fix a small batch of root-cause issues, not just surface symptoms.
 4. Validate the touched areas with diagnostics, targeted tests, and relevant repo scripts.
 5. Continue with the next batch.

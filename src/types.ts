@@ -11,12 +11,6 @@ import type { AST as YAML } from "yaml-eslint-parser";
 /** Comment nodes supported by the configured parsers. */
 export type Comment = ESTreeComment | TOML.Comment | YAML.Comment;
 
-/** Text replacement returned by an ESLint fixer. */
-export interface Fix {
-    range: [number, number];
-    text: string;
-}
-
 /** Shared settings consumed from ESLint flat config. */
 export interface JsonSchemaValidatorSettings {
     cache?: {
@@ -62,25 +56,6 @@ export interface RuleDefinition {
         params: { customBlock: boolean; filename: string }
     ) => RuleListener;
     meta: RuleMetaData;
-}
-
-/** Fixer API subset used by this plugin. */
-export interface RuleFixer {
-    insertTextAfter: (nodeOrToken: NodeOrToken, text: string) => Fix;
-
-    insertTextAfterRange: (range: [number, number], text: string) => Fix;
-
-    insertTextBefore: (nodeOrToken: NodeOrToken, text: string) => Fix;
-
-    insertTextBeforeRange: (range: [number, number], text: string) => Fix;
-
-    remove: (nodeOrToken: NodeOrToken) => Fix;
-
-    removeRange: (range: [number, number]) => Fix;
-
-    replaceText: (nodeOrToken: NodeOrToken, text: string) => Fix;
-
-    replaceTextRange: (range: [number, number], text: string) => Fix;
 }
 
 /** Visitor map returned by plugin rules. */
@@ -213,7 +188,7 @@ export interface SourceCode {
 
     lines: string[];
 
-    parserServices: {
+    parserServices?: {
         customBlock?: AST.VElement;
         isJSON?: true;
         isTOML?: true;

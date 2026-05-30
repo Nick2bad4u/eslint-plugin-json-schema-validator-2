@@ -41,7 +41,7 @@ blocks when `eslint-plugin-vue` is installed.
 }
 ```
 
-## :wrench: Options {#options}
+## Options
 
 ```json5
 {

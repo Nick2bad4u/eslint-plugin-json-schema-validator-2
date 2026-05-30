@@ -16,7 +16,7 @@ Use the
 [getting started guide](https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/getting-started/)
 for
 the shortest setup path, then move to the
-[`no-invalid` options](./no-invalid.md#options) when you need custom
+[`no-invalid` options](./no-invalid.md#Options) when you need custom
 schemas, YAML language-server comments, SchemaStore behavior, report filtering,
 or remote schema cache settings.
 

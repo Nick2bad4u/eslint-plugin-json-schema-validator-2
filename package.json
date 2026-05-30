@@ -63,6 +63,7 @@
     "types": "./dist/plugin.d.ts",
     "files": [
         "dist",
+        "!dist/.cached_schemastore",
         "docs/rules/**",
         "CHANGELOG.md"
     ],
@@ -70,6 +71,8 @@
         "docs/docusaurus"
     ],
     "scripts": {
+        "audit:dev": "node scripts/check-dev-audit.mjs",
+        "audit:prod": "npm audit --omit=dev --workspaces=false --audit-level=moderate",
         "build": "tsc -b tsconfig.build.json --force && npm run build:types:cjs && npm run build:cjs",
         "build:cjs": "esbuild dist/plugin.js --bundle --format=cjs --platform=node --packages=external --sourcemap --log-override:empty-import-meta=silent --outfile=dist/plugin.cjs --footer:js=\"module.exports = module.exports.default;\" && esbuild dist/utils/http-client/worker.js --bundle --format=cjs --platform=node --packages=external --sourcemap --log-override:empty-import-meta=silent --outfile=dist/utils/http-client/worker.cjs",
         "build:clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
@@ -320,5 +323,17 @@
         "provenance": true,
         "registry": "https://registry.npmjs.org/"
     },
-    "readme": "README.md"
+    "readme": "README.md",
+    "size-limit": [
+        {
+            "limit": "130 KB",
+            "name": "plugin CJS bundle",
+            "path": "dist/plugin.cjs"
+        },
+        {
+            "limit": "10 KB",
+            "name": "HTTP worker CJS bundle",
+            "path": "dist/utils/http-client/worker.cjs"
+        }
+    ]
 }

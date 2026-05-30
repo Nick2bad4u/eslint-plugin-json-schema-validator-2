@@ -562,6 +562,10 @@ function getCatalogValidators(
     context: RuleContext,
     relativeFilename: string
 ): null | Validator[] {
+    if (!hasDataParserServices(context.sourceCode)) {
+        return null;
+    }
+
     const option = getRuleObjectOption(context);
     if (option?.useSchemastoreCatalog === false) {
         return null;
@@ -701,6 +705,18 @@ function getSchemaValidators(context: RuleContext): null | Validator[] {
 }
 
 /**
+ * Check whether parser services identify a data-parser program this rule can
+ * validate directly.
+ */
+function hasDataParserServices(sourceCode: SourceCode): boolean {
+    return (
+        sourceCode.parserServices?.isJSON === true ||
+        sourceCode.parserServices?.isTOML === true ||
+        sourceCode.parserServices?.isYAML === true
+    );
+}
+
+/**
  * Check whether one validation path is an ancestor of another.
  */
 function isAncestorPath(
@@ -733,7 +749,7 @@ function isJSONProgram(
     _node: unknown
 ): _node is JSONAST.JSONProgram {
     return (
-        sourceCode.parserServices.isJSON === true &&
+        sourceCode.parserServices?.isJSON === true &&
         isRecord(_node) &&
         _node["type"] === "Program"
     );
@@ -861,7 +877,7 @@ function isTOMLProgram(
     _node: unknown
 ): _node is TOML.TOMLProgram {
     return (
-        sourceCode.parserServices.isTOML === true &&
+        sourceCode.parserServices?.isTOML === true &&
         isRecord(_node) &&
         _node["type"] === "Program"
     );
@@ -875,7 +891,7 @@ function isYAMLProgram(
     _node: unknown
 ): _node is YAML.YAMLProgram {
     return (
-        sourceCode.parserServices.isYAML === true &&
+        sourceCode.parserServices?.isYAML === true &&
         isRecord(_node) &&
         _node["type"] === "Program"
     );

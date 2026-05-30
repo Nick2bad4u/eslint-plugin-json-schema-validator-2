@@ -68,7 +68,7 @@ const getRuleFixIndicator = (ruleModule) => {
     return "report only";
 };
 
-const toRuleTableRow = ([ruleName, ruleModule]) => {
+const toRuleTableCells = ([ruleName, ruleModule]) => {
     const docsUrl = ruleModule.meta?.docs?.url;
     const description = ruleModule.meta?.docs?.description ?? "";
 
@@ -76,20 +76,48 @@ const toRuleTableRow = ([ruleName, ruleModule]) => {
         throw new TypeError(`Rule '${ruleName}' is missing meta.docs.url.`);
     }
 
-    return `| [\`${ruleName}\`](${docsUrl}) | ${description} | ${getRuleFixIndicator(ruleModule)} |`;
+    return [
+        `[\`${ruleName}\`](${docsUrl})`,
+        description,
+        getRuleFixIndicator(ruleModule),
+    ];
+};
+
+const formatMarkdownTableRow = (cells, columnWidths) =>
+    `| ${cells.map((cell, index) => cell.padEnd(columnWidths[index] ?? cell.length)).join(" | ")} |`;
+
+const formatMarkdownTableSeparator = (columnWidths) =>
+    `| ${columnWidths.map((width) => "-".repeat(width)).join(" | ")} |`;
+
+const formatMarkdownTable = (headers, rows) => {
+    const columnWidths = headers.map((header, index) =>
+        Math.max(header.length, ...rows.map((row) => row[index]?.length ?? 0))
+    );
+
+    return [
+        formatMarkdownTableRow(headers, columnWidths),
+        formatMarkdownTableSeparator(columnWidths),
+        ...rows.map((row) => formatMarkdownTableRow(row, columnWidths)),
+    ];
 };
 
 export const generateReadmeRulesSectionFromRules = (rules) => {
     const ruleEntries = Object.entries(rules).toSorted((left, right) =>
         left[0].localeCompare(right[0])
     );
+    const tableRows = formatMarkdownTable(
+        [
+            "Rule",
+            "Description",
+            "Fix",
+        ],
+        ruleEntries.map(toRuleTableCells)
+    );
 
     return [
         "## Rules",
         "",
-        "| Rule | Description | Fix |",
-        "| --- | --- | --- |",
-        ...ruleEntries.map(toRuleTableRow),
+        ...tableRows,
         "",
     ].join("\n");
 };
