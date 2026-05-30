@@ -1,0 +1,2 @@
+"$schema" = "../../schemas/strict-flag.schema.json"
+flag = "ok"

@@ -1,0 +1,5 @@
+{
+    // Local schema reference intentionally exercises the JSONC parser path.
+    "$schema": "../../schemas/strict-flag.schema.json",
+    "flag": 1
+}

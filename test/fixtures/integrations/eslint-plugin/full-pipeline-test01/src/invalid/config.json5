@@ -1,0 +1,4 @@
+{
+    $schema: "../../schemas/strict-flag.schema.json",
+    flag: 1,
+}

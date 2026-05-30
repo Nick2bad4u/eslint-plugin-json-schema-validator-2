@@ -1,0 +1,2 @@
+# yaml-language-server: $schema=../../schemas/strict-flag.schema.json
+flag: 1
