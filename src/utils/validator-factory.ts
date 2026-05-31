@@ -1,10 +1,14 @@
+import type { Logger } from "ajv/dist/core.js";
 import type { RegExpEngine } from "ajv/dist/types/index.js";
 import type { UnknownArray, UnknownRecord } from "type-fest";
 
 import { Ajv, type ErrorObject, type ValidateFunction } from "ajv";
 import { formatNames, fullFormats } from "ajv-formats/dist/formats.js";
 import v6Schema from "ajv/lib/refs/json-schema-draft-06.json" with { type: "json" };
-import { draft7 as migrateToDraft7 } from "json-schema-migrate-x";
+import {
+    getAjv as getSchemaMigrationAjv,
+    draft7 as migrateToDraft7,
+} from "json-schema-migrate-x";
 import {
     arrayAt,
     arrayFirst,
@@ -60,6 +64,18 @@ for (const formatName of formatNames) {
     ajv.addFormat(formatName, fullFormats[formatName]);
 }
 
+const noopLoggerMethod = (): undefined => undefined;
+const silentSchemaMigrationLogger = {
+    error: noopLoggerMethod,
+    log: noopLoggerMethod,
+    warn: noopLoggerMethod,
+} satisfies Logger;
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TypeScript resolves json-schema-migrate-x's Ajv return type, but typed ESLint cannot resolve the package's AjvCore.default declaration.
+const schemaMigrationAjv: SchemaMigrationLoggerTarget =
+    getSchemaMigrationAjv("draft7");
+schemaMigrationAjv.logger = silentSchemaMigrationLogger;
+
 /**
  * Validation failure reported by a compiled JSON Schema validator.
  */
@@ -101,6 +117,10 @@ interface PropertyNameParams {
 interface ResolvedSchemaReference {
     schemaId: string;
     schemaPath: string;
+}
+
+interface SchemaMigrationLoggerTarget {
+    logger: Logger;
 }
 
 interface UniqueItemsParams {
@@ -507,9 +527,11 @@ function schemaToValidator(
             } else if (resolveError(error, schemaPath, schemaObject, context)) {
                 shouldRetry = true;
             } else {
-                // eslint-disable-next-line no-console -- Existing developer diagnostic includes the schema path before rethrowing AJV's compile error.
-                console.error(schemaPath);
-                throw error;
+                const cause = toError(error);
+                throw new Error(
+                    `Failed to compile JSON schema at ${schemaPath}: ${cause.message}`,
+                    { cause: error }
+                );
             }
         }
     }

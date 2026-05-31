@@ -3,6 +3,7 @@
     "compilerOptions": {
         "allowJs": true,
         "checkJs": true,
+        "isolatedDeclarations": false,
         "noEmit": true,
         "types": [
             "node"

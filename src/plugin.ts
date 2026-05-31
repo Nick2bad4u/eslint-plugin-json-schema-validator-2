@@ -19,7 +19,7 @@ export type JsonSchemaValidatorConfigName =
     | "recommended";
 
 /** Complete plugin object exported by this package. */
-export interface JsonSchemaValidatorPlugin {
+export type JsonSchemaValidatorPlugin = ESLint.Plugin & {
     configs: {
         [configName: string]: Linter.Config[];
         base: Linter.Config[];
@@ -41,7 +41,7 @@ export interface JsonSchemaValidatorPlugin {
         JsonSchemaValidatorRuleName,
         NonNullable<ESLint.Plugin["rules"]>[string]
     >;
-}
+};
 
 /**
  * Fully-qualified rule IDs exported by the plugin.
