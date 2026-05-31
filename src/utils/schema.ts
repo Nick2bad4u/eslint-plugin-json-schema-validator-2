@@ -419,7 +419,7 @@ function resolveWorkspaceCacheDirectory(context: RuleContext): string {
  * Resolve a writable cache file path and create its containing directory.
  *
  * @throws When an explicit cache directory cannot be created, or when both the
- * default package cache and workspace fallback cannot be created.
+ *   default package cache and workspace fallback cannot be created.
  */
 function resolveWritableCacheFilePath(
     cacheDirectory: string,

@@ -1,6 +1,7 @@
 import type { Options as DocsPluginOptions } from "@docusaurus/plugin-content-docs";
 import type * as Preset from "@docusaurus/preset-classic";
 import type { Config, PluginModule } from "@docusaurus/types";
+import type { PluginOptions as LocalSearchPluginOptions } from "@easyops-cn/docusaurus-search-local";
 
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -29,6 +30,24 @@ const currentYear = new Date().getFullYear().toString();
 const modernEnhancementsClientModulePath = fileURLToPath(
     new URL("src/js/modern-enhancements.ts", import.meta.url)
 );
+const localSearchOptions = {
+    docsDir: ["site-docs", "../rules"],
+    docsRouteBasePath: ["/docs", "/docs/rules"],
+    explicitSearchResultPath: true,
+    hashed: "filename",
+    highlightSearchTermsOnTargetPage: true,
+    indexBlog: true,
+    indexDocs: true,
+    indexPages: true,
+    language: "en",
+    removeDefaultStopWordFilter: true,
+    searchBarPosition: "right",
+    searchBarShortcut: true,
+    searchBarShortcutHint: true,
+    searchBarShortcutKeymap: "mod+k",
+    searchResultContextMaxLength: 80,
+    searchResultLimits: 8,
+} satisfies LocalSearchPluginOptions;
 
 const requireFromDocsWorkspace = createRequire(import.meta.url);
 
@@ -269,46 +288,83 @@ const config = {
                 {
                     items: [
                         {
-                            label: "Overview",
+                            label: "📘 Overview",
                             to: "/docs/rules/overview",
                         },
                         {
-                            label: "Getting Started",
+                            label: "🚀 Getting Started",
                             to: "/docs/rules/getting-started",
                         },
                         {
-                            label: "Rule Reference",
+                            label: "⚙️ Configs",
+                            to: "/docs/configs/recommended",
+                        },
+                        {
+                            label: "🧩 Rule Reference",
                             to: "/docs/rules/no-invalid",
                         },
                         {
-                            label: "API",
+                            label: "🛠️ Developer API",
                             to: "/docs/developer/api/variables/default",
                         },
                     ],
-                    title: "Docs",
+                    title: "📚 Docs",
                 },
                 {
                     items: [
                         {
                             href: `https://github.com/${organizationName}/${projectName}`,
-                            label: "GitHub",
+                            label: "🐙 GitHub",
                         },
                         {
                             href: `https://www.npmjs.com/package/${packageName}`,
-                            label: "npm",
+                            label: "📦 npm",
+                        },
+                        {
+                            href: `https://github.com/${organizationName}/${projectName}/issues`,
+                            label: "🐞 Issues",
+                        },
+                        {
+                            href: `https://github.com/${organizationName}/${projectName}/releases`,
+                            label: "🏷️ Releases",
+                        },
+                        {
+                            href: `https://github.com/${organizationName}/${projectName}/blob/main/CHANGELOG.md`,
+                            label: "🧾 Changelog",
+                        },
+                    ],
+                    title: "🔗 Project",
+                },
+                {
+                    items: [
+                        {
+                            label: "✅ Recommended Config",
+                            to: "/docs/configs/recommended",
+                        },
+                        {
+                            label: "🧱 Base Config",
+                            to: "/docs/configs/base",
+                        },
+                        {
+                            label: "📝 Frontmatter Config",
+                            to: "/docs/configs/frontmatter",
                         },
                         {
                             href: "https://json-schema.org/",
-                            label: "JSON Schema",
+                            label: "📐 JSON Schema",
                         },
                         {
                             href: "https://www.schemastore.org/json/",
-                            label: "SchemaStore",
+                            label: "🗂️ SchemaStore",
                         },
                     ],
-                    title: "Project",
+                    title: "🧭 Resources",
                 },
             ],
+            logo: {
+                alt: `${packageName} logo`,
+                src: "img/logo-96x96.png",
+            },
             style: "dark",
         },
         image: socialCardImagePath,
@@ -322,18 +378,28 @@ const config = {
             hideOnScroll: true,
             items: [
                 {
-                    label: "Docs",
+                    label: "📚 Docs",
                     position: "left",
                     to: "/docs/rules/overview",
                 },
                 {
-                    label: "Rules",
+                    label: "🧩 Rules",
                     position: "left",
                     to: "/docs/rules/no-invalid",
                 },
                 {
+                    label: "🛠️ Developer",
+                    position: "right",
+                    to: "/docs/developer/overview",
+                },
+                {
+                    href: `https://www.npmjs.com/package/${packageName}`,
+                    label: "📦 npm",
+                    position: "right",
+                },
+                {
                     href: `https://github.com/${organizationName}/${projectName}`,
-                    label: "GitHub",
+                    label: "🐙 GitHub",
                     position: "right",
                 },
             ],
@@ -355,7 +421,10 @@ const config = {
             theme: prismThemes.github,
         },
     } satisfies Preset.ThemeConfig,
-    themes: ["@docusaurus/theme-mermaid"],
+    themes: [
+        "@docusaurus/theme-mermaid",
+        ["@easyops-cn/docusaurus-search-local", localSearchOptions],
+    ],
     title: packageName,
     titleDelimiter: "|",
     trailingSlash: true,

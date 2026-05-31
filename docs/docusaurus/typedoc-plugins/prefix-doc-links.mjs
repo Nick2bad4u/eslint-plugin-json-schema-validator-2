@@ -42,5 +42,27 @@ function onPageEnd(page) {
         return;
     }
 
-    page.contents = prefixBareMarkdownFileLinksInMarkdown(page.contents);
+    page.contents = unlinkOmittedPluginTypeAliasLinks(
+        prefixBareMarkdownFileLinksInMarkdown(page.contents)
+    );
+}
+
+/**
+ * TypeDoc indexes this exported type alias but does not reliably emit a
+ * standalone page for it because it intersects an external `ESLint.Plugin`
+ * contract with the package-specific config shape. Keep the generated API docs
+ * link-clean by rendering references to that omitted page as plain text.
+ *
+ * @param {string} input
+ */
+function unlinkOmittedPluginTypeAliasLinks(input) {
+    return input
+        .replaceAll(
+            "[JsonSchemaValidatorPlugin](./type-aliases/JsonSchemaValidatorPlugin.md)",
+            "JsonSchemaValidatorPlugin"
+        )
+        .replaceAll(
+            "[`JsonSchemaValidatorPlugin`](../type-aliases/JsonSchemaValidatorPlugin.md)",
+            "`JsonSchemaValidatorPlugin`"
+        );
 }

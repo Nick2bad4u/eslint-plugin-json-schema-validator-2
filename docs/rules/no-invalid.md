@@ -12,7 +12,7 @@ since: "v0.1.0"
 
 - :gear: This rule is included in `configs.recommended`.
 
-## :book: Rule Details
+## 📚 Rule Details
 
 This rule validates the file with JSON Schema and reports errors.
 
@@ -22,45 +22,45 @@ blocks when `eslint-plugin-vue` is installed.
 
 <!-- eslint-skip -->
 
-```json5
+```json
 // File name is ".eslintrc.json"
 /* eslint json-schema-validator-2/no-invalid: 'error' */
 {
- overrides: [
+ "overrides": [
   {
-   files: ["good"],
+   "files": ["good"],
    /* ✓ GOOD */
-   extends: ["foo"],
+   "extends": ["foo"]
   },
   {
-   files: ["bad"],
+   "files": ["bad"],
    /* ✗ BAD */
-   extends: [42],
-  },
- ],
+   "extends": [42]
+  }
+ ]
 }
 ```
 
 ## Options
 
-```json5
+```json
 {
  "json-schema-validator-2/no-invalid": [
   "error",
   {
-   schemas: [
+   "schemas": [
     {
-     fileMatch: [".eslintrc.json"],
-     schema: {
+     "fileMatch": [".eslintrc.json"],
+     "schema": {
       /* JSON Schema Definition */
-     }, // or string
-    },
+     } // or string
+    }
    ],
-   useSchemastoreCatalog: true,
-   mergeSchemas: true, // or ["$schema", "options", "catalog"]
-   reportMode: "all", // or "most-specific"
-  },
- ],
+   "useSchemastoreCatalog": true,
+   "mergeSchemas": true, // or ["$schema", "options", "catalog"]
+   "reportMode": "all" // or "most-specific"
+  }
+ ]
 }
 ```
 
@@ -225,18 +225,18 @@ foo: bar
 </i18n>
 ```
 
-## :books: Further reading
+## 📖 Further reading
 
 - [User guide](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/docs/user-guide/index.md)
 - [Rule overview](./overview.md)
 - [JSON Schema](https://json-schema.org/)
 - [JSON Schema Store](https://www.schemastore.org/json/)
 
-## :rocket: Version
+## 🚀 Version
 
 This rule was introduced in eslint-plugin-json-schema-validator-2 v0.1.0
 
-## :mag: Implementation
+## 🔍 Implementation
 
 - [Rule source](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/src/rules/no-invalid.ts)
 - [Test source](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/test/src/rules/no-invalid.test.ts)

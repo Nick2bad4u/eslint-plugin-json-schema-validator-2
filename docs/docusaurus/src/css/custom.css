@@ -13,6 +13,8 @@
         "Inter var", "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
     --sb-accent-overview: #22c55e;
     --sb-accent-started: #0ea5e9;
+    --sb-accent-configs: #14b8a6;
+    --sb-accent-developer: #8b5cf6;
     --sb-accent-rules: #f97316;
     --sb-accent-api-overview: #6366f1;
     --sb-sidebar-hover-background: rgb(3 105 161 / 10%);
@@ -29,6 +31,8 @@
     --ifm-color-primary-lightest: #e0f2fe;
     --sb-accent-overview: #4ade80;
     --sb-accent-started: #38bdf8;
+    --sb-accent-configs: #2dd4bf;
+    --sb-accent-developer: #c4b5fd;
     --sb-accent-rules: #fb923c;
     --sb-accent-api-overview: #a5b4fc;
     --sb-sidebar-hover-background: rgb(56 189 248 / 16%);
@@ -74,10 +78,16 @@
 }
 
 .sb-doc-overview > .menu__link,
-.sb-doc-getting-started > .menu__link,
-.sb-cat-api-overview > .menu__list-item-collapsible .menu__link,
-.sb-cat-rules > .menu__list-item-collapsible .menu__link {
+.sb-doc-getting-started > .menu__link {
     border-inline-start: 4px solid transparent;
+    padding-inline-start: calc(var(--ifm-menu-link-padding-horizontal) - 4px);
+}
+
+.sb-cat-api-overview > .menu__list-item-collapsible .menu__link,
+.sb-cat-configs > .menu__list-item-collapsible .menu__link,
+.sb-cat-developer > .menu__list-item-collapsible .menu__link,
+.sb-cat-rules > .menu__list-item-collapsible .menu__link {
+    border-inline-start: 4px solid var(--sb-cat-accent);
     padding-inline-start: calc(var(--ifm-menu-link-padding-horizontal) - 4px);
 }
 
@@ -89,33 +99,31 @@
     border-inline-start-color: var(--sb-accent-started);
 }
 
-.sb-cat-api-overview > .menu__list-item-collapsible .menu__link {
-    border-inline-start-color: var(--sb-accent-api-overview);
+.sb-cat-api-overview {
+    --sb-cat-accent: var(--sb-accent-api-overview);
 }
 
-.sb-cat-rules > .menu__list-item-collapsible .menu__link {
-    border-inline-start-color: var(--sb-accent-rules);
+.sb-cat-configs {
+    --sb-cat-accent: var(--sb-accent-configs);
 }
 
-.sb-cat-api-overview .theme-doc-sidebar-item-link-level-2 > .menu__link,
+.sb-cat-developer {
+    --sb-cat-accent: var(--sb-accent-developer);
+}
+
+.sb-cat-rules {
+    --sb-cat-accent: var(--sb-accent-rules);
+}
+
 .sb-cat-api-overview .menu__list .menu__link,
-.sb-cat-rules .theme-doc-sidebar-item-link-level-2 > .menu__link,
+.sb-cat-configs .menu__list .menu__link,
+.sb-cat-developer .menu__list .menu__link,
 .sb-cat-rules .menu__list .menu__link {
-    border-inline-start: 3px solid transparent;
+    border-inline-start: 3px solid var(--sb-cat-accent);
     border-radius: 0.42rem;
     line-height: 1.375;
     margin-block: 0.08rem;
     padding-block: 0.28rem;
     padding-inline-start: calc(var(--ifm-menu-link-padding-horizontal) - 3px);
     text-wrap: pretty;
-}
-
-.sb-cat-api-overview .theme-doc-sidebar-item-link-level-2 > .menu__link,
-.sb-cat-api-overview .menu__list .menu__link {
-    border-inline-start-color: var(--sb-accent-api-overview);
-}
-
-.sb-cat-rules .theme-doc-sidebar-item-link-level-2 > .menu__link,
-.sb-cat-rules .menu__list .menu__link {
-    border-inline-start-color: var(--sb-accent-rules);
 }

@@ -15,8 +15,47 @@ const sidebars = {
             type: "doc",
         },
         {
+            className: "sb-cat-configs",
+            collapsed: false,
+            collapsible: true,
+            items: [
+                {
+                    id: "configs/base",
+                    label: "🟣 Base",
+                    type: "doc",
+                },
+                {
+                    id: "configs/recommended",
+                    label: "🟢 Recommended",
+                    type: "doc",
+                },
+                {
+                    id: "configs/frontmatter",
+                    label: "🔵 Frontmatter",
+                    type: "doc",
+                },
+                {
+                    id: "configs/flat-recommended",
+                    label: "⚠️ Flat/Recommended [deprecated]",
+                    type: "doc",
+                },
+                {
+                    id: "configs/flat-base",
+                    label: "⚠️ Flat/Base [deprecated]",
+                    type: "doc",
+                },
+                {
+                    id: "configs/flat-frontmatter",
+                    label: "⚠️ Flat/Frontmatter [deprecated]",
+                    type: "doc",
+                },
+            ],
+            label: "Configs",
+            type: "category",
+        },
+        {
             className: "sb-cat-rules",
-            collapsed: true,
+            collapsed: false,
             collapsible: true,
             items: [
                 {

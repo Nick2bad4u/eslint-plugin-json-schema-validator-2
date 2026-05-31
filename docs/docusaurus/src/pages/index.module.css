@@ -41,6 +41,7 @@
 .heroKicker {
     display: inline-flex;
     align-items: center;
+    gap: 0.46rem;
     padding: 0.34rem 0.68rem;
     border: 1px solid rgb(255 255 255 / 34%);
     border-radius: 999rem;
@@ -51,6 +52,16 @@
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+}
+
+.heroKicker::before {
+    display: inline-block;
+    border-radius: 999rem;
+    background: #22c55e;
+    block-size: 0.48rem;
+    box-shadow: 0 0 0 0.24rem rgb(34 197 94 / 18%);
+    content: "";
+    inline-size: 0.48rem;
 }
 
 .heroTitle {
@@ -87,11 +98,24 @@
 }
 
 .heroBadgeLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.44rem;
     margin: 0;
     color: #ffffff;
     font-size: 0.84rem;
     font-weight: 760;
     letter-spacing: 0.01em;
+}
+
+.heroBadgeLabel::before {
+    flex: 0 0 auto;
+    border-radius: 999rem;
+    background: linear-gradient(135deg, #38bdf8, #22c55e);
+    block-size: 0.48rem;
+    box-shadow: 0 0 0 0.24rem rgb(56 189 248 / 14%);
+    content: "";
+    inline-size: 0.48rem;
 }
 
 .heroBadgeDescription {
@@ -358,10 +382,11 @@
     display: inline-block;
     border-radius: 999rem;
     background: var(--card-accent-color);
-    block-size: 1.65rem;
+    block-size: 0.6rem;
     box-shadow: 0 0 0 0.32rem
         color-mix(in srgb, var(--card-accent-color) 14%, transparent);
-    inline-size: 0.32rem;
+    flex: 0 0 auto;
+    inline-size: 0.6rem;
 }
 
 .cardTitle {
