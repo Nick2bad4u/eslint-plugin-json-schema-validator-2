@@ -12,7 +12,9 @@ export default [...jsonSchemaValidator.configs.recommended];
 ```
 
 Use `configs.base` when you want parser setup without enabling the validation
-rule:
+rule. The recommended preset keeps `no-invalid` scoped to JSON, JSONC, JSON5,
+YAML, and TOML files; add your own override when you want to validate JavaScript
+exports or another custom file family:
 
 ```js
 export default [

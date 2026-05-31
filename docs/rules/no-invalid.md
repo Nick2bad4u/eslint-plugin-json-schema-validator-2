@@ -123,8 +123,12 @@ The rule prefers a normal YAML `$schema` property when one exists. The
 
 ### Schema cache settings
 
-Remote schemas are cached by default. Configure the shared plugin settings when
-you need a specific cache directory or time-to-live:
+Remote schemas are cached by default. The default cache uses
+`node_modules/.cache/eslint-plugin-json-schema-validator-2` when the plugin is
+installed under `node_modules`, and falls back to
+`.cache/eslint-plugin-json-schema-validator-2` in the ESLint current working
+directory. Configure the shared plugin settings when you need a specific cache
+directory or time-to-live:
 
 ```js
 export default [

@@ -30,7 +30,8 @@ The plugin exposes these configs:
 - `jsonSchemaValidator.configs.base` registers the JSON, YAML, and TOML parsers.
 - `jsonSchemaValidator.configs.frontmatter` registers the structured-data parsers
   plus a Markdown-family YAML frontmatter processor.
-- `jsonSchemaValidator.configs.recommended` adds `json-schema-validator-2/no-invalid`.
+- `jsonSchemaValidator.configs.recommended` adds `json-schema-validator-2/no-invalid`
+  for JSON, JSONC, JSON5, YAML, and TOML files.
 - `jsonSchemaValidator.configs["flat/base"]` is a compatibility alias for `base`.
 - `jsonSchemaValidator.configs["flat/frontmatter"]` is a compatibility alias for
   `frontmatter`.
@@ -177,9 +178,12 @@ export default [
 ];
 ```
 
-Remote SchemaStore and `$schema` downloads are cached under the plugin cache
-directory by default. Configure the shared cache if your CI needs a persistent
-or workspace-local cache:
+Remote SchemaStore and `$schema` downloads are cached in
+`node_modules/.cache/eslint-plugin-json-schema-validator-2` by default when the
+plugin is installed under `node_modules`. Source checkouts and unwritable package
+caches fall back to `.cache/eslint-plugin-json-schema-validator-2` under the
+ESLint current working directory. Configure the shared cache if your CI needs a
+specific persistent or workspace-local cache:
 
 ```js
 export default [

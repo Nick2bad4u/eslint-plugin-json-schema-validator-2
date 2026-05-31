@@ -43,7 +43,8 @@ This plugin provides configs:
 
 - `*.configs.base` ... Configuration to enable correct JSON, YAML and TOML parsing.
 - `*.configs.frontmatter` ... Above, plus a processor that extracts leading YAML frontmatter from Markdown, MDX and MDC files as virtual `*.frontmatter.yaml` files.
-- `*.configs.recommended` ... Above, plus rule to validate with JSON Schema.
+- `*.configs.recommended` ... Above, plus rule to validate JSON, JSONC, JSON5,
+  YAML, and TOML files with JSON Schema.
 
 See [the rule list](../rules/overview.md) and the
 [`no-invalid` reference](../rules/no-invalid.md) for every option this plugin
@@ -125,7 +126,7 @@ export default [
 ```
 
 - `cache` ... Settings for remote schema cache files.
-  - `directory` ... Cache directory. Relative paths resolve from the ESLint current working directory.
+  - `directory` ... Cache directory. Relative paths resolve from the ESLint current working directory. The default is `node_modules/.cache/eslint-plugin-json-schema-validator-2` when the plugin is installed under `node_modules`, with `.cache/eslint-plugin-json-schema-validator-2` as the workspace fallback.
   - `ttl` ... Cache time-to-live in milliseconds. The default is 30 days. Use `false` to keep cached entries without scheduling background refreshes.
 - `http` ... Settings to resolve schema URLs.
   - `getModulePath` ... Module path to `GET` the URL. The default implementation is [./src/utils/http-client/get-modules/http.ts](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/src/utils/http-client/get-modules/http.ts).

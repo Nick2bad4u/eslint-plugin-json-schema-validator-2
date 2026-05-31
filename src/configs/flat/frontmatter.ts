@@ -14,6 +14,7 @@ const frontmatter: Linter.Config[] = [
             "*.mdc",
             "**/*.mdc",
         ],
+        name: "json-schema-validator-2/frontmatter",
         processor: "json-schema-validator-2/frontmatter",
     },
 ];

@@ -2,6 +2,8 @@ import type { Linter } from "eslint";
 
 import { arrayFirst, arrayJoin, setHas } from "ts-extras";
 
+import * as packageMeta from "../meta.js";
+
 const YAML_FRONTMATTER_DELIMITER = "---";
 const YAML_FRONTMATTER_END_DELIMITERS = new Set(["---", "..."]);
 
@@ -13,6 +15,10 @@ interface ExtractedFrontmatter {
  * Processor that extracts leading YAML frontmatter into a virtual YAML file.
  */
 export const frontmatterProcessor: Linter.Processor<Linter.ProcessorFile> = {
+    meta: {
+        name: "json-schema-validator-2/frontmatter",
+        version: packageMeta.version,
+    },
     postprocess(messageLists) {
         return messageLists.flat();
     },

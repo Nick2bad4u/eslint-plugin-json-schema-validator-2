@@ -18,8 +18,9 @@ import jsonSchemaValidator from "eslint-plugin-json-schema-validator-2";
 export default [...jsonSchemaValidator.configs.recommended];
 ```
 
-The recommended preset registers parsers for JSON, YAML, and TOML files and
-enables `json-schema-validator-2/no-invalid` as a warning.
+The recommended preset registers parsers for JSON, JSONC, JSON5, YAML, and TOML
+files and enables `json-schema-validator-2/no-invalid` as a warning for those
+files.
 
 The complete option reference is in the
 [`no-invalid` rule docs](https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/no-invalid/).
@@ -88,8 +89,12 @@ export default [
 ];
 ```
 
-Remote schemas are cached automatically for 30 days. Configure the cache from
-shared settings when CI or local tooling needs a specific location:
+Remote schemas are cached automatically for 30 days. The default cache uses
+`node_modules/.cache/eslint-plugin-json-schema-validator-2` when the plugin is
+installed under `node_modules`, and falls back to
+`.cache/eslint-plugin-json-schema-validator-2` in the ESLint current working
+directory. Configure the cache from shared settings when CI or local tooling
+needs a specific location:
 
 ```js
 export default [

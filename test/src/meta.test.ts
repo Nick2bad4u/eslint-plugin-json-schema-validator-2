@@ -19,6 +19,28 @@ const expectedMeta = {
     namespace: "json-schema-validator-2",
     version: packageJson.version,
 };
+const expectedConfigNames = {
+    base: [
+        "json-schema-validator-2/base",
+        "json-schema-validator-2/base/json",
+        "json-schema-validator-2/base/yaml",
+        "json-schema-validator-2/base/toml",
+    ],
+    frontmatter: [
+        "json-schema-validator-2/base",
+        "json-schema-validator-2/base/json",
+        "json-schema-validator-2/base/yaml",
+        "json-schema-validator-2/base/toml",
+        "json-schema-validator-2/frontmatter",
+    ],
+    recommended: [
+        "json-schema-validator-2/base",
+        "json-schema-validator-2/base/json",
+        "json-schema-validator-2/base/yaml",
+        "json-schema-validator-2/base/toml",
+        "json-schema-validator-2/recommended",
+    ],
+} as const;
 const ruleEntries = Object.entries(plugin.rules) as [string, RuleModule][];
 
 interface RuleMetadataProblems {
@@ -94,6 +116,10 @@ function collectRuleMetadataProblems(): RuleMetadataProblems {
     };
 }
 
+function compareRuleIds(left: string, right: string): number {
+    return left.localeCompare(right);
+}
+
 function getExpectedDocsUrl(ruleName: string): string {
     return `https://nick2bad4u.github.io/eslint-plugin-json-schema-validator-2/docs/rules/${ruleName}`;
 }
@@ -126,6 +152,20 @@ function hasValidDocsMetadata([ruleName, ruleModule]: readonly [
 }
 
 describe("test for meta object", () => {
+    it("flat config objects should expose stable inspector names.", () => {
+        expect.assertions(3);
+
+        expect(plugin.configs.base.map((config) => config.name)).toStrictEqual(
+            expectedConfigNames.base
+        );
+        expect(
+            plugin.configs.frontmatter.map((config) => config.name)
+        ).toStrictEqual(expectedConfigNames.frontmatter);
+        expect(
+            plugin.configs.recommended.map((config) => config.name)
+        ).toStrictEqual(expectedConfigNames.recommended);
+    });
+
     it("a plugin should have a meta object.", () => {
         expect.assertions(4);
 
@@ -135,6 +175,15 @@ describe("test for meta object", () => {
         expect(plugin.meta.name).not.toBe(
             "eslint-plugin-json-schema-validator"
         );
+    });
+
+    it("processors should expose modern ESLint object metadata.", () => {
+        expect.assertions(1);
+
+        expect(plugin.processors?.frontmatter.meta).toStrictEqual({
+            name: "json-schema-validator-2/frontmatter",
+            version: expectedMeta.version,
+        });
     });
 
     it("all rules should expose complete modern ESLint metadata.", () => {
@@ -160,13 +209,13 @@ describe("test for meta object", () => {
         const configuredRecommendedRuleIds = plugin.configs.recommended
             .flatMap((config) => getRuleKeys(config.rules))
             .filter((ruleId) => ruleId.startsWith(`${expectedMeta.namespace}/`))
-            .toSorted();
+            .toSorted(compareRuleIds);
         const metadataRecommendedRuleIds = ruleEntries
             .filter(
                 ([, ruleModule]) => ruleModule.meta.docs.recommended === true
             )
             .map(([ruleName]) => `${expectedMeta.namespace}/${ruleName}`)
-            .toSorted();
+            .toSorted(compareRuleIds);
 
         expect(configuredRecommendedRuleIds).toStrictEqual(
             metadataRecommendedRuleIds

@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import { safeCastTo } from "ts-extras";
 import { describe, expect, it } from "vitest";
 
-import type { RuleContext } from "../../../src/types";
+import type {
+    JsonSchemaValidatorSettings,
+    RuleContext,
+} from "../../../src/types";
 
 import { loadJson, loadSchema } from "../../../src/utils/schema";
 
@@ -22,10 +25,31 @@ const INVALID_JSON_MODULE_PATH = path.resolve(
 const RELATIVE_STATIC_JSON_MODULE_PATH =
     "./test/src/utils/http-client/get-modules/static-json.mjs";
 const CACHE_DIRECTORY = path.join(REPO_ROOT, ".temp/schema-cache-test");
+const DEFAULT_WORKSPACE_CACHE_DIRECTORY = path.join(
+    REPO_ROOT,
+    ".cache",
+    "eslint-plugin-json-schema-validator-2"
+);
 const RELATIVE_CACHE_DIRECTORY = ".temp/schema-cache-relative-test";
 
 function createContext(
     overrides: Partial<RuleContext["settings"]["json-schema-validator-2"]> = {}
+): RuleContext {
+    return createContextWithSettings({
+        cache: {
+            directory: CACHE_DIRECTORY,
+            ttl: false,
+        },
+        http: {
+            getModulePath: STATIC_JSON_MODULE_PATH,
+            requestOptions: {},
+        },
+        ...overrides,
+    });
+}
+
+function createContextWithSettings(
+    settings: JsonSchemaValidatorSettings
 ): RuleContext {
     return safeCastTo<RuleContext>({
         cwd: REPO_ROOT,
@@ -35,17 +59,7 @@ function createContext(
         physicalFilename: path.join(TEST_DIR, "cache-test.json"),
         report: () => {},
         settings: {
-            "json-schema-validator-2": {
-                cache: {
-                    directory: CACHE_DIRECTORY,
-                    ttl: false,
-                },
-                http: {
-                    getModulePath: STATIC_JSON_MODULE_PATH,
-                    requestOptions: {},
-                },
-                ...overrides,
-            },
+            "json-schema-validator-2": settings,
         },
         sourceCode: {} as RuleContext["sourceCode"],
     });
@@ -96,6 +110,34 @@ describe("schema cache settings", () => {
         expect(
             fs.existsSync(
                 path.join(resolvedCacheDirectory, "example.com/cache-test.json")
+            )
+        ).toBe(true);
+    });
+
+    it("uses the workspace cache fallback when no cache directory is configured from a source checkout", () => {
+        expect.assertions(2);
+
+        fs.rmSync(DEFAULT_WORKSPACE_CACHE_DIRECTORY, {
+            force: true,
+            recursive: true,
+        });
+
+        const context = createContextWithSettings({
+            http: {
+                getModulePath: STATIC_JSON_MODULE_PATH,
+                requestOptions: {},
+            },
+        });
+
+        const data = loadJson("https://example.com/cache-test.json", context);
+
+        expect(data).toStrictEqual({ cached: true });
+        expect(
+            fs.existsSync(
+                path.join(
+                    DEFAULT_WORKSPACE_CACHE_DIRECTORY,
+                    "example.com/cache-test.json"
+                )
             )
         ).toBe(true);
     });

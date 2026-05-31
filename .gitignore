@@ -127,8 +127,6 @@ dist
 /docs/docusaurus/stylelintcache
 **/site-docs/developer/api/
 
-# cache
-.cached_schemastore
 temp/
 
 /yarn.lock

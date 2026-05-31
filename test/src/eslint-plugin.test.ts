@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import * as vueParser from "vue-eslint-parser";
 
+import { structuredDataFilePatterns } from "../../src/configs/flat/file-patterns";
 import plugin from "../../src/plugin";
 
 // -----------------------------------------------------------------------------
@@ -41,6 +42,7 @@ const FULL_PIPELINE_EXPECTED_VALID_FILES = [
     "src/valid/config.yml",
     "src/valid/page.md",
 ] as const;
+const NO_INVALID_RULE_ID = "json-schema-validator-2/no-invalid";
 
 function toFixturePath(filePath: string): string {
     return path
@@ -79,6 +81,19 @@ describe("integration with eslint-plugin-json-schema-validator-2", () => {
         expect(
             results.reduce((sum, result) => sum + result.errorCount, 0)
         ).toBe(0);
+    });
+
+    it("should scope the recommended validation rule to structured-data files", () => {
+        expect.assertions(2);
+
+        const recommendedRuleConfig = plugin.configs.recommended.find(
+            (config) => config.rules?.[NO_INVALID_RULE_ID] !== undefined
+        );
+
+        expect(recommendedRuleConfig?.files).toStrictEqual([
+            ...structuredDataFilePatterns,
+        ]);
+        expect(recommendedRuleConfig?.rules?.[NO_INVALID_RULE_ID]).toBe("warn");
     });
 
     it("should validate Markdown frontmatter through the frontmatter processor config", async () => {

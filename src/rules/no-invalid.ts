@@ -229,6 +229,7 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
     }),
     meta: {
         defaultOptions: [{}],
+        deprecated: false,
         docs: {
             categories: ["recommended"],
             default: "warn",

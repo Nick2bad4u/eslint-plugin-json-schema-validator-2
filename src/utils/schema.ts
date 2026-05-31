@@ -34,10 +34,7 @@ const moduleFilename =
           fileURLToPath(import.meta.url);
 const moduleDirname =
     typeof __dirname === "string" ? __dirname : path.dirname(moduleFilename);
-const DEFAULT_CACHE_DIRECTORY = path.join(
-    moduleDirname,
-    "../.cached_schemastore"
-);
+const WORKSPACE_CACHE_DIRECTORY = path.join(".cache", meta.name);
 
 interface CacheEntry {
     data: unknown;
@@ -76,6 +73,24 @@ export function loadSchema(
     return loadedSchema === null || isSchemaObject(loadedSchema)
         ? loadedSchema
         : null;
+}
+
+/**
+ * Find the nearest node_modules ancestor for the installed plugin package.
+ */
+function findNodeModulesDirectory(startDirectory: string): null | string {
+    let currentDirectory = path.resolve(startDirectory);
+    while (true) {
+        if (path.basename(currentDirectory) === "node_modules") {
+            return currentDirectory;
+        }
+
+        const parentDirectory = path.dirname(currentDirectory);
+        if (parentDirectory === currentDirectory) {
+            return null;
+        }
+        currentDirectory = parentDirectory;
+    }
 }
 
 /**
@@ -142,20 +157,23 @@ function loadJsonFromURL(
         jsonFileName = `${jsonFileName}.json`;
     }
     const cacheSettings = context.settings["json-schema-validator-2"]?.cache;
+    const configuredCacheDirectory = cacheSettings?.directory;
     const cacheDirectory = resolveCacheDirectory(
-        cacheSettings?.directory,
+        configuredCacheDirectory,
         context
     );
     const cacheTtl = cacheSettings?.ttl ?? DEFAULT_CACHE_TTL;
-    const jsonFilePath = path.join(cacheDirectory, jsonFileName);
+    const jsonFilePath = resolveWritableCacheFilePath(
+        cacheDirectory,
+        configuredCacheDirectory,
+        context,
+        jsonFileName
+    );
 
     const options = context.settings["json-schema-validator-2"]?.http;
 
     const httpRequestOptions = options?.requestOptions ?? {};
     const httpGetModulePath = resolvePath(options?.getModulePath, context);
-
-    // eslint-disable-next-line n/no-sync, security/detect-non-literal-fs-filename -- ESLint rules are synchronous and cache schemas under a deterministic plugin-owned path.
-    fs.mkdirSync(path.dirname(jsonFilePath), { recursive: true });
 
     let cacheEntry: CacheEntry | undefined;
     try {
@@ -356,12 +374,22 @@ function resolveCacheDirectory(
     context: RuleContext
 ): string {
     if (!isDefined(cacheDirectory) || cacheDirectory === "") {
-        return DEFAULT_CACHE_DIRECTORY;
+        return resolveDefaultCacheDirectory(context);
     }
     if (path.isAbsolute(cacheDirectory)) {
         return cacheDirectory;
     }
     return path.resolve(context.cwd, cacheDirectory);
+}
+
+/**
+ * Resolve the default schema cache directory.
+ */
+function resolveDefaultCacheDirectory(context: RuleContext): string {
+    const nodeModulesDirectory = findNodeModulesDirectory(moduleDirname);
+    return isPresent(nodeModulesDirectory)
+        ? path.join(nodeModulesDirectory, ".cache", meta.name)
+        : resolveWorkspaceCacheDirectory(context);
 }
 
 /**
@@ -378,6 +406,51 @@ function resolvePath(
         return path.join(context.cwd, modulePath);
     }
     return modulePath;
+}
+
+/**
+ * Resolve the workspace-local schema cache directory.
+ */
+function resolveWorkspaceCacheDirectory(context: RuleContext): string {
+    return path.resolve(context.cwd, WORKSPACE_CACHE_DIRECTORY);
+}
+
+/**
+ * Resolve a writable cache file path and create its containing directory.
+ *
+ * @throws When an explicit cache directory cannot be created, or when both the
+ * default package cache and workspace fallback cannot be created.
+ */
+function resolveWritableCacheFilePath(
+    cacheDirectory: string,
+    configuredCacheDirectory: string | undefined,
+    context: RuleContext,
+    jsonFileName: string
+): string {
+    const jsonFilePath = path.join(cacheDirectory, jsonFileName);
+    try {
+        // eslint-disable-next-line n/no-sync, security/detect-non-literal-fs-filename -- ESLint rules are synchronous and cache schemas under a deterministic plugin-owned path.
+        fs.mkdirSync(path.dirname(jsonFilePath), { recursive: true });
+        return jsonFilePath;
+    } catch (error) {
+        const fallbackCacheDirectory = resolveWorkspaceCacheDirectory(context);
+        const hasExplicitCacheDirectory =
+            isDefined(configuredCacheDirectory) &&
+            configuredCacheDirectory !== "";
+        if (
+            hasExplicitCacheDirectory ||
+            cacheDirectory === fallbackCacheDirectory
+        ) {
+            throw error;
+        }
+        const fallbackJsonFilePath = path.join(
+            fallbackCacheDirectory,
+            jsonFileName
+        );
+        // eslint-disable-next-line n/no-sync, security/detect-non-literal-fs-filename -- Falls back to a deterministic workspace-local cache when the package cache cannot be created.
+        fs.mkdirSync(path.dirname(fallbackJsonFilePath), { recursive: true });
+        return fallbackJsonFilePath;
+    }
 }
 
 /**

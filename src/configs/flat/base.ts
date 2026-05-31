@@ -5,10 +5,16 @@ import * as tomlParser from "toml-eslint-parser";
 import * as yamlParser from "yaml-eslint-parser";
 
 import { pluginCore } from "../../plugin-core.js";
+import {
+    jsonFilePatterns,
+    tomlFilePatterns,
+    yamlFilePatterns,
+} from "./file-patterns.js";
 
 /** Base flat config that wires parsers for structured data files. */
 const base: Linter.Config[] = [
     {
+        name: "json-schema-validator-2/base",
         plugins: {
             get "json-schema-validator-2"(): ESLint.Plugin {
                 return pluginCore;
@@ -16,17 +22,11 @@ const base: Linter.Config[] = [
         },
     },
     {
-        files: [
-            "*.json",
-            "**/*.json",
-            "*.json5",
-            "**/*.json5",
-            "*.jsonc",
-            "**/*.jsonc",
-        ],
+        files: [...jsonFilePatterns],
         languageOptions: {
             parser: jsoncParser,
         },
+        name: "json-schema-validator-2/base/json",
         rules: {
             "no-unused-expressions": "off",
             "no-unused-vars": "off",
@@ -35,15 +35,11 @@ const base: Linter.Config[] = [
         },
     },
     {
-        files: [
-            "*.yaml",
-            "**/*.yaml",
-            "*.yml",
-            "**/*.yml",
-        ],
+        files: [...yamlFilePatterns],
         languageOptions: {
             parser: yamlParser,
         },
+        name: "json-schema-validator-2/base/yaml",
         rules: {
             // ESLint core rules known to cause problems with YAML.
             "no-irregular-whitespace": "off",
@@ -52,10 +48,11 @@ const base: Linter.Config[] = [
         },
     },
     {
-        files: ["*.toml", "**/*.toml"],
+        files: [...tomlFilePatterns],
         languageOptions: {
             parser: tomlParser,
         },
+        name: "json-schema-validator-2/base/toml",
         rules: {
             // ESLint core rules known to cause problems with TOML.
             "no-irregular-whitespace": "off",

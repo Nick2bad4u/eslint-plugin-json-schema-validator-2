@@ -18,34 +18,44 @@ export type JsonSchemaValidatorConfigName =
     | "frontmatter"
     | "recommended";
 
+/** Complete plugin object exported by this package. */
+export interface JsonSchemaValidatorPlugin {
+    configs: {
+        [configName: string]: Linter.Config[];
+        base: Linter.Config[];
+        "flat/base": Linter.Config[];
+        "flat/frontmatter": Linter.Config[];
+        "flat/recommended": Linter.Config[];
+        frontmatter: Linter.Config[];
+        recommended: Linter.Config[];
+    };
+    meta: {
+        name: string;
+        namespace: "json-schema-validator-2";
+        version: string;
+    };
+    processors: {
+        frontmatter: Linter.Processor;
+    };
+    rules: Record<
+        JsonSchemaValidatorRuleName,
+        NonNullable<ESLint.Plugin["rules"]>[string]
+    >;
+}
+
 /**
  * Fully-qualified rule IDs exported by the plugin.
- *
- * @ignore
  */
 export type JsonSchemaValidatorRuleId =
     `json-schema-validator-2/${JsonSchemaValidatorRuleName}`;
 
 /**
  * Short rule names exported by the plugin.
- *
- * @ignore
  */
 export type JsonSchemaValidatorRuleName = "no-invalid";
 
-type JsonSchemaValidatorConfigs = Record<
-    JsonSchemaValidatorConfigName,
-    Linter.Config[]
->;
-
-type JsonSchemaValidatorPlugin = ESLint.Plugin & {
-    configs: JsonSchemaValidatorConfigs;
-    meta: typeof pluginCore.meta;
-    rules: typeof pluginCore.rules;
-};
-
 /** Flat configs exposed through the plugin object. */
-const configs: JsonSchemaValidatorConfigs = {
+const configs: JsonSchemaValidatorPlugin["configs"] = {
     base: baseConfig,
     "flat/base": baseConfig,
     "flat/frontmatter": frontmatterConfig,
@@ -56,9 +66,11 @@ const configs: JsonSchemaValidatorConfigs = {
 
 /** ESLint plugin object. */
 const plugin: JsonSchemaValidatorPlugin = {
-    ...pluginCore,
     configs,
-};
+    meta: pluginCore.meta,
+    processors: pluginCore.processors,
+    rules: pluginCore.rules,
+} satisfies ESLint.Plugin;
 
 /** Plugin package metadata exposed for ESLint. */
 export const meta: JsonSchemaValidatorPlugin["meta"] = plugin.meta;
