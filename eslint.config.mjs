@@ -9,6 +9,10 @@ const config = [
     ...baseConfig,
 
     {
+        ignores: ["docs/docusaurus/static/img/coverage.json"],
+        name: "Local Generated Documentation Artifacts",
+    },
+    {
         files: ["docs/docusaurus/src/pages/index.tsx"],
         name: "Local Docusaurus Root Page",
         rules: {

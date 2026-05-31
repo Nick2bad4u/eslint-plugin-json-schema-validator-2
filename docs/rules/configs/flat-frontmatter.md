@@ -3,8 +3,6 @@ title: flat/frontmatter
 description: Compatibility alias for the frontmatter flat config.
 ---
 
-# `configs["flat/frontmatter"]`
-
 `configs["flat/frontmatter"]` is a compatibility alias for
 `configs.frontmatter`.
 

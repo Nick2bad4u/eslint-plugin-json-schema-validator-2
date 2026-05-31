@@ -3,8 +3,6 @@ title: frontmatter
 description: What the frontmatter flat config enables.
 ---
 
-# `configs.frontmatter`
-
 Use `configs.frontmatter` when you want ESLint to extract leading YAML
 frontmatter from Markdown-family files.
 

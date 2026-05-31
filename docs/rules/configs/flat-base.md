@@ -3,8 +3,6 @@ title: flat/base
 description: Compatibility alias for the base flat config.
 ---
 
-# `configs["flat/base"]`
-
 `configs["flat/base"]` is a compatibility alias for `configs.base`.
 
 ```js

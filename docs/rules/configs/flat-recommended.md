@@ -3,8 +3,6 @@ title: flat/recommended
 description: Compatibility alias for the recommended flat config.
 ---
 
-# `configs["flat/recommended"]`
-
 `configs["flat/recommended"]` is a compatibility alias for
 `configs.recommended`.
 

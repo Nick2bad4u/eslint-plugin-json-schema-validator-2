@@ -3,8 +3,6 @@ title: base
 description: What the base flat config wires into ESLint.
 ---
 
-# `configs.base`
-
 Use `configs.base` when you want parser and plugin setup without enabling the
 validation rule.
 

@@ -3,8 +3,6 @@ title: Developer
 description: Developer-facing references for plugin exports and generated API docs.
 ---
 
-# Developer
-
 Use this section when you need the package's public TypeScript surface rather
 than end-user setup guidance.
 

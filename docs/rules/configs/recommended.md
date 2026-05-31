@@ -3,8 +3,6 @@ title: recommended
 description: What the recommended flat config enables.
 ---
 
-# `configs.recommended`
-
 Use `configs.recommended` when you want the normal plugin behavior for
 structured data files.
 

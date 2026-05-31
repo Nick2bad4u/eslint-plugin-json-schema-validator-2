@@ -37,13 +37,11 @@ import {
 const CATALOG_URL = "https://www.schemastore.org/api/json/catalog.json";
 const YAML_SCHEMA_COMMENT_PATTERN =
     /^\s*yaml-language-server:\s*\$schema=(?<schema>\S+)\s*$/v;
-/* eslint-disable perfectionist/sort-arrays -- Order encodes schema merge precedence. */
 const SCHEMA_KINDS = [
     "$schema",
     "options",
     "catalog",
 ] as const satisfies readonly SchemaKind[];
-/* eslint-enable perfectionist/sort-arrays -- Re-enable array sorting after precedence tuple. */
 
 interface Cache {
     validators: null | Validator[];
