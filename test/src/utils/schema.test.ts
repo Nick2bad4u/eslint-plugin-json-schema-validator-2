@@ -10,6 +10,7 @@ import type {
 } from "../../../src/types";
 
 import { loadJson, loadSchema } from "../../../src/utils/schema";
+import { compile } from "../../../src/utils/validator-factory";
 
 // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.dirname is not available across the configured Node range.
 const TEST_DIR = fileURLToPath(new URL(".", import.meta.url));
@@ -172,7 +173,7 @@ describe("schema cache settings", () => {
         });
     });
 
-    it("normalizes VS Code schema URLs and removes empty enum arrays from known schemas", () => {
+    it("normalizes VS Code schema URLs and removes empty enum arrays", () => {
         expect.assertions(1);
 
         const cacheDirectory = path.join(
@@ -211,7 +212,82 @@ describe("schema cache settings", () => {
         });
     });
 
-    it("loads VS Code schema URLs that already include the JSON extension", () => {
+    it("removes empty enum arrays from workspace settings schemas", () => {
+        expect.assertions(1);
+
+        const cacheDirectory = path.join(
+            ".temp",
+            "schema-cache-vscode-workspace-test"
+        );
+        fs.rmSync(path.join(REPO_ROOT, cacheDirectory), {
+            force: true,
+            recursive: true,
+        });
+        const context = createContext({
+            cache: {
+                directory: cacheDirectory,
+                ttl: false,
+            },
+        });
+        const data = loadJson("vscode://schemas/settings/workspace", context);
+
+        expect(data).toStrictEqual({
+            allOf: [
+                {
+                    properties: {
+                        "editor.defaultFormatter": {},
+                    },
+                    type: "object",
+                },
+            ],
+            properties: {
+                "workbench.externalUriOpeners": {
+                    additionalProperties: {
+                        anyOf: [
+                            {},
+                            {
+                                properties: {
+                                    nested: {},
+                                },
+                                type: "object",
+                            },
+                        ],
+                    },
+                },
+            },
+            type: "object",
+        });
+    });
+
+    it("compiles workspace settings schemas after VS Code compatibility cleanup", () => {
+        expect.assertions(1);
+
+        const cacheDirectory = path.join(
+            ".temp",
+            "schema-cache-vscode-workspace-compile-test"
+        );
+        fs.rmSync(path.join(REPO_ROOT, cacheDirectory), {
+            force: true,
+            recursive: true,
+        });
+        const context = createContext({
+            cache: {
+                directory: cacheDirectory,
+                ttl: false,
+            },
+        });
+        const schemaPath = "vscode://schemas/settings/workspace";
+        const schema = loadSchema(schemaPath, context);
+
+        expect(() => {
+            if (schema === null) {
+                throw new TypeError("Expected workspace settings schema.");
+            }
+            compile(schema, schemaPath, context);
+        }).not.toThrow();
+    });
+
+    it("sanitizes VS Code schema URLs that already include the JSON extension", () => {
         expect.assertions(1);
 
         const context = createContext();
@@ -225,14 +301,10 @@ describe("schema cache settings", () => {
                 "workbench.externalUriOpeners": {
                     additionalProperties: {
                         anyOf: [
-                            {
-                                enum: [],
-                            },
+                            {},
                             {
                                 properties: {
-                                    nested: {
-                                        enum: [],
-                                    },
+                                    nested: {},
                                 },
                                 type: "object",
                             },

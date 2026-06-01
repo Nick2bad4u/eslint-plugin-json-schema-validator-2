@@ -67,6 +67,41 @@ const schemas = new Map([
             type: "object",
         },
     ],
+    [
+        "https://raw.githubusercontent.com/ota-meshi/extract-vscode-schemas/main/resources/vscode/schemas/settings/workspace.json",
+        {
+            allOf: [
+                {
+                    properties: {
+                        "editor.defaultFormatter": {
+                            enum: [],
+                        },
+                    },
+                    type: "object",
+                },
+            ],
+            properties: {
+                "workbench.externalUriOpeners": {
+                    additionalProperties: {
+                        anyOf: [
+                            {
+                                enum: [],
+                            },
+                            {
+                                properties: {
+                                    nested: {
+                                        enum: [],
+                                    },
+                                },
+                                type: "object",
+                            },
+                        ],
+                    },
+                },
+            },
+            type: "object",
+        },
+    ],
 ]);
 
 /**

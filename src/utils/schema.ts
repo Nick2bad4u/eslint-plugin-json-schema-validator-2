@@ -94,20 +94,6 @@ function findNodeModulesDirectory(startDirectory: string): null | string {
 }
 
 /**
- * Resolve a nested property path from unknown JSON-like data.
- */
-function getNestedProperty(value: unknown, keys: readonly string[]): unknown {
-    let current = value;
-    for (const key of keys) {
-        if (!isRecord(current)) {
-            return undefined;
-        }
-        current = current[key];
-    }
-    return current;
-}
-
-/**
  * Check whether parsed cache data has the expected wrapper shape.
  */
 function isCacheEntry(value: unknown): value is CacheEntry {
@@ -254,28 +240,7 @@ function loadJsonInternalWithEdit(
         }
         return loadJsonFromURL(url, context, (orig) => {
             const result = isDefined(edit) ? edit(orig) : orig;
-            if (jsonPath === "vscode://schemas/settings/machine") {
-                // Adjust `vscode://schemas/settings/machine` resource to avoid bugs.
-                const target = getNestedProperty(result, [
-                    "properties",
-                    "workbench.externalUriOpeners",
-                    "additionalProperties",
-                    "anyOf",
-                ]);
-                removeEmptyEnum(target);
-            } else if (jsonPath === "vscode://schemas/launch") {
-                // Adjust `vscode://schemas/launch` resource to avoid bugs.
-                const target = getNestedProperty(result, [
-                    "properties",
-                    "compounds",
-                    "items",
-                    "properties",
-                    "configurations",
-                    "items",
-                    "oneOf",
-                ]);
-                removeEmptyEnum(target);
-            }
+            sanitizeVscodeSchema(result);
             return result;
         });
     }
@@ -337,7 +302,7 @@ function postProcess(
     return data;
 }
 
-/** Remove empty `enum:` schema */
+/** Remove empty `enum:` schema placeholders from a JSON-like value. */
 function removeEmptyEnum(target: unknown): void {
     if (!isPresent(target)) return;
     if (Array.isArray(target)) {
@@ -352,17 +317,9 @@ function removeEmptyEnum(target: unknown): void {
     const schemaEnum = target["enum"];
     if (Array.isArray(schemaEnum) && isEmpty(schemaEnum)) {
         delete target["enum"];
-        return;
     }
-    const { properties } = target;
-    if (
-        target["type"] === "object" &&
-        isPresent(properties) &&
-        isRecord(properties)
-    ) {
-        for (const key of objectKeys(properties)) {
-            removeEmptyEnum(properties[key]);
-        }
+    for (const key of objectKeys(target)) {
+        removeEmptyEnum(target[key]);
     }
 }
 
@@ -451,6 +408,17 @@ function resolveWritableCacheFilePath(
         fs.mkdirSync(path.dirname(fallbackJsonFilePath), { recursive: true });
         return fallbackJsonFilePath;
     }
+}
+
+/**
+ * Normalize VS Code schema resources for standalone AJV compilation.
+ *
+ * VS Code schemas may contain editor-internal empty enum placeholders. AJV
+ * correctly rejects those as schemas, so strip them only on this compatibility
+ * path instead of weakening validation for arbitrary user schemas.
+ */
+function sanitizeVscodeSchema(schema: unknown): void {
+    removeEmptyEnum(schema);
 }
 
 /**
