@@ -26,6 +26,9 @@ const debug = debugBuilder(
 );
 
 const DEFAULT_CACHE_TTL = 1000 * 60 * 60 * 24 * 30; // 30 days
+const DYNAMIC_VSCODE_SETTING_NAMES = new Set<string>([
+    "editor.defaultFormatter",
+]);
 const RELOADING = new Set<string>();
 const moduleFilename =
     typeof __filename === "string"
@@ -302,6 +305,32 @@ function postProcess(
     return data;
 }
 
+/** Remove enum constraints from extension-dependent VS Code setting schemas. */
+function removeDynamicVscodeSettingEnums(target: unknown): void {
+    if (!isPresent(target)) return;
+    if (Array.isArray(target)) {
+        for (const e of target) {
+            removeDynamicVscodeSettingEnums(e);
+        }
+        return;
+    }
+    if (!isRecord(target)) {
+        return;
+    }
+    const { properties } = target;
+    if (isRecord(properties)) {
+        for (const key of objectKeys(properties)) {
+            const value = properties[key];
+            if (setHas(DYNAMIC_VSCODE_SETTING_NAMES, key)) {
+                removeEnumConstraint(value);
+            }
+        }
+    }
+    for (const key of objectKeys(target)) {
+        removeDynamicVscodeSettingEnums(target[key]);
+    }
+}
+
 /** Remove empty `enum:` schema placeholders from a JSON-like value. */
 function removeEmptyEnum(target: unknown): void {
     if (!isPresent(target)) return;
@@ -320,6 +349,26 @@ function removeEmptyEnum(target: unknown): void {
     }
     for (const key of objectKeys(target)) {
         removeEmptyEnum(target[key]);
+    }
+}
+
+/** Remove every enum constraint from a schema branch. */
+function removeEnumConstraint(target: unknown): void {
+    if (!isPresent(target)) return;
+    if (Array.isArray(target)) {
+        for (const e of target) {
+            removeEnumConstraint(e);
+        }
+        return;
+    }
+    if (!isRecord(target)) {
+        return;
+    }
+    delete target["enum"];
+    delete target["enumDescriptions"];
+    delete target["markdownEnumDescriptions"];
+    for (const key of objectKeys(target)) {
+        removeEnumConstraint(target[key]);
     }
 }
 
@@ -418,6 +467,7 @@ function resolveWritableCacheFilePath(
  * path instead of weakening validation for arbitrary user schemas.
  */
 function sanitizeVscodeSchema(schema: unknown): void {
+    removeDynamicVscodeSettingEnums(schema);
     removeEmptyEnum(schema);
 }
 

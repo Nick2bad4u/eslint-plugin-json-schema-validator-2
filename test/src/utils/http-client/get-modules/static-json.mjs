@@ -74,12 +74,38 @@ const schemas = new Map([
                 {
                     properties: {
                         "editor.defaultFormatter": {
-                            enum: [],
+                            enum: [
+                                null,
+                                "vscode.markdown-language-features",
+                            ],
+                            enumDescriptions: [
+                                "None",
+                                "Built-in Markdown formatter",
+                            ],
+                            type: ["string", "null"],
                         },
                     },
                     type: "object",
                 },
             ],
+            patternProperties: {
+                "^\\[.*\\]$": {
+                    properties: {
+                        "editor.defaultFormatter": {
+                            enum: [
+                                null,
+                                "vscode.markdown-language-features",
+                            ],
+                            enumDescriptions: [
+                                "None",
+                                "Built-in Markdown formatter",
+                            ],
+                            type: ["string", "null"],
+                        },
+                    },
+                    type: "object",
+                },
+            },
             properties: {
                 "workbench.externalUriOpeners": {
                     additionalProperties: {

@@ -8,6 +8,7 @@ import type {
     JsonSchemaValidatorSettings,
     RuleContext,
 } from "../../../src/types";
+import type { SchemaObject } from "../../../src/utils/types";
 
 import { loadJson, loadSchema } from "../../../src/utils/schema";
 import { compile } from "../../../src/utils/validator-factory";
@@ -32,6 +33,14 @@ const DEFAULT_WORKSPACE_CACHE_DIRECTORY = path.join(
     "eslint-plugin-json-schema-validator-2"
 );
 const RELATIVE_CACHE_DIRECTORY = ".temp/schema-cache-relative-test";
+
+function assertLoadedSchema(
+    schema: null | SchemaObject
+): asserts schema is SchemaObject {
+    if (schema === null) {
+        throw new TypeError("Expected workspace settings schema.");
+    }
+}
 
 function createContext(
     overrides: Partial<RuleContext["settings"]["json-schema-validator-2"]> = {}
@@ -235,11 +244,23 @@ describe("schema cache settings", () => {
             allOf: [
                 {
                     properties: {
-                        "editor.defaultFormatter": {},
+                        "editor.defaultFormatter": {
+                            type: ["string", "null"],
+                        },
                     },
                     type: "object",
                 },
             ],
+            patternProperties: {
+                "^\\[.*\\]$": {
+                    properties: {
+                        "editor.defaultFormatter": {
+                            type: ["string", "null"],
+                        },
+                    },
+                    type: "object",
+                },
+            },
             properties: {
                 "workbench.externalUriOpeners": {
                     additionalProperties: {
@@ -278,13 +299,16 @@ describe("schema cache settings", () => {
         });
         const schemaPath = "vscode://schemas/settings/workspace";
         const schema = loadSchema(schemaPath, context);
+        assertLoadedSchema(schema);
+        const validate = compile(schema, schemaPath, context);
 
-        expect(() => {
-            if (schema === null) {
-                throw new TypeError("Expected workspace settings schema.");
-            }
-            compile(schema, schemaPath, context);
-        }).not.toThrow();
+        expect(
+            validate({
+                "[markdown]": {
+                    "editor.defaultFormatter": "unifiedjs.vscode-remark",
+                },
+            })
+        ).toStrictEqual([]);
     });
 
     it("sanitizes VS Code schema URLs that already include the JSON extension", () => {
