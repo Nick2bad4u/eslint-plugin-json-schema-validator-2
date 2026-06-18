@@ -27,7 +27,7 @@ interface ResponseState {
 }
 
 /**
- * GET Method using http modules.
+ * GET Method using HTTP modules.
  */
 export default async function get(
     url: string,
@@ -134,7 +134,7 @@ function handleResponseEnd(res: IncomingMessage, state: ResponseState): void {
             return;
         }
         try {
-            const redirectUrl = new URL(location, state.url).toString();
+            const redirectUrl = new URL(location, state.url).href;
             state.resolve(
                 get0(redirectUrl, state.options, state.redirectCount + 1)
             );

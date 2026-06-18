@@ -13,18 +13,16 @@ import { loadTestCases } from "../../utils/utils";
 type TestedRuleModule = Parameters<RuleTester["run"]>[1];
 
 const parserWithoutServices = {
-    parseForESLint(code: string) {
-        return {
-            ast: espree.parse(code, {
-                comment: true,
-                ecmaVersion: 2020,
-                loc: true,
-                range: true,
-                sourceType: "module",
-                tokens: true,
-            }),
-        };
-    },
+    parseForESLint: (code: string) => ({
+        ast: espree.parse(code, {
+            comment: true,
+            ecmaVersion: 2020,
+            loc: true,
+            range: true,
+            sourceType: "module",
+            tokens: true,
+        }),
+    }),
 };
 
 // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.dirname is not available across the configured Node range.
@@ -47,7 +45,6 @@ const tester = new RuleTester({
     },
 });
 
-// eslint-disable-next-line vitest/require-hook -- RuleTester registers its own Vitest test cases at module load time.
 tester.run(
     "no-invalid",
     safeCastTo<TestedRuleModule>(rule),

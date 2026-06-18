@@ -210,7 +210,7 @@ function prefixIfBareRelativeMarkdownFile(url) {
         return url;
     }
 
-    // Ignore any explicit scheme (http:, https:, mailto:, vscode:, etc.).
+    // Ignore any explicit scheme (HTTP:, HTTPS:, mailto:, VS Code:, etc.).
     if (SCHEME_RE.test(trimmed)) {
         return url;
     }

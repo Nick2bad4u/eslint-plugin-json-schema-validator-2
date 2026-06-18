@@ -86,30 +86,26 @@ function createAnalysisRule(
     onResult: (output: AnalyzedOutput) => void
 ): Rule.RuleModule {
     const ruleModule = {
-        create(context: Rule.RuleContext) {
-            return {
-                ExportDefaultDeclaration(
-                    node: AST.ESLintExportDefaultDeclaration
-                ) {
-                    const declarationRange = node.declaration.range;
-                    const analyzedAst = analyzeJsAST(
-                        node.declaration as never,
-                        declarationRange,
-                        context as unknown as RuleContext
-                    );
-                    if (analyzedAst === null) {
-                        return;
-                    }
+        create: (context: Rule.RuleContext) => ({
+            ExportDefaultDeclaration(node: AST.ESLintExportDefaultDeclaration) {
+                const declarationRange = node.declaration.range;
+                const analyzedAst = analyzeJsAST(
+                    node.declaration as never,
+                    declarationRange,
+                    context as unknown as RuleContext
+                );
+                if (analyzedAst === null) {
+                    return;
+                }
 
-                    onResult(
-                        toOutput(
-                            analyzedAst,
-                            context.sourceCode as unknown as SourceCode
-                        )
-                    );
-                },
-            };
-        },
+                onResult(
+                    toOutput(
+                        analyzedAst,
+                        context.sourceCode as unknown as SourceCode
+                    )
+                );
+            },
+        }),
     };
 
     return ruleModule as unknown as Rule.RuleModule;

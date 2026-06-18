@@ -153,7 +153,7 @@ function compositingVisitors(
 }
 
 /**
- * Composes a rule visitor for a Vue custom block.
+ * Composes a rule visitor for a Vue.js custom block.
  */
 function createCustomBlockRule(
     rule: RuleDefinition,
@@ -176,7 +176,7 @@ function createCustomBlockRule(
 }
 
 /**
- * Gets file name of a Vue custom block.
+ * Gets file name of a Vue.js custom block.
  */
 function getBlockFileName(
     filename: string,
@@ -203,7 +203,7 @@ function getBlockFileName(
 }
 
 /**
- * Extracts Vue parser custom-block visitor support when available.
+ * Extracts Vue.js parser custom-block visitor support when available.
  */
 function getDefineCustomBlocksVisitor(
     sourceCode: Rule.RuleContext["sourceCode"]
@@ -217,7 +217,7 @@ function getDefineCustomBlocksVisitor(
 }
 
 /**
- * Checks whether parser services support Vue custom blocks.
+ * Checks whether parser services support Vue.js custom blocks.
  */
 function hasCustomBlockParserServices(
     parserServices: unknown

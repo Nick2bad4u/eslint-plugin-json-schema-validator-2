@@ -74,10 +74,7 @@ const schemas = new Map([
                 {
                     properties: {
                         "editor.defaultFormatter": {
-                            enum: [
-                                null,
-                                "vscode.markdown-language-features",
-                            ],
+                            enum: [null, "vscode.markdown-language-features"],
                             enumDescriptions: [
                                 "None",
                                 "Built-in Markdown formatter",
@@ -92,10 +89,7 @@ const schemas = new Map([
                 "^\\[.*\\]$": {
                     properties: {
                         "editor.defaultFormatter": {
-                            enum: [
-                                null,
-                                "vscode.markdown-language-features",
-                            ],
+                            enum: [null, "vscode.markdown-language-features"],
                             enumDescriptions: [
                                 "None",
                                 "Built-in Markdown formatter",

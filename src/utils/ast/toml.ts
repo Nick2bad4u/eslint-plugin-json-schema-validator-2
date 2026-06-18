@@ -111,7 +111,7 @@ export function getTOMLNodeFromPath(
  */
 function getMatchType(paths: string[], keys: (number | string)[]): MatchType {
     if (keys.length <= paths.length) {
-        if (!keys.every((key, index) => String(key) === String(paths[index]))) {
+        if (keys.some((key, index) => String(key) !== String(paths[index]))) {
             return MatchType.notMatch;
         }
         return keys.length === paths.length

@@ -1,7 +1,5 @@
 import nickTwoBadFourU from "eslint-config-nick2bad4u";
 
-import plugin from "./plugin.mjs";
-
 const baseConfig = nickTwoBadFourU.configs.all;
 
 /** @type {import("eslint").Linter.Config[]} */
@@ -31,6 +29,8 @@ const config = [
         name: "Local Docusaurus Config Environment",
         rules: {
             "n/no-process-env": "off",
+            "unicorn/no-unreadable-new-expression": "off",
+            "unicorn/prefer-temporal": "off",
         },
     },
     {
@@ -50,7 +50,51 @@ const config = [
         name: "Local TypeDoc Runtime Plugin JavaScript",
         rules: {
             "@typescript-eslint/explicit-module-boundary-types": "off",
+            "@typescript-eslint/no-unsafe-argument": "off",
+            "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unsafe-call": "off",
+            "@typescript-eslint/no-unsafe-member-access": "off",
+            "@typescript-eslint/no-unsafe-return": "off",
+            "@typescript-eslint/prefer-nullish-coalescing": "off",
+            "@typescript-eslint/restrict-template-expressions": "off",
+            "@typescript-eslint/strict-boolean-expressions": "off",
             "import-x/extensions": "off",
+            "unicorn/comment-content": "off",
+            "unicorn/no-break-in-nested-loop": "off",
+            "unicorn/prefer-includes-over-repeated-comparisons": "off",
+            "unicorn/prefer-minimal-ternary": "off",
+            "unicorn/prefer-ternary": "off",
+        },
+    },
+    {
+        files: [
+            "src/**/*.{ts,tsx,mts,cts}",
+            "test/**/*.{ts,tsx,mts,cts}",
+            "vite.config.ts",
+        ],
+        name: "Local Parser and Test Implementation Compatibility",
+        rules: {
+            "unicorn/consistent-compound-words": "off",
+            "unicorn/max-nested-calls": "off",
+            "unicorn/no-declarations-before-early-exit": "off",
+            "unicorn/no-duplicate-loops": "off",
+            "unicorn/no-top-level-side-effects": "off",
+            "unicorn/no-unreadable-new-expression": "off",
+            "unicorn/no-unsafe-string-replacement": "off",
+            "unicorn/prefer-array-last-methods": "off",
+            "unicorn/prefer-includes-over-repeated-comparisons": "off",
+            "unicorn/prefer-minimal-ternary": "off",
+            "unicorn/prefer-number-coercion": "off",
+            "unicorn/try-complexity": "off",
+        },
+    },
+    {
+        files: ["test/src/utils/http-client/get-modules/*.{cjs,mjs}"],
+        name: "Local Fixture Runtime Module Compatibility",
+        rules: {
+            "@typescript-eslint/no-unsafe-argument": "off",
+            "@typescript-eslint/restrict-template-expressions": "off",
+            "unicorn/comment-content": "off",
         },
     },
     {
@@ -97,13 +141,6 @@ const config = [
         name: "Local Runtime JSON Module Imports",
         rules: {
             "import-x/extensions": "off",
-        },
-    },
-    {
-        files: ["src/**/*.{ts,tsx,mts,cts}"],
-        name: "Local JSON Schema Validator",
-        plugins: {
-            "json-schema-validator-2": plugin,
         },
     },
 ];

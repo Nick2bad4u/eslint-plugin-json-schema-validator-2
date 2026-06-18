@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { themes as prismThemes } from "prism-react-renderer";
 
-const environment = globalThis.process.env;
+const environment = process.env;
 const baseUrl =
     environment["DOCUSAURUS_BASE_URL"] ??
     "/eslint-plugin-json-schema-validator-2/";
@@ -25,7 +25,7 @@ const projectBlogDescription = `Updates and practical guidance for ${packageName
 const projectKeywords =
     "eslint, eslint-plugin, json schema, schemastore, yaml, toml, flat config";
 const socialCardImagePath = "img/logo.png";
-const socialCardImageUrl = new URL(socialCardImagePath, siteUrl).toString();
+const socialCardImageUrl = new URL(socialCardImagePath, siteUrl).href;
 const currentYear = new Date().getFullYear().toString();
 const modernEnhancementsClientModulePath = fileURLToPath(
     new URL("src/js/modern-enhancements.ts", import.meta.url)
@@ -77,46 +77,42 @@ const getWebpackWarningMessage = (warning: unknown): string | undefined => {
 };
 
 const suppressKnownWebpackWarningsPlugin: PluginModule = () => ({
-    configureWebpack() {
-        return {
-            ignoreWarnings: [
-                (warning: unknown) => {
-                    const message = getWebpackWarningMessage(warning);
+    configureWebpack: () => ({
+        ignoreWarnings: [
+            (warning: unknown) => {
+                const message = getWebpackWarningMessage(warning);
 
-                    return (
-                        message?.includes(
-                            "Critical dependency: require function is used in a way in which dependencies cannot be statically extracted"
-                        ) === true
-                    );
-                },
-            ],
-            resolve: {
-                alias:
-                    vscodeLanguageServerTypesEsmEntry === undefined
-                        ? {}
-                        : {
-                              "vscode-languageserver-types$":
-                                  vscodeLanguageServerTypesEsmEntry,
-                              "vscode-languageserver-types/lib/umd/main.js$":
-                                  vscodeLanguageServerTypesEsmEntry,
-                          },
+                return (
+                    message?.includes(
+                        "Critical dependency: require function is used in a way in which dependencies cannot be statically extracted"
+                    ) === true
+                );
             },
-        };
-    },
+        ],
+        resolve: {
+            alias:
+                vscodeLanguageServerTypesEsmEntry === undefined
+                    ? {}
+                    : {
+                          "vscode-languageserver-types$":
+                              vscodeLanguageServerTypesEsmEntry,
+                          "vscode-languageserver-types/lib/umd/main.js$":
+                              vscodeLanguageServerTypesEsmEntry,
+                      },
+        },
+    }),
     name: "suppress-known-webpack-warnings",
 });
 
 const futureConfig = {
-    ...(enableExperimentalFaster
-        ? {
-              faster: {
-                  mdxCrossCompilerCache: true,
-                  rspackBundler: true,
-                  rspackPersistentCache: true,
-                  ssgWorkerThreads: true,
-              },
-          }
-        : {}),
+    ...(enableExperimentalFaster && {
+        faster: {
+            mdxCrossCompilerCache: true,
+            rspackBundler: true,
+            rspackPersistentCache: true,
+            ssgWorkerThreads: true,
+        },
+    }),
     v4: {
         fasterByDefault: false,
         mdx1CompatDisabledByDefault: true,

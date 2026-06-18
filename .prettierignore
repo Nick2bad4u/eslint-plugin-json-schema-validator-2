@@ -13,6 +13,7 @@ dist/
 docs/docusaurus/docs/
 docs/docusaurus/build/
 docs/docusaurus/.docusaurus/
+docs/docusaurus/static/img/coverage.json
 docs/packages/
 docs/TSDoc/
 docs/Guides/

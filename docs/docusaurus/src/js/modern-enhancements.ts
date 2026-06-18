@@ -1,7 +1,6 @@
 const isExternalDocumentationLink = (
     link: Readonly<HTMLAnchorElement>
-): boolean =>
-    link.hostname.length > 0 && link.hostname !== globalThis.location.hostname;
+): boolean => link.hostname.length > 0 && link.hostname !== location.hostname;
 
 /**
  * Marks external documentation links as safe opener-isolated links.
@@ -18,16 +17,9 @@ export const markExternalDocumentationLinks = (): void => {
 
 const domContentLoadedListener = new AbortController();
 
-if (
-    typeof document !== "undefined" &&
-    typeof globalThis.addEventListener === "function"
-) {
-    globalThis.addEventListener(
-        "DOMContentLoaded",
-        markExternalDocumentationLinks,
-        {
-            once: true,
-            signal: domContentLoadedListener.signal,
-        }
-    );
+if (typeof document !== "undefined" && typeof addEventListener === "function") {
+    addEventListener("DOMContentLoaded", markExternalDocumentationLinks, {
+        once: true,
+        signal: domContentLoadedListener.signal,
+    });
 }

@@ -90,9 +90,9 @@ const GET_JSON_NODES: JsonNodeGetters = {
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
         );
     },
-    JSONExpressionStatement(node: JSON.JSONExpressionStatement) {
-        return { value: node.expression };
-    },
+    JSONExpressionStatement: (node: JSON.JSONExpressionStatement) => ({
+        value: node.expression,
+    }),
     JSONObjectExpression(node: JSON.JSONObjectExpression, paths: string[]) {
         const path = String(paths.shift());
         for (const prop of node.properties) {
@@ -108,9 +108,7 @@ const GET_JSON_NODES: JsonNodeGetters = {
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
         );
     },
-    Program(node: JSON.JSONProgram) {
-        return { value: arrayFirst(node.body) };
-    },
+    Program: (node: JSON.JSONProgram) => ({ value: arrayFirst(node.body) }),
 };
 /**
  * Get node from path.

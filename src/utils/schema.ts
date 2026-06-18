@@ -45,7 +45,7 @@ interface CacheEntry {
 }
 
 /**
- * Load json data
+ * Load JSON data
  */
 export function loadJson(jsonPath: string, context: RuleContext): unknown {
     return loadJsonInternal(jsonPath, context);
@@ -134,7 +134,7 @@ function isSchemaObject(value: unknown): value is SchemaObject {
 }
 
 /**
- * Load schema data from url
+ * Load schema data from URL
  */
 function loadJsonFromURL(
     jsonPath: string,
@@ -216,7 +216,7 @@ function loadJsonFromURL(
 }
 
 /**
- * Load json data. Can insert a data editing process.
+ * Load JSON data. Can insert a data editing process.
  */
 function loadJsonInternal(
     jsonPath: string,

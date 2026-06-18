@@ -206,22 +206,22 @@ function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
     if (configStr === null) {
         fs.writeFileSync(inputFile, `/* {} */\n${code0}`, "utf8");
         throw new Error("missing config");
-    } else {
-        const configJson = configStr.groups?.["config"];
-        if (configJson === undefined) {
-            throw new Error(`missing inline config in @ ${inputFile}`);
-        }
-        code = replaceInlineFixtureConfig(code0, filename, {
-            blockComment,
-            hashComment,
+    }
+
+    const configJson = configStr.groups?.["config"];
+    if (configJson === undefined) {
+        throw new Error(`missing inline config in @ ${inputFile}`);
+    }
+    code = replaceInlineFixtureConfig(code0, filename, {
+        blockComment,
+        hashComment,
+    });
+    try {
+        config = parseJsonValue(configJson) as FixtureConfig;
+    } catch (error: unknown) {
+        throw new Error(`Invalid inline config in @ ${inputFile}`, {
+            cause: error,
         });
-        try {
-            config = parseJsonValue(configJson) as FixtureConfig;
-        } catch (error: unknown) {
-            throw new Error(`Invalid inline config in @ ${inputFile}`, {
-                cause: error,
-            });
-        }
     }
 
     return {

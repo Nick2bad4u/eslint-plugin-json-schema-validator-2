@@ -7,8 +7,6 @@ ESLint rules that validate JSON, JSONC, JSON5, YAML, TOML, Markdown frontmatter,
 This fork keeps the useful validation behavior from the upstream plugin while
 moving the repository onto the modern ESLint plugin tooling used across my plugin projects.
 
-<!-- eslint-disable markdown/no-missing-label-refs -->
-
 > [!NOTE]
 > Shoutout to [ota-meshi](https://github.com/ota-meshi) and the plugin he made: [eslint-plugin-json-schema-validator](https://github.com/ota-meshi/eslint-plugin-json-schema-validator), which this fork builds on. The original plugin did the hard work of proving the JSON Schema validation model for JSON-like files in ESLint.
 

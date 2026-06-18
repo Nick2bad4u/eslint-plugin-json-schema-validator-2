@@ -184,18 +184,12 @@ const VISITORS = {
             data,
         };
     },
-    ArrowFunctionExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
-    AssignmentExpression(
+    ArrowFunctionExpression: () => UNKNOWN_PATH_DATA,
+    AssignmentExpression: (
         node: AST.ESLintAssignmentExpression,
         context: RuleContext
-    ): SubPathData {
-        return getPathData(node.right, context);
-    },
-    AwaitExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
+    ): SubPathData => getPathData(node.right, context),
+    AwaitExpression: () => UNKNOWN_PATH_DATA,
     BinaryExpression(
         node: AST.ESLintBinaryExpression,
         context: RuleContext
@@ -245,12 +239,8 @@ const VISITORS = {
             data: evalData.value,
         };
     },
-    ChainExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
-    ClassExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
+    ChainExpression: () => UNKNOWN_PATH_DATA,
+    ClassExpression: () => UNKNOWN_PATH_DATA,
     ConditionalExpression(
         node: AST.ESLintConditionalExpression,
         context: RuleContext
@@ -264,9 +254,7 @@ const VISITORS = {
         }
         return getPathData(node.alternate, context);
     },
-    FunctionExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
+    FunctionExpression: () => UNKNOWN_PATH_DATA,
     Identifier(node: AST.ESLintIdentifier, context: RuleContext): SubPathData {
         const init = findInitNode(context, node);
         if (!isPresent(init)) {
@@ -322,12 +310,10 @@ const VISITORS = {
         }
         return data;
     },
-    Literal(node: AST.ESLintLiteral): SubPathData {
-        return {
-            children: EMPTY_MAP,
-            data: node.value,
-        };
-    },
+    Literal: (node: AST.ESLintLiteral): SubPathData => ({
+        children: EMPTY_MAP,
+        data: node.value,
+    }),
     LogicalExpression(
         node: AST.ESLintLogicalExpression,
         context: RuleContext
@@ -395,9 +381,7 @@ const VISITORS = {
 
         return UNKNOWN_PATH_DATA;
     },
-    MetaProperty() {
-        return UNKNOWN_PATH_DATA;
-    },
+    MetaProperty: () => UNKNOWN_PATH_DATA,
     NewExpression(
         node: AST.ESLintNewExpression,
         context: RuleContext
@@ -495,9 +479,7 @@ const VISITORS = {
         }
         return { children: EMPTY_MAP, data };
     },
-    ThisExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
+    ThisExpression: () => UNKNOWN_PATH_DATA,
     UnaryExpression(
         node: AST.ESLintUnaryExpression,
         context: RuleContext
@@ -517,12 +499,8 @@ const VISITORS = {
             data,
         };
     },
-    UpdateExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
-    YieldExpression() {
-        return UNKNOWN_PATH_DATA;
-    },
+    UpdateExpression: () => UNKNOWN_PATH_DATA,
+    YieldExpression: () => UNKNOWN_PATH_DATA,
 };
 
 /**

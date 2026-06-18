@@ -102,7 +102,7 @@ export function getStaticValue(
         return null;
     }
     const staticValue = eslintUtils.getStaticValue(
-        // @ts-expect-error -- `eslintUtils` is typed now but incompatible with Vue AST typings
+        // @ts-expect-error -- `eslintUtils` is typed now but incompatible with Vue.js AST typings
         node,
         scope
     );
@@ -140,7 +140,7 @@ function getScope(context: RuleContext, currentNode: AST.ESLintNode) {
     let node: AST.Node | null = currentNode;
     for (; node; node = node.parent ?? null) {
         const scope = scopeManager.acquire(
-            // @ts-expect-error -- incompatible with Vue AST typings
+            // @ts-expect-error -- incompatible with Vue.js AST typings
             node,
             inner
         );
@@ -175,8 +175,8 @@ function getStringLiteralValue(
 }
 
 /**
- * Converts parser-service expressions to the Vue parser expression shape used
- * by this module.
+ * Converts parser-service expressions to the Vue.js parser expression shape
+ * used by this module.
  */
 function toESLintExpression(expression: unknown): AST.ESLintExpression {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- eslint-scope uses ESTree nodes, while this module is intentionally parser-bound to vue-eslint-parser-compatible nodes.
@@ -184,8 +184,8 @@ function toESLintExpression(expression: unknown): AST.ESLintExpression {
 }
 
 /**
- * Converts parser-service identifiers to the Vue parser identifier shape used
- * by this module.
+ * Converts parser-service identifiers to the Vue.js parser identifier shape
+ * used by this module.
  */
 function toESLintIdentifier(identifier: unknown): AST.ESLintIdentifier {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- eslint-scope uses ESTree nodes, while this module is intentionally parser-bound to vue-eslint-parser-compatible nodes.

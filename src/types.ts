@@ -61,7 +61,6 @@ export interface RuleDefinition {
 /** Visitor map returned by plugin rules. */
 export type RuleListener = Record<
     string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ESLint visitors are intentionally bivariant at the rule boundary.
     ((...args: any[]) => void) | undefined
 >;
 

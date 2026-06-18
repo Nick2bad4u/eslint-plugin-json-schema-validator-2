@@ -420,13 +420,12 @@ function filterValidationErrors(
     if (reportMode === "all") {
         return [...errors];
     }
-    return errors.filter(
-        (error) =>
-            !errors.some(
-                (candidate) =>
-                    candidate !== error &&
-                    isAncestorPath(error.path, candidate.path)
-            )
+    return errors.filter((error) =>
+        errors.every(
+            (candidate) =>
+                candidate === error ||
+                !isAncestorPath(error.path, candidate.path)
+        )
     );
 }
 
@@ -582,7 +581,7 @@ function getCatalogValidators(
             const matchesAllJson = fileMatch.some((entry) =>
                 /^\*\.json$/v.test(entry)
             );
-            // Exclude schemas with patterns that match all json files.
+            // Exclude schemas with patterns that match all JSON files.
             // https://github.com/SchemaStore/schemastore/pull/3291
             if (!matchesAllJson && matchFile(relativeFilename, fileMatch)) {
                 const schemaValidator = schemaPathToValidator(
@@ -632,7 +631,7 @@ function getOptionsValidators(
  * https://github.com/mdx-js/eslint-mdx/blob/b97db2e912a416d5d40ddb78ab6c9fa1ab150c17/packages/eslint-mdx/src/helpers.ts#L28-L50
  *
  * Given a filepath, get the nearest path that is a regular file. The filepath
- * provided by eslint may be a virtual filepath rather than a file on disk. This
+ * provided by ESLint may be a virtual filepath rather than a file on disk. This
  * attempts to transform a virtual path into an on-disk path.
  */
 function getPhysicalFilename(filename: string, child?: string): string {

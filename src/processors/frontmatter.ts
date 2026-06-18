@@ -19,9 +19,7 @@ export const frontmatterProcessor: Linter.Processor<Linter.ProcessorFile> = {
         name: "json-schema-validator-2/frontmatter",
         version: packageMeta.version,
     },
-    postprocess(messageLists) {
-        return messageLists.flat();
-    },
+    postprocess: (messageLists) => messageLists.flat(),
     preprocess(text, filename) {
         const frontmatter = extractYamlFrontmatter(text);
         if (frontmatter === null) {
