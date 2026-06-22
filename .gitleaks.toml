@@ -15,3 +15,7 @@ title = "eslint-plugin-json-schema-validator-2 secret detection configuration"
            '''(^|/)\.temp/''',
         '''^docs/docusaurus/docs/typedoc\.json$''',
     ]
+
+[[allowlists]]
+    description = "Ignore historical schema property-name false positives"
+    paths = [ '''^schemastore/json\.schemastore\.org/ansible-role-2\.9\.json$''' ]
