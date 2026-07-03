@@ -134,7 +134,7 @@ function findVariable(
  */
 function getScope(context: RuleContext, currentNode: AST.ESLintNode) {
     // On Program node, get the outermost scope to avoid return Node.js special function scope or ES modules scope.
-    const inner = currentNode.type !== "Program";
+    const isInner = currentNode.type !== "Program";
     const scopeManager = context.sourceCode.scopeManager;
 
     let node: AST.Node | null = currentNode;
@@ -142,7 +142,7 @@ function getScope(context: RuleContext, currentNode: AST.ESLintNode) {
         const scope = scopeManager.acquire(
             // @ts-expect-error -- incompatible with Vue.js AST typings
             node,
-            inner
+            isInner
         );
 
         if (scope) {

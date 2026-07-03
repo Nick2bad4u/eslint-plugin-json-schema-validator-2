@@ -43,7 +43,7 @@ const parseTarball = (tarballData) => {
     const tarData = gunzipSync(tarballData);
     const entries = [];
 
-    for (let offset = 0; offset + blockSize <= tarData.length; ) {
+    for (let offset = 0; offset + blockSize <= tarData.length;) {
         const header = tarData.subarray(offset, offset + blockSize);
 
         if (header.every((byte) => byte === 0)) {

@@ -171,12 +171,12 @@ function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
         INPUT_FILE_PATTERN,
         "config.json"
     );
-    const hashComment =
+    const isHashComment =
         inputFile.endsWith(".yaml") ||
         inputFile.endsWith(".yml") ||
         inputFile.endsWith(".toml");
-    const blockComment =
-        (!hashComment && inputFile.endsWith(".json")) ||
+    const isBlockComment =
+        (!isHashComment && inputFile.endsWith(".json")) ||
         inputFile.endsWith(".json5") ||
         inputFile.endsWith(".js");
     if (!fs.existsSync(configFile)) {
@@ -187,8 +187,8 @@ function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
     }
     if (config !== undefined) {
         code = prependFixtureFilename(code0, filename, {
-            blockComment,
-            hashComment,
+            blockComment: isBlockComment,
+            hashComment: isHashComment,
         });
         return {
             languageOptions: { parser: getParser(inputFile) },
@@ -198,9 +198,9 @@ function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
         };
     }
     // Inline config
-    const configStr = hashComment
+    const configStr = isHashComment
         ? INLINE_HASH_COMMENT_PATTERN.exec(code0)
-        : blockComment
+        : isBlockComment
           ? INLINE_BLOCK_COMMENT_PATTERN.exec(code0)
           : INLINE_HTML_COMMENT_PATTERN.exec(code0);
     if (configStr === null) {
@@ -213,8 +213,8 @@ function getConfig(ruleName: string, inputFile: string): LoadedValidTestCase {
         throw new Error(`missing inline config in @ ${inputFile}`);
     }
     code = replaceInlineFixtureConfig(code0, filename, {
-        blockComment,
-        hashComment,
+        blockComment: isBlockComment,
+        hashComment: isHashComment,
     });
     try {
         config = parseJsonValue(configJson) as FixtureConfig;
@@ -307,24 +307,26 @@ function isSafePackageName(pkgName: string): boolean {
 
 function* itrListupInput(rootDir: string): IterableIterator<string> {
     for (const filename of fs.readdirSync(rootDir)) {
-        if (!filename.startsWith("_")) {
-            const abs = path.join(rootDir, filename);
-            if (isInputFixture(filename)) {
-                const requirementsPath = path.join(
-                    rootDir,
-                    filename.replace(
-                        INPUT_REQUIREMENTS_PATTERN,
-                        "requirements.json"
-                    )
-                );
-                const requirements = readRequirements(requirementsPath);
+        if (filename.startsWith("_")) {
+            continue;
+        }
 
-                if (!hasUnsupportedRequirements(requirements)) {
-                    yield abs;
-                }
-            } else if (fs.statSync(abs).isDirectory()) {
-                yield* itrListupInput(abs);
+        const abs = path.join(rootDir, filename);
+        if (isInputFixture(filename)) {
+            const requirementsPath = path.join(
+                rootDir,
+                filename.replace(
+                    INPUT_REQUIREMENTS_PATTERN,
+                    "requirements.json"
+                )
+            );
+            const requirements = readRequirements(requirementsPath);
+
+            if (!hasUnsupportedRequirements(requirements)) {
+                yield abs;
             }
+        } else if (fs.statSync(abs).isDirectory()) {
+            yield* itrListupInput(abs);
         }
     }
 }

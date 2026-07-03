@@ -148,8 +148,8 @@ function findInlineLinkLabelOpenBracket(line, closeBracketIndex) {
         const ch = line.charAt(i);
 
         const isBracket = ch === "[" || ch === "]";
-        const escapedBracket = isBracket && isEscaped(line, i);
-        if (!escapedBracket) {
+        const isEscapedBracket = isBracket && isEscaped(line, i);
+        if (!isEscapedBracket) {
             if (ch === "]") {
                 depth += 1;
             } else if (ch === "[") {

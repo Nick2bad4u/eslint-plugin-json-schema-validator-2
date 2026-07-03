@@ -67,7 +67,7 @@ const GET_YAML_NODES: YamlNodeGetters = {
             }
             throw new Error("Unexpected state: empty YAML program");
         }
-        const path = String(paths.shift());
+        const path = consumePath(paths);
         for (const [index, document] of node.body.entries()) {
             if (String(index) === path) {
                 return { value: document };
@@ -91,7 +91,7 @@ const GET_YAML_NODES: YamlNodeGetters = {
         };
     },
     YAMLMapping(node: YAML.YAMLMapping, paths: string[]) {
-        const path = String(paths.shift());
+        const path = consumePath(paths);
         for (const pair of node.pairs) {
             const key = getYAMLPathKey(pair.key);
 
@@ -112,40 +112,42 @@ const GET_YAML_NODES: YamlNodeGetters = {
         );
     },
     YAMLSequence(node: YAML.YAMLSequence, paths: string[]) {
-        const path = String(paths.shift());
+        const path = consumePath(paths);
         for (const [index, entry] of node.entries.entries()) {
-            if (String(index) === path) {
-                if (entry) {
-                    return { value: entry };
-                }
-                return {
-                    key: (sourceCode): [number, number] => {
-                        const before = node.entries
-                            .slice(0, index)
-                            .toReversed()
-                            .find((n) => isPresent(n));
-                        let hyphenTokenElementIndex: number;
-                        let hyphenToken: null | Token;
-                        if (before) {
-                            hyphenTokenElementIndex =
-                                node.entries.indexOf(before) + 1;
-                            hyphenToken = sourceCode.getTokenAfter(before);
-                        } else {
-                            hyphenTokenElementIndex = 0;
-                            hyphenToken = sourceCode.getFirstToken(node);
-                        }
-                        // If it is preceded by consecutive blank elements, it must be moved to the target.
-                        while (hyphenTokenElementIndex < index) {
-                            hyphenTokenElementIndex += 1;
-                            hyphenToken = sourceCode.getTokenAfter(
-                                getRequiredToken(hyphenToken)
-                            );
-                        }
-                        return getRequiredRange(getRequiredToken(hyphenToken));
-                    },
-                    value: null,
-                };
+            if (String(index) !== path) {
+                continue;
             }
+
+            if (entry) {
+                return { value: entry };
+            }
+            return {
+                key: (sourceCode): [number, number] => {
+                    const before = node.entries
+                        .slice(0, index)
+                        .toReversed()
+                        .find((n) => isPresent(n));
+                    let hyphenTokenElementIndex: number;
+                    let hyphenToken: null | Token;
+                    if (before) {
+                        hyphenTokenElementIndex =
+                            node.entries.indexOf(before) + 1;
+                        hyphenToken = sourceCode.getTokenAfter(before);
+                    } else {
+                        hyphenTokenElementIndex = 0;
+                        hyphenToken = sourceCode.getFirstToken(node);
+                    }
+                    // If it is preceded by consecutive blank elements, it must be moved to the target.
+                    while (hyphenTokenElementIndex < index) {
+                        hyphenTokenElementIndex += 1;
+                        hyphenToken = sourceCode.getTokenAfter(
+                            getRequiredToken(hyphenToken)
+                        );
+                    }
+                    return getRequiredRange(getRequiredToken(hyphenToken));
+                },
+                value: null,
+            };
         }
         throw new Error(
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
@@ -202,6 +204,13 @@ export function getYAMLNodeFromPath(
         data = getYAMLNodeFromTraverseTarget(data.value, remainingPaths);
     }
     return data;
+}
+
+function consumePath(paths: string[]): string {
+    const [pathValue, ...remainingPaths] = paths;
+    paths.length = 0;
+    paths.push(...remainingPaths);
+    return String(pathValue);
 }
 
 /**

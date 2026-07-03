@@ -25,10 +25,7 @@ export interface JsonSchemaValidatorSettings {
 
 /** AST nodes supported by this plugin. */
 export type Node =
-    | AST.ESLintNode
-    | JSON.JSONNode
-    | TOML.TOMLNode
-    | YAML.YAMLNode;
+    AST.ESLintNode | JSON.JSONNode | TOML.TOMLNode | YAML.YAMLNode;
 
 /** AST node or token accepted by SourceCode helpers. */
 export type NodeOrToken = Node | Token;

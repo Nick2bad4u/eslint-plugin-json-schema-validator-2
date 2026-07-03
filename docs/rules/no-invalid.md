@@ -12,15 +12,41 @@ since: "v0.1.0"
 
 - :gear: This rule is included in `configs.recommended`.
 
-## 📚 Rule Details
-
-This rule validates the file with JSON Schema and reports errors.
+## Targeted pattern scope
 
 It supports JSON, JSONC, JSON5, YAML, TOML, JavaScript object exports,
 Markdown-family YAML frontmatter through `configs.frontmatter`, and Vue custom
 blocks when `eslint-plugin-vue` is installed.
 
-<!-- eslint-skip -->
+## What this rule reports
+
+This rule validates a matched file with JSON Schema and reports schema errors
+for invalid values, missing required fields, invalid types, and related Ajv
+validation failures.
+
+## Why this rule exists
+
+Schema-backed project files can drift from the format expected by tooling while
+still looking syntactically valid. Running schema validation through ESLint keeps
+those errors close to the changed file and lets teams share schemas in normal
+lint configuration.
+
+## ❌ Incorrect
+
+```json
+// File name is ".eslintrc.json"
+/* eslint json-schema-validator-2/no-invalid: 'error' */
+{
+ "overrides": [
+  {
+   "files": ["bad"],
+   "extends": [42]
+  }
+ ]
+}
+```
+
+## ✅ Correct
 
 ```json
 // File name is ".eslintrc.json"
@@ -29,19 +55,15 @@ blocks when `eslint-plugin-vue` is installed.
  "overrides": [
   {
    "files": ["good"],
-   /* ✓ GOOD */
    "extends": ["foo"]
-  },
-  {
-   "files": ["bad"],
-   /* ✗ BAD */
-   "extends": [42]
   }
  ]
 }
 ```
 
-## Options
+## Additional examples
+
+### Options
 
 ```json
 {
@@ -51,9 +73,7 @@ blocks when `eslint-plugin-vue` is installed.
    "schemas": [
     {
      "fileMatch": [".eslintrc.json"],
-     "schema": {
-      /* JSON Schema Definition */
-     } // or string
+     "schema": {/* JSON Schema Definition */} // or string
     }
    ],
    "useSchemastoreCatalog": true,
@@ -225,19 +245,14 @@ foo: bar
 </i18n>
 ```
 
-## 📖 Further reading
+## Further reading
 
 - [User guide](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/docs/user-guide/index.md)
 - [Rule overview](./overview.md)
 - [JSON Schema](https://json-schema.org/)
 - [JSON Schema Store](https://www.schemastore.org/json/)
-
-## 🚀 Version
-
-This rule was introduced in eslint-plugin-json-schema-validator-2 v0.1.0
-
-## 🔍 Implementation
-
 - [Rule source](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/src/rules/no-invalid.ts)
 - [Test source](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/test/src/rules/no-invalid.test.ts)
 - [Test fixture sources](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/tree/main/test/fixtures/rules/no-invalid)
+
+This rule was introduced in eslint-plugin-json-schema-validator-2 v0.1.0.

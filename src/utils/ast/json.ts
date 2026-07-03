@@ -48,43 +48,45 @@ const TRAVERSE_TARGET_TYPE: ReadonlySet<JSON.JSONNode["type"]> = new Set<
 
 const GET_JSON_NODES: JsonNodeGetters = {
     JSONArrayExpression(node: JSON.JSONArrayExpression, paths: string[]) {
-        const path = String(paths.shift());
+        const path = consumePath(paths);
         for (const [index, element] of node.elements.entries()) {
-            if (String(index) === path) {
-                if (element) {
-                    return { value: element };
-                }
-                return {
-                    key: (sourceCode): [number, number] => {
-                        const before = node.elements
-                            .slice(0, index)
-                            .toReversed()
-                            .find((n) => isPresent(n));
-                        let tokenIndex = before
-                            ? node.elements.indexOf(before)
-                            : -1;
-                        let token = before
-                            ? sourceCode.getTokenAfter(before)
-                            : sourceCode.getFirstToken(node);
-                        while (tokenIndex < index) {
-                            tokenIndex += 1;
-                            token = sourceCode.getTokenAfter(
-                                getRequiredToken(token)
-                            );
-                        }
-                        const currentToken = getRequiredToken(token);
-                        const previousToken = getRequiredToken(
-                            sourceCode.getTokenBefore(currentToken)
-                        );
-
-                        return [
-                            getRequiredRange(previousToken)[1],
-                            arrayFirst(getRequiredRange(currentToken)),
-                        ];
-                    },
-                    value: null,
-                };
+            if (String(index) !== path) {
+                continue;
             }
+
+            if (element) {
+                return { value: element };
+            }
+            return {
+                key: (sourceCode): [number, number] => {
+                    const before = node.elements
+                        .slice(0, index)
+                        .toReversed()
+                        .find((n) => isPresent(n));
+                    let tokenIndex = before
+                        ? node.elements.indexOf(before)
+                        : -1;
+                    let token = before
+                        ? sourceCode.getTokenAfter(before)
+                        : sourceCode.getFirstToken(node);
+                    while (tokenIndex < index) {
+                        tokenIndex += 1;
+                        token = sourceCode.getTokenAfter(
+                            getRequiredToken(token)
+                        );
+                    }
+                    const currentToken = getRequiredToken(token);
+                    const previousToken = getRequiredToken(
+                        sourceCode.getTokenBefore(currentToken)
+                    );
+
+                    return [
+                        getRequiredRange(previousToken)[1],
+                        arrayFirst(getRequiredRange(currentToken)),
+                    ];
+                },
+                value: null,
+            };
         }
         throw new Error(
             `Unexpected state: [${arrayJoin([path, ...paths], ", ")}]`
@@ -94,7 +96,7 @@ const GET_JSON_NODES: JsonNodeGetters = {
         value: node.expression,
     }),
     JSONObjectExpression(node: JSON.JSONObjectExpression, paths: string[]) {
-        const path = String(paths.shift());
+        const path = consumePath(paths);
         for (const prop of node.properties) {
             if (prop.key.type === "JSONIdentifier") {
                 if (prop.key.name === path) {
@@ -147,6 +149,12 @@ export function getJSONNodeFromPath(
  *
  * @throws When called with an unsupported parser node.
  */
+function consumePath(paths: string[]): string {
+    const [pathValue, ...remainingPaths] = paths;
+    paths.length = 0;
+    paths.push(...remainingPaths);
+    return String(pathValue);
+}
 /* eslint-disable new-cap -- Parser dispatch uses ESTree-style uppercase node-type property names. */
 function getJSONNodeFromTraverseTarget(
     node: TraverseTarget,

@@ -123,13 +123,15 @@ function ensureOutputFixture(outputFile: string, result: AnalyzedOutput): void {
 
 function* listupInput(rootDir: string): IterableIterator<string> {
     for (const filename of fs.readdirSync(rootDir)) {
-        if (!filename.startsWith("_")) {
-            const abs = path.join(rootDir, filename);
-            if (filename.endsWith("input.js")) {
-                yield abs;
-            } else if (fs.statSync(abs).isDirectory()) {
-                yield* listupInput(abs);
-            }
+        if (filename.startsWith("_")) {
+            continue;
+        }
+
+        const abs = path.join(rootDir, filename);
+        if (filename.endsWith("input.js")) {
+            yield abs;
+        } else if (fs.statSync(abs).isDirectory()) {
+            yield* listupInput(abs);
         }
     }
 }

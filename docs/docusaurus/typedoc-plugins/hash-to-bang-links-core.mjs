@@ -83,20 +83,20 @@ export function convertHashLinksToBangLinksInInlineTagText(inlineTagText) {
 export function convertHashLinksToBangLinksInParts(parts) {
     for (const part of parts) {
         if (
-            part.kind === "inline-tag" &&
-            (part.tag === "@link" ||
-                part.tag === "@linkcode" ||
-                part.tag === "@linkplain")
+            part.kind !== "inline-tag" ||
+            (part.tag !== "@link" &&
+                part.tag !== "@linkcode" &&
+                part.tag !== "@linkplain")
         ) {
-            const rewritten = convertHashLinksToBangLinksInInlineTagText(
-                part.text
-            );
-            if (rewritten !== part.text) {
-                part.text = rewritten;
-                // Ensure TypeDoc re-resolves this link based on updated text.
-                delete part.target;
-                delete part.tsLinkText;
-            }
+            continue;
+        }
+
+        const rewritten = convertHashLinksToBangLinksInInlineTagText(part.text);
+        if (rewritten !== part.text) {
+            part.text = rewritten;
+            // Ensure TypeDoc re-resolves this link based on updated text.
+            delete part.target;
+            delete part.tsLinkText;
         }
     }
 }

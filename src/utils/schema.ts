@@ -143,7 +143,7 @@ function loadJsonFromURL(
 ): unknown {
     let jsonFileName = jsonPath.replace(/^https?:\/\//v, "");
     if (!jsonFileName.endsWith(".json")) {
-        jsonFileName = `${jsonFileName}.json`;
+        jsonFileName += ".json";
     }
     const cacheSettings = context.settings["json-schema-validator-2"]?.cache;
     const configuredCacheDirectory = cacheSettings?.directory;
@@ -239,7 +239,7 @@ function loadJsonInternalWithEdit(
             9
         )}`;
         if (!url.endsWith(".json")) {
-            url = `${url}.json`;
+            url += ".json";
         }
         return loadJsonFromURL(url, context, (orig) => {
             const result = isDefined(edit) ? edit(orig) : orig;

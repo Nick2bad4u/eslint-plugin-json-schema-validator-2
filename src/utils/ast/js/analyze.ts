@@ -1,7 +1,14 @@
 import type { ArrayElement, UnknownRecord } from "type-fest";
 import type { AST } from "vue-eslint-parser";
 
-import { arrayAt, arrayFirst, isPresent, keyIn, setHas } from "ts-extras";
+import {
+    arrayAt,
+    arrayFirst,
+    isPresent,
+    keyIn,
+    objectAssign,
+    setHas,
+} from "ts-extras";
 
 import type { RuleContext, SourceCode } from "../../../types.js";
 
@@ -101,7 +108,7 @@ export function analyzeJsAST(
     };
 }
 const CALC_UNARY: Record<UnaryOperator, ((v: unknown) => unknown) | null> = {
-    "!": (v) => !toBoolean(v),
+    "!": (v) => !isTruthy(v),
     "+": Number,
     "-": negateValue,
     delete: null,
@@ -249,7 +256,7 @@ const VISITORS = {
         if (testData.data === UNKNOWN) {
             return UNKNOWN_PATH_DATA;
         }
-        if (toBoolean(testData.data)) {
+        if (isTruthy(testData.data)) {
             return getPathData(node.consequent, context);
         }
         return getPathData(node.alternate, context);
@@ -325,7 +332,7 @@ const VISITORS = {
         const operator: "&&" | "??" | "||" = node.operator;
         switch (operator) {
             case "&&": {
-                if (!toBoolean(leftData.data)) {
+                if (!isTruthy(leftData.data)) {
                     return leftData;
                 }
 
@@ -339,7 +346,7 @@ const VISITORS = {
                 break;
             }
             case "||": {
-                if (toBoolean(leftData.data)) {
+                if (isTruthy(leftData.data)) {
                     return leftData;
                 }
 
@@ -440,10 +447,10 @@ const VISITORS = {
             expressions.push(data.data);
         }
 
-        const strings: TemplateStringsArray = Object.assign(
+        const strings = objectAssign(
             node.quasi.quasis.map((q) => q.value.cooked ?? q.value.raw),
             { raw: node.quasi.quasis.map((q) => q.value.raw) }
-        );
+        ) as TemplateStringsArray;
 
         const data = String.raw(strings, ...expressions);
 
@@ -952,6 +959,22 @@ function isStaticObject(value: unknown): value is StaticObject {
 }
 
 /**
+ * Converts a value to a boolean.
+ */
+function isTruthy(value: unknown): boolean {
+    if (typeof value === "boolean") {
+        return value;
+    }
+    if (typeof value === "number") {
+        return value !== 0 && !Number.isNaN(value);
+    }
+    if (typeof value === "bigint") {
+        return value !== 0n;
+    }
+    return isPresent(value) && value !== "";
+}
+
+/**
  * Applies JavaScript left shift semantics.
  */
 function leftShiftValues(left: unknown, right: unknown): unknown {
@@ -1010,22 +1033,6 @@ function subtractValues(left: unknown, right: unknown): unknown {
         return left - right;
     }
     return Number(left) - Number(right);
-}
-
-/**
- * Converts a value to a boolean.
- */
-function toBoolean(value: unknown): boolean {
-    if (typeof value === "boolean") {
-        return value;
-    }
-    if (typeof value === "number") {
-        return value !== 0 && !Number.isNaN(value);
-    }
-    if (typeof value === "bigint") {
-        return value !== 0n;
-    }
-    return isPresent(value) && value !== "";
 }
 
 /**

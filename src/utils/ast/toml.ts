@@ -40,7 +40,7 @@ const TRAVERSE_TARGET_TYPE: ReadonlySet<TOML.TOMLNode["type"]> = new Set<
 
 const GET_TOML_NODES: TomlNodeGetters = {
     TOMLArray(node: TOML.TOMLArray, paths: string[]) {
-        const path = String(paths.shift());
+        const path = consumePath(paths);
         for (const [index, element] of node.elements.entries()) {
             if (String(index) === path) {
                 return { value: element };
@@ -91,19 +91,23 @@ export function getTOMLNodeFromPath(
     }
 
     for (const body of topLevelTable.body) {
-        if (body.type === "TOMLKeyValue") {
-            const result = getTOMLNodeFromPathForKeyValue(body, remainingPaths);
-            if (result) {
-                return result;
-            }
-        } else {
-            const result = getTOMLNodeFromPathForTable(body, remainingPaths);
-            if (result) {
-                return result;
-            }
+        const result =
+            body.type === "TOMLKeyValue"
+                ? getTOMLNodeFromPathForKeyValue(body, remainingPaths)
+                : getTOMLNodeFromPathForTable(body, remainingPaths);
+
+        if (result) {
+            return result;
         }
     }
     throw new Error(`Unexpected state: [${arrayJoin(remainingPaths, ", ")}]`);
+}
+
+function consumePath(paths: string[]): string {
+    const [pathValue, ...remainingPaths] = paths;
+    paths.length = 0;
+    paths.push(...remainingPaths);
+    return String(pathValue);
 }
 
 /**

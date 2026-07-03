@@ -27,8 +27,8 @@ import type { SchemaObject } from "./types.js";
 
 import { loadSchema } from "./schema.js";
 
-const lazyRegExpEngine: RegExpEngine = Object.assign(
-    (str: string, flags: string) => {
+const lazyRegExpEngine = Object.defineProperty(
+    function lazyRegExpEngine(str: string, flags: string): RegExp {
         let thrownError: Error | undefined;
         try {
             // eslint-disable-next-line security/detect-non-literal-regexp -- Ajv must compile schema-provided regex patterns through this hook.
@@ -42,8 +42,9 @@ const lazyRegExpEngine: RegExpEngine = Object.assign(
         }
         throw thrownError;
     },
-    { code: "new RegExp" }
-);
+    "code",
+    { value: "new RegExp" }
+) as unknown as RegExpEngine;
 
 const ajv = new Ajv({
     // SchemaId: "auto",
@@ -185,7 +186,7 @@ function addSchemaWithResolvedReferences(
             ajv.addSchema(refSchema, resolvedReference.schemaId);
         } catch (error) {
             if (
-                resolveError(
+                canResolveError(
                     error,
                     resolvedReference.schemaPath,
                     refSchema,
@@ -203,6 +204,40 @@ function addSchemaWithResolvedReferences(
 /** Format an AJV validation message, falling back when AJV omits it. */
 function ajvMessage(error: AjvError): string {
     return error.message ?? "is invalid";
+}
+
+/**
+ * Resolve Schema Error
+ *
+ * @throws When AJV throws an error that is not a resolvable missing reference.
+ */
+function canResolveError(
+    error: unknown,
+    baseSchemaPath: string,
+    baseSchema: SchemaObject,
+    context: RuleContext
+): boolean {
+    const missingRef = getMissingRef(error);
+    if (!isDefined(missingRef)) {
+        return false;
+    }
+
+    const resolvedReference = resolveSchemaReference(
+        missingRef,
+        baseSchemaPath,
+        baseSchema
+    );
+    if (resolvedReference === null) {
+        return false;
+    }
+
+    const refSchema = loadSchema(resolvedReference.schemaPath, context);
+    if (refSchema === null) {
+        return false;
+    }
+
+    addSchemaWithResolvedReferences(refSchema, resolvedReference, context);
+    return true;
 }
 
 /** Describe a negated schema from AJV's `not` validation error payload. */
@@ -426,40 +461,6 @@ function normalizeAjvError(errorObject: ErrorObject): AjvError {
     };
 }
 
-/**
- * Resolve Schema Error
- *
- * @throws When AJV throws an error that is not a resolvable missing reference.
- */
-function resolveError(
-    error: unknown,
-    baseSchemaPath: string,
-    baseSchema: SchemaObject,
-    context: RuleContext
-): boolean {
-    const missingRef = getMissingRef(error);
-    if (!isDefined(missingRef)) {
-        return false;
-    }
-
-    const resolvedReference = resolveSchemaReference(
-        missingRef,
-        baseSchemaPath,
-        baseSchema
-    );
-    if (resolvedReference === null) {
-        return false;
-    }
-
-    const refSchema = loadSchema(resolvedReference.schemaPath, context);
-    if (refSchema === null) {
-        return false;
-    }
-
-    addSchemaWithResolvedReferences(refSchema, resolvedReference, context);
-    return true;
-}
-
 /** Resolve an AJV missing reference into a loadable schema URL and schema id. */
 function resolveSchemaReference(
     missingRef: string,
@@ -524,7 +525,9 @@ function schemaToValidator(
                 schemaObject = structuredClone(schemaObject);
                 migrateToDraft7(schemaObject);
                 shouldRetry = true;
-            } else if (resolveError(error, schemaPath, schemaObject, context)) {
+            } else if (
+                canResolveError(error, schemaPath, schemaObject, context)
+            ) {
                 shouldRetry = true;
             } else {
                 const cause = toError(error);

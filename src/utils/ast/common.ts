@@ -9,5 +9,4 @@ export type GetLoc = (sourceCode: SourceCode) => [number, number];
  * Parser-specific node metadata used to report schema validation errors.
  */
 export type NodeData<N> =
-    | { key: GetLoc; value: N | null }
-    | { key?: undefined; value: N };
+    { key: GetLoc; value: N | null } | { key?: undefined; value: N };

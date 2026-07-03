@@ -101,7 +101,7 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
             getRuleObjectOption(context)?.reportMode
         );
 
-        let existsExports = false;
+        let isExistsExports = false;
 
         /**
          * Validate JSON Schema
@@ -136,10 +136,10 @@ const noInvalidRule: RuleModule = createRule("no-invalid", {
             node: AST.ESLintExpression,
             rootRange: [number, number]
         ) {
-            if (existsExports) {
+            if (isExistsExports) {
                 return;
             }
-            existsExports = true;
+            isExistsExports = true;
 
             const data = analyzeJsAST(node, rootRange, context);
             if (!isPresent(data)) {
@@ -492,11 +492,13 @@ function findSchemaPathFromTOML(node: TOML.TOMLProgram): unknown {
         return null;
     }
     for (const body of rootExpr.body) {
-        if (body.type === "TOMLKeyValue" && body.key.keys.length === 1) {
-            const [key] = getStaticTOMLValue(body.key);
-            if (key === "$schema") {
-                return getStaticTOMLValue(body.value);
-            }
+        if (body.type !== "TOMLKeyValue" || body.key.keys.length !== 1) {
+            continue;
+        }
+
+        const [key] = getStaticTOMLValue(body.key);
+        if (key === "$schema") {
+            return getStaticTOMLValue(body.value);
         }
     }
     return null;
@@ -576,21 +578,23 @@ function getCatalogValidators(
 
     const validators: Validator[] = [];
     for (const schemaData of catalog.schemas) {
-        if (isSchemaStoreSchema(schemaData)) {
-            const fileMatch = schemaData.fileMatch;
-            const matchesAllJson = fileMatch.some((entry) =>
-                /^\*\.json$/v.test(entry)
+        if (!isSchemaStoreSchema(schemaData)) {
+            continue;
+        }
+
+        const fileMatch = schemaData.fileMatch;
+        const isMatchesAllJson = fileMatch.some((entry) =>
+            /^\*\.json$/v.test(entry)
+        );
+        // Exclude schemas with patterns that match all JSON files.
+        // https://github.com/SchemaStore/schemastore/pull/3291
+        if (!isMatchesAllJson && isMatchingFile(relativeFilename, fileMatch)) {
+            const schemaValidator = schemaPathToValidator(
+                schemaData.url,
+                context
             );
-            // Exclude schemas with patterns that match all JSON files.
-            // https://github.com/SchemaStore/schemastore/pull/3291
-            if (!matchesAllJson && matchFile(relativeFilename, fileMatch)) {
-                const schemaValidator = schemaPathToValidator(
-                    schemaData.url,
-                    context
-                );
-                if (isPresent(schemaValidator)) {
-                    validators.push(schemaValidator);
-                }
+            if (isPresent(schemaValidator)) {
+                validators.push(schemaValidator);
             }
         }
     }
@@ -616,11 +620,13 @@ function getOptionsValidators(
 
     const validators: Validator[] = [];
     for (const schemaData of option.schemas) {
-        if (matchFile(filename, schemaData.fileMatch)) {
-            const validator = optionSchemaToValidator(schemaData, context);
-            if (isPresent(validator)) {
-                validators.push(validator);
-            }
+        if (!isMatchingFile(filename, schemaData.fileMatch)) {
+            continue;
+        }
+
+        const validator = optionSchemaToValidator(schemaData, context);
+        if (isPresent(validator)) {
+            validators.push(validator);
         }
     }
     return validators.length > 0 ? validators : null;
@@ -750,6 +756,19 @@ function isJSONProgram(
         sourceCode.parserServices?.isJSON === true &&
         isRecord(_node) &&
         _node["type"] === "Program"
+    );
+}
+
+/**
+ * Check if filename matches a schema fileMatch entry.
+ */
+function isMatchingFile(
+    filename: string,
+    fileMatch: readonly string[]
+): boolean {
+    return (
+        arrayIncludes(fileMatch, path.basename(filename)) ||
+        fileMatch.some((fm) => minimatch(filename, fm, { dot: true }))
     );
 }
 
@@ -892,16 +911,6 @@ function isYAMLProgram(
         sourceCode.parserServices?.isYAML === true &&
         isRecord(_node) &&
         _node["type"] === "Program"
-    );
-}
-
-/**
- * Check if filename matches a schema fileMatch entry.
- */
-function matchFile(filename: string, fileMatch: readonly string[]): boolean {
-    return (
-        arrayIncludes(fileMatch, path.basename(filename)) ||
-        fileMatch.some((fm) => minimatch(filename, fm, { dot: true }))
     );
 }
 
