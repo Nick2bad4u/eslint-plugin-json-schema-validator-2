@@ -131,3 +131,5 @@ temp/
 
 /yarn.lock
 .temp/
+.lychee.report.md
+.lycheecache
