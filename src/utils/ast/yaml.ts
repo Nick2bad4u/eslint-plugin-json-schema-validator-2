@@ -293,7 +293,10 @@ function getYAMLNodeFromTraverseTarget(
  * Converts scalar YAML keys to path keys.
  */
 function getYAMLPathKey(
-    node: null | YAML.YAMLContent | YAML.YAMLWithMeta
+    node:
+        | null
+        | YAML.YAMLContent
+        | YAML.YAMLWithMeta
 ): null | string {
     if (!isPresent(node)) {
         return "null";

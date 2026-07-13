@@ -63,7 +63,7 @@ describe("ast for JS.", () => {
         });
         throwOnFirstLintError(err);
 
-        const analyzedResult = requireAnalyzedOutput(result, filename);
+        const analyzedResult = getAnalyzedOutput(result, filename);
         ensureOutputFixture(outputFile, analyzedResult);
 
         const output = JSON.parse(
@@ -76,9 +76,9 @@ describe("ast for JS.", () => {
     it("throws when a fixture does not produce analysis output.", () => {
         expect.assertions(1);
 
-        expect(() =>
-            requireAnalyzedOutput(undefined, "missing-input.js")
-        ).toThrow("No analysis result was produced for missing-input.js.");
+        expect(() => getAnalyzedOutput(undefined, "missing-input.js")).toThrow(
+            "No analysis result was produced for missing-input.js."
+        );
     });
 });
 
@@ -121,6 +121,17 @@ function ensureOutputFixture(outputFile: string, result: AnalyzedOutput): void {
     }
 }
 
+function getAnalyzedOutput(
+    result: AnalyzedOutput | undefined,
+    filename: string
+): AnalyzedOutput {
+    if (result === undefined) {
+        throw new Error(`No analysis result was produced for ${filename}.`);
+    }
+
+    return result;
+}
+
 function* listupInput(rootDir: string): IterableIterator<string> {
     for (const filename of fs.readdirSync(rootDir)) {
         if (filename.startsWith("_")) {
@@ -134,17 +145,6 @@ function* listupInput(rootDir: string): IterableIterator<string> {
             yield* listupInput(abs);
         }
     }
-}
-
-function requireAnalyzedOutput(
-    result: AnalyzedOutput | undefined,
-    filename: string
-): AnalyzedOutput {
-    if (result === undefined) {
-        throw new Error(`No analysis result was produced for ${filename}.`);
-    }
-
-    return result;
 }
 
 function throwOnFirstLintError(messages: readonly Linter.LintMessage[]): void {

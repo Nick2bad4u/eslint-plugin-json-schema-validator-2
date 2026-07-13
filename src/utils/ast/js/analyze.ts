@@ -85,7 +85,14 @@ type StaticObject = UnknownRecord;
 
 type SubPathData = Pick<PathData, "children" | "data">;
 
-type UnaryOperator = "!" | "+" | "-" | "delete" | "typeof" | "void" | "~";
+type UnaryOperator =
+    | "!"
+    | "+"
+    | "-"
+    | "delete"
+    | "typeof"
+    | "void"
+    | "~";
 /**
  * Analyze JavaScript AST
  */
@@ -329,7 +336,10 @@ const VISITORS = {
         if (leftData.data === UNKNOWN) {
             return UNKNOWN_PATH_DATA;
         }
-        const operator: "&&" | "??" | "||" = node.operator;
+        const operator:
+            | "&&"
+            | "??"
+            | "||" = node.operator;
         switch (operator) {
             case "&&": {
                 if (!isTruthy(leftData.data)) {
@@ -770,7 +780,13 @@ function calcBinaryExpression(
 /**
  * Compares two static values.
  */
-function compareValues(left: unknown, right: unknown): -1 | 0 | 1 {
+function compareValues(
+    left: unknown,
+    right: unknown
+):
+    | -1
+    | 0
+    | 1 {
     const leftValue = toComparableValue(left);
     const rightValue = toComparableValue(right);
     if (leftValue < rightValue) {
@@ -1038,7 +1054,10 @@ function subtractValues(left: unknown, right: unknown): unknown {
 /**
  * Converts a value to a comparable primitive.
  */
-function toComparableValue(value: unknown): bigint | number | string {
+function toComparableValue(value: unknown):
+    | bigint
+    | number
+    | string {
     if (
         typeof value === "bigint" ||
         typeof value === "number" ||

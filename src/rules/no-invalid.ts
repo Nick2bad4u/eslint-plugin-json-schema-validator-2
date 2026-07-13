@@ -63,7 +63,10 @@ interface RuleObjectOption {
 
 type RuleOption = RuleObjectOption | string;
 
-type SchemaKind = "$schema" | "catalog" | "options";
+type SchemaKind =
+    | "$schema"
+    | "catalog"
+    | "options";
 
 interface SchemaStoreCatalog {
     schemas: unknown[];
@@ -396,7 +399,11 @@ function createValidatorsContext(
  */
 function errorDataToLoc(
     sourceCode: SourceCode,
-    errorData: NodeData<JSONAST.JSONNode | TOML.TOMLNode | YAML.YAMLNode>
+    errorData: NodeData<
+        | JSONAST.JSONNode
+        | TOML.TOMLNode
+        | YAML.YAMLNode
+    >
 ): JSONAST.SourceLocation {
     if (isPresent(errorData.key)) {
         return rangeToLocation(sourceCode, errorData.key(sourceCode));
@@ -435,7 +442,10 @@ function filterValidationErrors(
 function findSchemaPath(
     context: RuleContext,
     sourceCode: SourceCode,
-    node: JSONAST.JSONProgram | TOML.TOMLProgram | YAML.YAMLProgram
+    node:
+        | JSONAST.JSONProgram
+        | TOML.TOMLProgram
+        | YAML.YAMLProgram
 ): null | string {
     let schema: unknown = null;
     if (isJSONProgram(sourceCode, node)) {

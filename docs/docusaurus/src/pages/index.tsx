@@ -18,7 +18,10 @@ interface HeroStat {
 }
 
 interface HomeCard {
-    readonly accent: "blue" | "green" | "pink";
+    readonly accent:
+        | "blue"
+        | "green"
+        | "pink";
     readonly description: string;
     readonly title: string;
     readonly to: string;

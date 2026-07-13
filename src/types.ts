@@ -9,7 +9,10 @@ import type { AST } from "vue-eslint-parser";
 import type { AST as YAML } from "yaml-eslint-parser";
 
 /** Comment nodes supported by the configured parsers. */
-export type Comment = ESTreeComment | TOML.Comment | YAML.Comment;
+export type Comment =
+    | ESTreeComment
+    | TOML.Comment
+    | YAML.Comment;
 
 /** Shared settings consumed from ESLint flat config. */
 export interface JsonSchemaValidatorSettings {
@@ -25,7 +28,10 @@ export interface JsonSchemaValidatorSettings {
 
 /** AST nodes supported by this plugin. */
 export type Node =
-    AST.ESLintNode | JSON.JSONNode | TOML.TOMLNode | YAML.YAMLNode;
+    | AST.ESLintNode
+    | JSON.JSONNode
+    | TOML.TOMLNode
+    | YAML.YAMLNode;
 
 /** AST node or token accepted by SourceCode helpers. */
 export type NodeOrToken = Node | Token;
@@ -71,7 +77,10 @@ export interface RuleMetaData {
     languages?: string[];
     messages: Record<string, string>;
     schema: Arrayable<JSONSchema4>;
-    type: "layout" | "problem" | "suggestion";
+    type:
+        | "layout"
+        | "problem"
+        | "suggestion";
 }
 
 /** Complete rule module exposed to ESLint. */
@@ -81,7 +90,10 @@ export interface RuleModule {
 }
 /** SourceCode API subset used by this plugin. */
 export interface SourceCode {
-    ast: JSON.JSONProgram | TOML.TOMLProgram | YAML.YAMLProgram;
+    ast:
+        | JSON.JSONProgram
+        | TOML.TOMLProgram
+        | YAML.YAMLProgram;
     commentsExistBetween: (left: NodeOrToken, right: NodeOrToken) => boolean;
     getAllComments: () => Comment[];
     getCommentsAfter: (nodeOrToken: NodeOrToken) => Comment[];
@@ -177,7 +189,10 @@ export interface SourceCode {
     getTokensBetween: (
         left: NodeOrToken,
         right: NodeOrToken,
-        padding?: CursorWithCountOptions | FilterPredicate | number
+        padding?:
+            | CursorWithCountOptions
+            | FilterPredicate
+            | number
     ) => Token[];
 
     hasBOM: boolean;
@@ -198,25 +213,29 @@ export interface SourceCode {
     visitorKeys: Record<string, string[]>;
 }
 /** Tokens supported by the configured parsers. */
-export type Token = Comment | ES.Token | TOML.Token | YAML.Token;
+export type Token =
+    | Comment
+    | ES.Token
+    | TOML.Token
+    | YAML.Token;
 
 type CursorWithCountOptions =
     | FilterPredicate
     | number
     | {
-          count?: number;
-          filter?: FilterPredicate;
-          includeComments?: boolean;
-      };
+        count?: number;
+        filter?: FilterPredicate;
+        includeComments?: boolean;
+    };
 
 type CursorWithSkipOptions =
     | FilterPredicate
     | number
     | {
-          filter?: FilterPredicate;
-          includeComments?: boolean;
-          skip?: number;
-      };
+        filter?: FilterPredicate;
+        includeComments?: boolean;
+        skip?: number;
+    };
 
 interface DeprecatedInfo {
     replacedBy?: RuleReplacement[];

@@ -7,7 +7,19 @@ const config = [
     ...baseConfig,
 
     {
-        ignores: ["docs/docusaurus/static/img/coverage.json"],
+        files: ["eslint.config.mjs"],
+        languageOptions: {
+            parserOptions: {
+                projectService: {
+                    allowDefaultProject: ["eslint.config.mjs"],
+                },
+            },
+        },
+        name: "Local ESLint Config Project Service",
+    },
+
+    {
+        ignores: ["docs/docusaurus/static/img/coverage.json", "plugin.mjs"],
         name: "Local Generated Documentation Artifacts",
     },
     {
@@ -82,10 +94,20 @@ const config = [
             "unicorn/no-unreadable-new-expression": "off",
             "unicorn/no-unsafe-string-replacement": "off",
             "unicorn/prefer-array-last-methods": "off",
+            // Error.isError is unavailable on the package's supported Node 22 runtime.
+            "unicorn/prefer-error-is-error": "off",
             "unicorn/prefer-includes-over-repeated-comparisons": "off",
             "unicorn/prefer-minimal-ternary": "off",
             "unicorn/prefer-number-coercion": "off",
             "unicorn/try-complexity": "off",
+        },
+    },
+    {
+        files: ["src/rules/no-invalid.ts"],
+        name: "Local AJV Error Path Compatibility",
+        rules: {
+            // AJV exposes the validation path through a deliberately dynamic boundary.
+            "@typescript-eslint/no-unsafe-assignment": "off",
         },
     },
     {

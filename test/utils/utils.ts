@@ -249,9 +249,7 @@ function getMinIndent(lines: readonly string[]): number {
     return Math.min(...lineIndents);
 }
 
-function getParser(
-    fileName: string
-):
+function getParser(fileName: string):
     | typeof espree
     | typeof jsoncESLintParser
     | typeof tomlESLintParser
