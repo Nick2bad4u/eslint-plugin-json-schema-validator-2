@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const COMMAND_TIMEOUT = 60_000;
+const ESLINT_PEER_VERSION = "9.38.0";
 const INSTALL_TIMEOUT = 120_000;
 const PACKAGE_NAME = "eslint-plugin-json-schema-validator-2";
 const PACKAGE_ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -191,6 +192,7 @@ describe("packaged entrypoints", () => {
                         "--package-lock=false",
                         "--prefer-offline",
                         "--save=false",
+                        `eslint@${ESLINT_PEER_VERSION}`,
                         path.join(packDirectory, tarballFilename),
                     ],
                     consumerDirectory
