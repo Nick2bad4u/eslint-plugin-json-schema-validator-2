@@ -7,14 +7,10 @@ import { createSyncFn } from "synckit";
 import { safeCastTo } from "ts-extras";
 
 const moduleUrl =
-    typeof __filename === "string"
-        ? pathToFileURL(__filename).href
-        : import.meta.url;
-const moduleFilename =
-    typeof __filename === "string"
-        ? __filename
-        : // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.filename is not available across the configured Node range
-          fileURLToPath(import.meta.url);
+    typeof import.meta.url === "string"
+        ? import.meta.url
+        : pathToFileURL(__filename).href;
+const moduleFilename = fileURLToPath(moduleUrl);
 const require = createRequire(moduleUrl);
 const ext = path.extname(moduleFilename);
 const sourceRuntimeWorkerPath = fileURLToPath(

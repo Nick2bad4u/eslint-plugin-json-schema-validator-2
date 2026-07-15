@@ -4,7 +4,7 @@ import debugBuilder from "debug";
 import { draft7 as migrateToDraft7 } from "json-schema-migrate-x";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
     isDefined,
     isEmpty,
@@ -30,13 +30,12 @@ const DYNAMIC_VSCODE_SETTING_NAMES = new Set<string>([
     "editor.defaultFormatter",
 ]);
 const RELOADING = new Set<string>();
-const moduleFilename =
-    typeof __filename === "string"
-        ? __filename
-        : // eslint-disable-next-line unicorn/prefer-import-meta-properties -- import.meta.filename is not available across the configured Node range.
-          fileURLToPath(import.meta.url);
-const moduleDirname =
-    typeof __dirname === "string" ? __dirname : path.dirname(moduleFilename);
+const moduleUrl =
+    typeof import.meta.url === "string"
+        ? import.meta.url
+        : pathToFileURL(__filename).href;
+const moduleFilename = fileURLToPath(moduleUrl);
+const moduleDirname = path.dirname(moduleFilename);
 const WORKSPACE_CACHE_DIRECTORY = path.join(".cache", meta.name);
 
 interface CacheEntry {
