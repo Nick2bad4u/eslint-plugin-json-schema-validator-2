@@ -27,30 +27,30 @@ import type { SchemaObject } from "./types.js";
 
 import { loadSchema } from "./schema.js";
 
-const lazyRegExpEngine = Object.defineProperty(
-    function lazyRegExpEngine(str: string, flags: string): RegExp {
-        let thrownError: Error | undefined;
-        try {
-            // eslint-disable-next-line security/detect-non-literal-regexp -- Ajv must compile schema-provided regex patterns through this hook.
-            return new RegExp(str, flags);
-        } catch (error_) {
-            thrownError = toError(error_);
-        }
-        if (flags.includes("u")) {
-            // eslint-disable-next-line security/detect-non-literal-regexp -- Ajv fallback keeps validating the same schema pattern without the unicode flag.
-            return new RegExp(str, flags.replace("u", ""));
-        }
-        throw thrownError;
-    },
-    "code",
-    { value: "new RegExp" }
-) as unknown as RegExpEngine;
+function lazyRegExpEngine(str: string, flags: string): RegExp {
+    let thrownError: Error | undefined;
+    try {
+        // eslint-disable-next-line security/detect-non-literal-regexp -- Ajv must compile schema-provided regex patterns through this hook.
+        return new RegExp(str, flags);
+    } catch (error_) {
+        thrownError = toError(error_);
+    }
+    if (flags.includes("u")) {
+        // eslint-disable-next-line security/detect-non-literal-regexp -- Ajv fallback keeps validating the same schema pattern without the unicode flag.
+        return new RegExp(str, flags.replace("u", ""));
+    }
+    throw thrownError;
+}
+
+lazyRegExpEngine.code = "new RegExp";
+
+const typedRegExpEngine: RegExpEngine = lazyRegExpEngine;
 
 const ajv = new Ajv({
     // SchemaId: "auto",
     allErrors: true,
     code: {
-        regExp: lazyRegExpEngine,
+        regExp: typedRegExpEngine,
     },
     // MissingRefs: "ignore",
     // extendRefs: "ignore",

@@ -1,14 +1,7 @@
 import type { ArrayElement, UnknownRecord } from "type-fest";
 import type { AST } from "vue-eslint-parser";
 
-import {
-    arrayAt,
-    arrayFirst,
-    isPresent,
-    keyIn,
-    objectAssign,
-    setHas,
-} from "ts-extras";
+import { arrayAt, arrayFirst, isPresent, keyIn, setHas } from "ts-extras";
 
 import type { RuleContext, SourceCode } from "../../../types.js";
 
@@ -457,12 +450,8 @@ const VISITORS = {
             expressions.push(data.data);
         }
 
-        const strings = objectAssign(
-            node.quasi.quasis.map((q) => q.value.cooked ?? q.value.raw),
-            { raw: node.quasi.quasis.map((q) => q.value.raw) }
-        ) as TemplateStringsArray;
-
-        const data = String.raw(strings, ...expressions);
+        const raw = node.quasi.quasis.map((q) => q.value.raw);
+        const data = String.raw({ raw }, ...expressions);
 
         return {
             children: EMPTY_MAP,

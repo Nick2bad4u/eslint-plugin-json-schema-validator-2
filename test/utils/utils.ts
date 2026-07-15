@@ -35,7 +35,7 @@ const INPUT_FILE_PATTERN = /input\.(?:js|json5?|toml|vue|ya?ml)$/v;
 const INPUT_REQUIREMENTS_PATTERN = /input\.\w+$/v;
 const INLINE_HASH_COMMENT_PATTERN = /^#(?<config>[^\n]+)\n/v;
 const INLINE_BLOCK_COMMENT_PATTERN = /^\/\*(?<config>.*?)\*\//v;
-const INLINE_HTML_COMMENT_PATTERN = /^<!--(?<config>.*?)-->/v;
+const INLINE_HTML_COMMENT_PATTERN = /^<!--(?<config>.*?)-->/sv;
 
 /**
  * Load test cases

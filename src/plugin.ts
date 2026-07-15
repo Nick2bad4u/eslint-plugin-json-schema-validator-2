@@ -7,8 +7,6 @@ import { pluginCore } from "./plugin-core.js";
 
 /**
  * Names of the flat configs exported by the plugin.
- *
- * @ignore
  */
 export type JsonSchemaValidatorConfigName =
     | "base"
