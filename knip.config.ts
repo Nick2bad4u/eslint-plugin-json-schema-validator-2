@@ -45,7 +45,6 @@ const knipConfig: KnipConfig = {
         "commitlint",
         "commitlint-config-gitmoji",
         "fast-check",
-        "gitleaks-secret-scanner",
         "htmlhint",
         "leasot",
         "markdown-link-check",

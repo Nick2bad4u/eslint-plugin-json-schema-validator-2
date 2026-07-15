@@ -3,19 +3,16 @@ title = "eslint-plugin-json-schema-validator-2 secret detection configuration"
 [extend]
     path = "node_modules/gitleaks-config-nick2bad4u/gitleaks.toml"
 
-[[allowlists]]
-    description = "Ignore generated and dependency artifacts"
-    paths = [
-        '''(^|/)\.cache/''',
-           '''(^|/)coverage/''',
-           '''(^|/)dist/''',
-           '''(^|/)docs/docusaurus/\.docusaurus/''',
-           '''(^|/)node_modules/''',
-           '''(^|/)temp/''',
-           '''(^|/)\.temp/''',
-        '''^docs/docusaurus/docs/typedoc\.json$''',
-    ]
-
-[[allowlists]]
-    description = "Ignore historical schema property-name false positives"
-    paths = [ '''^schemastore/json\.schemastore\.org/ansible-role-2\.9\.json$''' ]
+[allowlist]
+description = "Ignore generated artifacts and historical schema false positives"
+paths = [
+    '''(^|/)\.cache/''',
+    '''(^|/)coverage/''',
+    '''(^|/)dist/''',
+    '''(^|/)docs/docusaurus/\.docusaurus/''',
+    '''(^|/)node_modules/''',
+    '''(^|/)temp/''',
+    '''(^|/)\.temp/''',
+    '''^docs/docusaurus/docs/typedoc\.json$''',
+    '''^schemastore/json\.schemastore\.org/ansible-role-2\.9\.json$''',
+]

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
 
 import pc from "picocolors";
 
@@ -22,16 +24,24 @@ const allowedVulnerabilityNames = new Set([
     "@docusaurus/theme-classic",
     "@docusaurus/theme-mermaid",
     "@docusaurus/theme-search-algolia",
+    "all-contributors-cli",
     "copy-webpack-plugin",
     "css-minimizer-webpack-plugin",
+    "esbuild",
+    "external-editor",
+    "inquirer",
     "serialize-javascript",
     "sockjs",
+    "tmp",
     "uuid",
     "webpack-dev-server",
 ]);
 
 const allowedAdvisoryUrls = new Set([
     "https://github.com/advisories/GHSA-5c6j-r48x-rmvq",
+    "https://github.com/advisories/GHSA-52f5-9888-hmc6",
+    "https://github.com/advisories/GHSA-g7r4-m6w7-qqqr",
+    "https://github.com/advisories/GHSA-ph9p-34f9-6g65",
     "https://github.com/advisories/GHSA-qj8w-gfj5-8c6v",
     "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
 ]);
@@ -53,8 +63,11 @@ const allowedViaNames = new Set([
     "@docusaurus/theme-search-algolia",
     "copy-webpack-plugin",
     "css-minimizer-webpack-plugin",
+    "external-editor",
+    "inquirer",
     "serialize-javascript",
     "sockjs",
+    "tmp",
     "uuid",
     "webpack-dev-server",
 ]);
@@ -145,28 +158,49 @@ const collectUnexpectedAuditFindings = (vulnerabilities) => {
     return problems;
 };
 
-const npmExecPath = process.env["npm_execpath"];
+const isProductionAudit = process.argv.includes("--production");
+const auditEnvironment = {
+    ...process.env,
+};
+
+delete auditEnvironment["FORCE_COLOR"];
+delete auditEnvironment["NPM_CONFIG_ALLOW_SCRIPTS"];
+delete auditEnvironment["npm_config_allow_scripts"];
+
+const configuredNpmExecPath = auditEnvironment["npm_execpath"];
+const bundledNpmExecPath = path.join(
+    path.dirname(process.execPath),
+    "node_modules",
+    "npm",
+    "bin",
+    "npm-cli.js"
+);
+const npmExecPath =
+    typeof configuredNpmExecPath === "string" &&
+    configuredNpmExecPath.length > 0
+        ? configuredNpmExecPath
+        : existsSync(bundledNpmExecPath)
+          ? bundledNpmExecPath
+          : undefined;
+const auditArguments = [
+    "audit",
+    "--json",
+    "--audit-level=moderate",
+    ...(isProductionAudit ? ["--omit=dev", "--workspaces=false"] : []),
+];
 const auditCommand =
-    typeof npmExecPath === "string" && npmExecPath.length > 0
+    npmExecPath === undefined
         ? {
-              args: [
-                  npmExecPath,
-                  "audit",
-                  "--json",
-                  "--audit-level=moderate",
-              ],
-              command: process.execPath,
+              args: auditArguments,
+              command: "npm",
           }
         : {
-              args: [
-                  "audit",
-                  "--json",
-                  "--audit-level=moderate",
-              ],
-              command: "npm",
+              args: [npmExecPath, ...auditArguments],
+              command: process.execPath,
           };
 const auditResult = spawnSync(auditCommand.command, auditCommand.args, {
     encoding: "utf8",
+    env: auditEnvironment,
     shell: false,
     stdio: [
         "ignore",
@@ -187,7 +221,12 @@ if (auditResult.stdout.trim().length === 0) {
 
 const auditReport = JSON.parse(auditResult.stdout);
 const vulnerabilities = getVulnerabilities(auditReport);
-const unexpectedFindings = collectUnexpectedAuditFindings(vulnerabilities);
+const unexpectedFindings = isProductionAudit
+    ? Object.keys(vulnerabilities).map(
+          (vulnerabilityName) =>
+              `Unexpected production vulnerability ${vulnerabilityName}`
+      )
+    : collectUnexpectedAuditFindings(vulnerabilities);
 
 if (unexpectedFindings.length > 0) {
     console.error(pc.red("Unexpected npm audit findings detected:"));
@@ -199,13 +238,17 @@ if (unexpectedFindings.length > 0) {
     process.exit(1);
 }
 
-console.log(
-    pc.yellow(
-        "npm audit contains only the tracked Docusaurus dev-tooling advisory chain."
-    )
-);
-console.log(
-    pc.gray(
-        "Production dependencies are checked separately by `npm run audit:prod`."
-    )
-);
+if (isProductionAudit) {
+    console.log(pc.green("No production dependency vulnerabilities found."));
+} else {
+    console.log(
+        pc.yellow(
+            "npm audit contains only tracked development-tooling advisory chains."
+        )
+    );
+    console.log(
+        pc.gray(
+            "Production dependencies are checked separately by `npm run audit:prod`."
+        )
+    );
+}
