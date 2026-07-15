@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Keep `peerDependencies.eslint` aligned with the currently installed
- * `devDependencies.eslint` upper range.
+ * Keep `peerDependencies.eslint` aligned with the repository's supported ESLint
+ * major versions.
  *
- * Why: npm does not support `$eslint` indirection in `peerDependencies` (that
- * syntax is supported for `overrides` only), so we synchronize the top-end
- * range explicitly after dependency updates.
+ * Why: dependency update tools may raise the peer dependency's lower bounds to
+ * the currently installed ESLint version. The peer range is a support contract,
+ * so keep the independently tested ESLint 9 and ESLint 10 ranges explicit.
  */
 
 import { readFile, writeFile } from "node:fs/promises";
@@ -28,17 +28,11 @@ const packageJsonPath = fileURLToPath(
     new URL("../package.json", import.meta.url)
 );
 /**
- * The minimum supported range for eslint in peer dependencies. This is used as
- * a fallback when the existing peer range is not a valid string or cannot be
- * parsed to determine a floor candidate. This ensures that the peer dependency
- * range does not fall below a certain baseline, which is important for
- * maintaining compatibility with supported versions of eslint.
+ * The supported ESLint peer dependency range.
  *
  * @type {string}
- *
- * @see resolvePeerFloorRange
  */
-const minimumSupportedEslintRange = "^9.0.0";
+const supportedEslintPeerRange = "^9.0.0 || ^10.0.0";
 
 /**
  * Read and parse package.json.
@@ -70,34 +64,6 @@ const readPackageJson = async () => {
 };
 
 /**
- * Resolve a floor range from an existing peer range when possible. Falls back
- * to repository baseline.
- *
- * @type {(existingPeerRange: unknown) => string}
- *
- * @param {unknown} existingPeerRange
- *
- * @returns {string}
- */
-const resolvePeerFloorRange = (existingPeerRange) => {
-    if (typeof existingPeerRange !== "string") {
-        return minimumSupportedEslintRange;
-    }
-
-    /** @type {string[]} */
-    const [floorCandidate] = existingPeerRange
-        .split("||")
-        .map((part) => part.trim());
-
-    if (!floorCandidate) {
-        return minimumSupportedEslintRange;
-    }
-
-    /** @type {string} */
-    return floorCandidate;
-};
-
-/**
  * Check whether an unknown runtime value is a non-null object record.
  *
  * @type {(value: unknown) => value is Record<string, unknown>}
@@ -116,45 +82,26 @@ const main = async () => {
     const packageJson = await readPackageJson();
 
     /** @type {unknown} */
-    const devDependencies = packageJson["devDependencies"];
-    /** @type {unknown} */
     const peerDependencies = packageJson["peerDependencies"];
 
-    if (!isRecord(devDependencies) || !isRecord(peerDependencies)) {
+    if (!isRecord(peerDependencies)) {
         /** @type {string} */
         throw new TypeError(
-            "Expected package.json to include object-valued devDependencies and peerDependencies"
-        );
-    }
-
-    /** @type {unknown} */
-    const devDependencyEslintRange = devDependencies["eslint"];
-
-    if (
-        typeof devDependencyEslintRange !== "string" ||
-        devDependencyEslintRange.trim().length === 0
-    ) {
-        throw new TypeError(
-            "Expected devDependencies.eslint to be a non-empty string range"
+            "Expected package.json to include object-valued peerDependencies"
         );
     }
 
     /** @type {string} */
-    const peerFloorRange = resolvePeerFloorRange(peerDependencies["eslint"]);
-    /** @type {string} */
-    const nextPeerEslintRange = `${peerFloorRange} || ${devDependencyEslintRange}`;
-
-    /** @type {string} */
-    if (peerDependencies["eslint"] === nextPeerEslintRange) {
+    if (peerDependencies["eslint"] === supportedEslintPeerRange) {
         /** @type {string} */
         console.log(
-            `peerDependencies.eslint already aligned: ${nextPeerEslintRange}`
+            `peerDependencies.eslint already aligned: ${supportedEslintPeerRange}`
         );
         /** @type {void} */
         return;
     }
 
-    peerDependencies["eslint"] = nextPeerEslintRange;
+    peerDependencies["eslint"] = supportedEslintPeerRange;
     try {
         /** @type {string} */
         await writeFile(
@@ -165,7 +112,7 @@ const main = async () => {
         );
         /** @type {string} */
         console.log(
-            `Updated peerDependencies.eslint to: ${nextPeerEslintRange}`
+            `Updated peerDependencies.eslint to: ${supportedEslintPeerRange}`
         );
     } catch (error) {
         /** @type {Error} */
@@ -193,7 +140,6 @@ const main = async () => {
  * @see writeFile
  * @see readPackageJson
  * @see isRecord
- * @see resolvePeerFloorRange
  * @see main
  */
 try {

@@ -143,8 +143,8 @@
         "lint:node-version-files": "node scripts/sync-node-version-files.mjs --check",
         "lint:package": "npm run lint:node-version-files && npm run lint:package-sort && npm run lint:packagelintrc && echo \"Package.json lint done!\"",
         "lint:package:strict": "npm run lint:node-version-files && npm run lint:package-sort && npm run lint:package-check:strict && npm run lint:packagelintrc && echo \"Package.json lint done!\"",
-        "lint:package-check": "publint && node scripts/attw-pack-check.mjs",
-        "lint:package-check:strict": "publint && node scripts/attw-pack-check.mjs --profile strict",
+        "lint:package-check": "publint && attw --pack .",
+        "lint:package-check:strict": "publint && attw --pack . --profile strict",
         "lint:package-json": "npmPkgJsonLint . --config .npmpackagejsonlintrc.json",
         "lint:package-sort": "sort-package-json \"./package.json\" \"./docs/docusaurus/package.json\"",
         "lint:package-sort-check": "sort-package-json --check \"./package.json\" \"./docs/docusaurus/package.json\"",
@@ -192,7 +192,7 @@
         "types:update": "typesync",
         "update-actions": "npx actions-up --yes --style sha",
         "update-all": "npm run update-actions && npm run update-deps",
-        "update-deps": "ncu --configFileName .ncurc.workspaces.json --configFilePath node_modules/ncu-config-nick2bad4u && npm update --workspaces --force && npm install --force && npm run sync:peer-eslint-range && npm run sync:node-version-files && npm run sync:rules:write",
+        "update-deps": "ncu --configFileName .ncurc.workspaces.json --configFilePath node_modules/ncu-config-nick2bad4u && cross-env npm_config_allow_scripts= npm update --workspaces --force && cross-env npm_config_allow_scripts= npm install --force && npm run sync:peer-eslint-range && npm run sync:node-version-files && npm run sync:rules:write",
         "verify:readme-rules-table": "npm run build && npm run sync:rules:write"
     },
     "overrides": {
@@ -219,7 +219,7 @@
         "@arethetypeswrong/cli": "^0.18.5",
         "@csstools/stylelint-formatter-github": "^2.0.0",
         "@double-great/remark-lint-alt-text": "^1.1.1",
-        "@eslint/config-inspector": "^3.0.4",
+        "@eslint/config-inspector": "^3.1.0",
         "@eslint/eslintrc": "^3.3.6",
         "@eslint/js": "^10.0.1",
         "@microsoft/tsdoc-config": "^0.18.1",
@@ -241,7 +241,7 @@
         "@types/node": "^26.1.1",
         "@types/semver": "^7.7.1",
         "@types/sloc": "^0.2.3",
-        "@typescript-eslint/rule-tester": "^8.63.0",
+        "@typescript-eslint/rule-tester": "^8.64.0",
         "@vitest/coverage-v8": "^4.1.10",
         "@vitest/ui": "^4.1.10",
         "actionlint": "^2.0.6",
@@ -254,7 +254,7 @@
         "detect-secrets": "^1.0.6",
         "esbuild": "^0.28.1",
         "eslint": "^10.7.0",
-        "eslint-config-nick2bad4u": "^5.0.0",
+        "eslint-config-nick2bad4u": "^6.0.0",
         "eslint-formatter-unix": "^9.0.1",
         "eslint-plugin-node-dependencies": "^2.2.0",
         "eslint-plugin-toml": "^1.4.0",
@@ -305,7 +305,7 @@
         "typedoc": "^0.28.20",
         "typedoc-config-nick2bad4u": "^2.0.3",
         "typescript": "^6.0.3",
-        "typescript-eslint": "^8.63.0",
+        "typescript-eslint": "^8.64.0",
         "typesync": "^0.14.3",
         "vfile": "^6.0.3",
         "vite": "^8.1.4",
@@ -317,7 +317,7 @@
         "yamllint-js": "^0.2.4"
     },
     "peerDependencies": {
-        "eslint": "^9.38.0 || ^10.5.0"
+        "eslint": "^9.0.0 || ^10.0.0"
     },
     "packageManager": "npm@12.0.1",
     "engines": {
@@ -338,6 +338,13 @@
     "publishConfig": {
         "provenance": true,
         "registry": "https://registry.npmjs.org/"
+    },
+    "allowScripts": {
+        "@swc/core": true,
+        "core-js": false,
+        "esbuild": true,
+        "fsevents": true,
+        "unrs-resolver": true
     },
     "readme": "README.md",
     "size-limit": [
