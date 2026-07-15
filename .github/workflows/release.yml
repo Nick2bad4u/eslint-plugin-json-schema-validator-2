@@ -105,7 +105,7 @@ jobs:
                   token: "${{ secrets.GITHUB_TOKEN }}"
 
             - name: "Setup Node.js"
-              uses: "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" # v6.4.0
+              uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v7.0.0
               with:
                   node-version-file: ".node-version"
                   registry-url: "${{ env.NPM_REGISTRY_URL }}"
@@ -287,8 +287,40 @@ jobs:
                   git push origin "$TAG"
 
             - name: "Generate release notes from git-cliff"
+              env:
+                  EXPECTED_TAG: "${{ steps.version.outputs.tag }}"
+                  GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
               run: |
                   set -euo pipefail
+
+                  if [ -z "$EXPECTED_TAG" ]; then
+                    echo "::error::The release version step did not provide an expected tag."
+                    exit 1
+                  fi
+
+                  tag_ref="refs/tags/${EXPECTED_TAG}"
+                  if ! git show-ref --verify --quiet "$tag_ref"; then
+                    echo "::error::Expected local tag ${EXPECTED_TAG} does not exist."
+                    exit 1
+                  fi
+
+                  tag_commit=$(git rev-parse "${tag_ref}^{commit}")
+                  head_commit=$(git rev-parse HEAD)
+                  if [ "$tag_commit" != "$head_commit" ]; then
+                    echo "::error::Tag ${EXPECTED_TAG} points to ${tag_commit}, but HEAD is ${head_commit}."
+                    exit 1
+                  fi
+
+                  head_tags=$(git tag --points-at HEAD --sort=refname)
+                  if [ "$head_tags" != "$EXPECTED_TAG" ]; then
+                    displayed_head_tags=${head_tags//$'\n'/, }
+                    if [ -z "$displayed_head_tags" ]; then
+                      displayed_head_tags="(none)"
+                    fi
+                    echo "::error::Expected ${EXPECTED_TAG} to be the only tag at HEAD, but found: ${displayed_head_tags}."
+                    exit 1
+                  fi
+
                   mkdir -p temp
                   npm run --silent changelog:release-notes -- --output "${RELEASE_NOTES_PATH}"
                   if [ ! -s "${RELEASE_NOTES_PATH}" ]; then
