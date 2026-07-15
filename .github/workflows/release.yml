@@ -69,7 +69,7 @@ jobs:
 
         steps:
             - name: "Harden the runner (Audit all outbound calls)"
-              uses: "step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411" # v2.19.4
+              uses: "step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920" # v2.20.0
               with:
                   egress-policy: "audit"
 
@@ -125,8 +125,8 @@ jobs:
                   set -euo pipefail
                   sudo apt-get update
                   sudo apt-get install --no-install-recommends --yes yamllint
-                  go install github.com/rhysd/actionlint/cmd/actionlint@latest
-                  go install github.com/zricethezav/gitleaks/v8@latest
+                  go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+                  go install github.com/zricethezav/gitleaks/v8@v8.30.1
                   echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
             - name: "Configure Git for release automation"
@@ -184,12 +184,11 @@ jobs:
               if: "${{ github.event_name != 'workflow_dispatch' || !inputs.skip_verify }}"
               run: "npm run release:check"
 
-            - name: "Ensure verification did not modify tracked files"
-              if: "startsWith(github.ref, 'refs/tags/v')"
+            - name: "Ensure verification left a clean checkout"
               run: |
                   set -euo pipefail
-                  if ! git diff --quiet || ! git diff --cached --quiet; then
-                    echo "release:check modified files on a tag-triggered release. Ensure main is clean before tagging." >&2
+                  if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+                    echo "Release verification modified the checkout. Commit generated changes before releasing." >&2
                     git status --short
                     exit 1
                   fi
@@ -270,7 +269,12 @@ jobs:
                     exit 1
                   fi
 
-                  git add -A
+                  git add -- package.json package-lock.json
+                  if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+                    echo "Unexpected files changed after the release version bump." >&2
+                    git status --short
+                    exit 1
+                  fi
                   if git diff --cached --quiet; then
                     echo "No staged changes found for release commit." >&2
                     exit 1
@@ -313,7 +317,16 @@ jobs:
                   tarball_filename=$(
                     node -e "const fs = require('node:fs');
                     const packMetadata = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
-                    process.stdout.write(packMetadata[0].filename);" "$pack_metadata_path"
+                    const entries = Array.isArray(packMetadata)
+                      ? packMetadata
+                      : packMetadata && typeof packMetadata === 'object'
+                        ? Object.values(packMetadata)
+                        : [];
+                    const filename = entries.length === 1 ? entries[0]?.filename : undefined;
+                    if (typeof filename !== 'string' || filename.length === 0) {
+                      throw new Error('npm pack did not return exactly one tarball filename.');
+                    }
+                    process.stdout.write(filename);" "$pack_metadata_path"
                   )
                   tarball_path="${assets_dir}/${tarball_filename}"
                   safe_package_name=$(printf '%s' "$PACKAGE_NAME" | sed 's/^@//; s#/#-#g')
@@ -336,7 +349,7 @@ jobs:
                   } >> "$GITHUB_OUTPUT"
 
             - name: "Create GitHub release"
-              uses: "softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b" # v3.0.1
+              uses: "softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228" # v3.0.2
               with:
                   tag_name: "${{ steps.version.outputs.tag }}"
                   name: "${{ steps.version.outputs.tag }}"
