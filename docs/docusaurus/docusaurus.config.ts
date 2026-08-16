@@ -293,7 +293,7 @@ const config = {
                         },
                         {
                             label: "⚙️ Configs",
-                            to: "/docs/configs/recommended",
+                            to: "/docs/rules/configs/recommended",
                         },
                         {
                             label: "🧩 Rule Reference",
@@ -301,7 +301,7 @@ const config = {
                         },
                         {
                             label: "🛠️ Developer API",
-                            to: "/docs/developer/api/variables/default",
+                            to: "/docs/developer/api",
                         },
                     ],
                     title: "📚 Docs",
@@ -335,15 +335,15 @@ const config = {
                     items: [
                         {
                             label: "✅ Recommended Config",
-                            to: "/docs/configs/recommended",
+                            to: "/docs/rules/configs/recommended",
                         },
                         {
                             label: "🧱 Base Config",
-                            to: "/docs/configs/base",
+                            to: "/docs/rules/configs/base",
                         },
                         {
                             label: "📝 Frontmatter Config",
-                            to: "/docs/configs/frontmatter",
+                            to: "/docs/rules/configs/frontmatter",
                         },
                         {
                             href: "https://json-schema.org/",
