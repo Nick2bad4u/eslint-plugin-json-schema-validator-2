@@ -1,6 +1,10 @@
 # eslint-plugin-json-schema-validator-2
 
-[![npm license.](https://flat.badgen.net/npm/license/eslint-plugin-json-schema-validator-2?color=purple)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/LICENSE) [![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-plugin-json-schema-validator-2?color=pink)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator-2) [![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=cyan)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=yellow)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=green)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=red)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/issues) [![codecov.](https://flat.badgen.net/codecov/github/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=blue)](https://codecov.io/gh/Nick2bad4u/eslint-plugin-json-schema-validator-2)
+[![npm license.](https://flat.badgen.net/npm/license/eslint-plugin-json-schema-validator-2?color=purple)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/blob/main/LICENSE)
+<!-- npmjs.com blocks automated link checks with HTTP 403. -->
+
+[![npm total downloads.](https://flat.badgen.net/npm/dt/eslint-plugin-json-schema-validator-2?color=pink)](https://www.npmjs.com/package/eslint-plugin-json-schema-validator-2) <!-- markdown-link-check-disable-line -->
+[![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=cyan)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=yellow)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=green)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=red)](https://github.com/Nick2bad4u/eslint-plugin-json-schema-validator-2/issues) [![codecov.](https://flat.badgen.net/codecov/github/Nick2bad4u/eslint-plugin-json-schema-validator-2?color=blue)](https://codecov.io/gh/Nick2bad4u/eslint-plugin-json-schema-validator-2)
 
 ESLint rules that validate JSON, JSONC, JSON5, YAML, TOML, Markdown frontmatter, JavaScript exports, and Vue custom blocks with JSON Schema.
 
@@ -239,7 +243,7 @@ for the rule catalog.
 ## Related Packages
 
 - [JSON Schema](https://json-schema.org/)
-- [SchemaStore](https://www.schemastore.org/json/)
+- [SchemaStore](https://www.schemastore.org/)
 - [jsonc-eslint-parser](https://github.com/ota-meshi/jsonc-eslint-parser)
 - [yaml-eslint-parser](https://github.com/ota-meshi/yaml-eslint-parser)
 - [toml-eslint-parser](https://github.com/ota-meshi/toml-eslint-parser)

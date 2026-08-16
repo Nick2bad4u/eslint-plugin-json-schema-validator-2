@@ -20,7 +20,7 @@ export async function get(
     httpModulePath?: string
 ): Promise<string> {
     const client =
-        isDefined(httpModulePath) && httpModulePath !== ""
+        httpModulePath !== "" && isDefined(httpModulePath)
             ? getDefaultExport(await loadModule(httpModulePath))
             : defaultClient;
     return client(url, options);

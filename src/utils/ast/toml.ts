@@ -4,6 +4,7 @@ import { getStaticTOMLValue, type AST as TOML } from "toml-eslint-parser";
 import {
     arrayFirst,
     arrayJoin,
+    assert,
     assertNever,
     isEmpty,
     isPresent,
@@ -136,9 +137,10 @@ function getMatchType(paths: string[], keys: (number | string)[]): MatchType {
 function getRequiredRange(token: {
     range?: [number, number] | undefined;
 }): [number, number] {
-    if (!isPresent(token.range)) {
-        throw new Error("Unexpected state: missing TOML token range");
-    }
+    assert(
+        isPresent(token.range),
+        "Unexpected state: missing TOML token range"
+    );
     return token.range;
 }
 

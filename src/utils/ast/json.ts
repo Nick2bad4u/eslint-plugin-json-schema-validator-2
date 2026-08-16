@@ -3,6 +3,7 @@ import type { AST as JSON } from "jsonc-eslint-parser";
 import {
     arrayFirst,
     arrayJoin,
+    assert,
     assertNever,
     isPresent,
     safeCastTo,
@@ -188,9 +189,10 @@ function getJSONNodeFromTraverseTarget(
 function getRequiredRange(token: {
     range?: [number, number] | undefined;
 }): [number, number] {
-    if (!isPresent(token.range)) {
-        throw new Error("Unexpected state: missing JSON token range");
-    }
+    assert(
+        isPresent(token.range),
+        "Unexpected state: missing JSON token range"
+    );
     return token.range;
 }
 
@@ -200,9 +202,7 @@ function getRequiredRange(token: {
  * @throws When the parser token store cannot provide the requested token.
  */
 function getRequiredToken<T>(token: null | T): T {
-    if (!isPresent(token)) {
-        throw new Error("Unexpected state: missing JSON token");
-    }
+    assert(isPresent(token), "Unexpected state: missing JSON token");
     return token;
 }
 

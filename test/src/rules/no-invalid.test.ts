@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as tomlParser from "toml-eslint-parser";
 import { safeCastTo } from "ts-extras";
+import { describe, expect, it } from "vitest";
 import * as yamlParser from "yaml-eslint-parser";
 
 import rule from "../../../src/rules/no-invalid";
@@ -43,6 +44,14 @@ const tester = new RuleTester({
         parser: jsonParser,
         sourceType: "module",
     },
+});
+
+describe("no-invalid RuleTester suite", () => {
+    it("declares its option schema", () => {
+        expect.assertions(2);
+        expect(rule.meta.schema).toHaveLength(1);
+        expect(rule.meta.schema).not.toContain(undefined);
+    });
 });
 
 tester.run(

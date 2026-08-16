@@ -9,6 +9,7 @@ import pc from "picocolors";
 const allowedVulnerabilityNames = new Set([
     "@docusaurus/bundler",
     "@docusaurus/core",
+    "@docusaurus/mdx-loader",
     "@docusaurus/plugin-content-blog",
     "@docusaurus/plugin-content-docs",
     "@docusaurus/plugin-content-pages",
@@ -22,6 +23,7 @@ const allowedVulnerabilityNames = new Set([
     "@docusaurus/plugin-svgr",
     "@docusaurus/preset-classic",
     "@docusaurus/theme-classic",
+    "@docusaurus/theme-common",
     "@docusaurus/theme-mermaid",
     "@docusaurus/theme-search-algolia",
     "all-contributors-cli",
@@ -29,6 +31,7 @@ const allowedVulnerabilityNames = new Set([
     "css-minimizer-webpack-plugin",
     "esbuild",
     "external-editor",
+    "image-size",
     "inquirer",
     "serialize-javascript",
     "sockjs",
@@ -38,17 +41,20 @@ const allowedVulnerabilityNames = new Set([
 ]);
 
 const allowedAdvisoryUrls = new Set([
-    "https://github.com/advisories/GHSA-5c6j-r48x-rmvq",
     "https://github.com/advisories/GHSA-52f5-9888-hmc6",
+    "https://github.com/advisories/GHSA-5c6j-r48x-rmvq",
+    "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
     "https://github.com/advisories/GHSA-g7r4-m6w7-qqqr",
     "https://github.com/advisories/GHSA-ph9p-34f9-6g65",
     "https://github.com/advisories/GHSA-qj8w-gfj5-8c6v",
+    "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
     "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
 ]);
 
 const allowedViaNames = new Set([
     "@docusaurus/bundler",
     "@docusaurus/core",
+    "@docusaurus/mdx-loader",
     "@docusaurus/plugin-content-blog",
     "@docusaurus/plugin-content-docs",
     "@docusaurus/plugin-content-pages",
@@ -60,10 +66,12 @@ const allowedViaNames = new Set([
     "@docusaurus/plugin-sitemap",
     "@docusaurus/plugin-svgr",
     "@docusaurus/theme-classic",
+    "@docusaurus/theme-common",
     "@docusaurus/theme-search-algolia",
     "copy-webpack-plugin",
     "css-minimizer-webpack-plugin",
     "external-editor",
+    "image-size",
     "inquirer",
     "serialize-javascript",
     "sockjs",

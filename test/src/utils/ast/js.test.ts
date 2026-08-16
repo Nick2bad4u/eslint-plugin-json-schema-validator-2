@@ -5,6 +5,7 @@ import * as espree from "espree";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assert, isDefined } from "ts-extras";
 import { describe, expect, it } from "vitest";
 
 import type { RuleContext, SourceCode } from "../../../../src/types";
@@ -165,11 +166,10 @@ function toOutput(
             typeof value === "symbol" ? "$UNKNOWN$" : value
     );
 
-    if (serializedObject === undefined) {
-        throw new TypeError(
-            "Expected analyzed object to be JSON serializable."
-        );
-    }
+    assert(
+        isDefined(serializedObject),
+        "Expected analyzed object to be JSON serializable."
+    );
 
     return {
         object: JSON.parse(serializedObject) as unknown,
@@ -183,7 +183,7 @@ function toOutput(
                 : pathData.key;
         const children: Record<string, OutputPathData> = {};
         for (const [childKey, val] of pathData.children.entries()) {
-            if (val !== null && val !== undefined && typeof val !== "symbol") {
+            if (typeof val !== "symbol") {
                 children[childKey] = normalizePathData(val);
             }
         }

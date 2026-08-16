@@ -88,7 +88,7 @@ async function get0(
 }
 
 function getProxyAgent(proxyUrl: string | undefined): ProxyAgent {
-    if (isDefined(proxyUrl) && proxyUrl !== "") {
+    if (proxyUrl !== "" && isDefined(proxyUrl)) {
         return new ProxyAgent({
             getProxyForUrl: () => proxyUrl,
         });

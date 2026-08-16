@@ -1,14 +1,43 @@
+# yaml-language-server: $schema=https://json.schemastore.org/pre-commit-config.json
+minimum_pre_commit_version: "4.0.0"
+default_install_hook_types:
+    - "pre-commit"
+default_stages:
+    - "pre-commit"
+fail_fast: false
 repos:
-    - repo: "https://github.com/gitleaks/gitleaks"
-      rev: "v8.16.3"
-      hooks:
-          - id: "gitleaks"
-    - repo: "https://github.com/pre-commit/mirrors-eslint"
-      rev: "v8.38.0"
-      hooks:
-          - id: "eslint"
     - repo: "https://github.com/pre-commit/pre-commit-hooks"
-      rev: "v4.4.0"
+      rev: "3e8a8703264a2f4a69428a0aa4dcb512790b2c8c" # frozen: v6.0.0
       hooks:
+          - id: "check-added-large-files"
+            args: ["--maxkb=5000"]
+          - id: "check-case-conflict"
+          - id: "check-illegal-windows-names"
+          - id: "check-json"
+          - id: "check-merge-conflict"
+          - id: "check-symlinks"
+          - id: "check-toml"
+          - id: "check-xml"
+          - id: "check-yaml"
+            args: ["--unsafe"]
+          - id: "destroyed-symlinks"
+          - id: "detect-private-key"
           - id: "end-of-file-fixer"
           - id: "trailing-whitespace"
+            args: ["--markdown-linebreak-ext=md"]
+    - repo: "https://github.com/gitleaks/gitleaks"
+      rev: "83d9cd684c87d95d656c1458ef04895a7f1cbd8e" # frozen: v8.30.1
+      hooks:
+          - id: "gitleaks"
+    - repo: "https://github.com/python-jsonschema/check-jsonschema"
+      rev: "6b63472e72e1a91ed8a2f6d483790dfb644fa1d3" # frozen: 0.37.4
+      hooks:
+          - id: "check-github-workflows"
+          - id: "check-jsonschema"
+            alias: "check-package-json-schema"
+            args: ["--schemafile", "https://json.schemastore.org/package.json"]
+            files: "(^|/)package\\.json$"
+          - id: "check-jsonschema"
+            alias: "check-tsconfig-schema"
+            args: ["--schemafile", "https://json.schemastore.org/tsconfig.json"]
+            files: "(^|/)tsconfig(?:\\.[^/]+)?\\.json$"

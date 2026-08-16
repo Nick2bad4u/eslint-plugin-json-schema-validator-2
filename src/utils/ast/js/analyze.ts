@@ -379,7 +379,7 @@ const VISITORS = {
         }
 
         const define = objectData.children.get(propName);
-        if (isPresent(define) && define !== UNKNOWN) {
+        if (define !== UNKNOWN && isPresent(define)) {
             return define;
         }
         if (isPresent(objectData.data)) {
@@ -776,8 +776,18 @@ function compareValues(
     | -1
     | 0
     | 1 {
-    const leftValue = toComparableValue(left);
-    const rightValue = toComparableValue(right);
+    const leftValue =
+        typeof left === "bigint" ||
+        typeof left === "number" ||
+        typeof left === "string"
+            ? left
+            : Number(left);
+    const rightValue =
+        typeof right === "bigint" ||
+        typeof right === "number" ||
+        typeof right === "string"
+            ? right
+            : Number(right);
     if (leftValue < rightValue) {
         return -1;
     }
@@ -1038,23 +1048,6 @@ function subtractValues(left: unknown, right: unknown): unknown {
         return left - right;
     }
     return Number(left) - Number(right);
-}
-
-/**
- * Converts a value to a comparable primitive.
- */
-function toComparableValue(value: unknown):
-    | bigint
-    | number
-    | string {
-    if (
-        typeof value === "bigint" ||
-        typeof value === "number" ||
-        typeof value === "string"
-    ) {
-        return value;
-    }
-    return Number(value);
 }
 
 /**

@@ -335,7 +335,7 @@ function formatSchemaType(schemaType: unknown): string {
 
 /** Format an unknown value for inclusion in a validation message. */
 function formatValue(value: unknown): string {
-    if (!isDefined(value) || typeof value === "symbol") {
+    if (typeof value === "symbol" || !isDefined(value)) {
         return String(value);
     }
     try {

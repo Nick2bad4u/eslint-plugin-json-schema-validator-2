@@ -61,8 +61,6 @@ interface RuleObjectOption {
     useSchemastoreCatalog?: boolean;
 }
 
-type RuleOption = RuleObjectOption | string;
-
 type SchemaKind =
     | "$schema"
     | "catalog"
@@ -618,13 +616,13 @@ function getOptionsValidators(
     context: RuleContext,
     filename: string
 ): null | Validator[] {
-    const option = getRuleOption(context);
+    const option = arrayFirst(context.options);
     if (typeof option === "string") {
         const schemaValidator = schemaPathToValidator(option, context);
         return isPresent(schemaValidator) ? [schemaValidator] : null;
     }
 
-    if (!isPresent(option?.schemas)) {
+    if (!isRuleObjectOption(option) || !isPresent(option.schemas)) {
         return null;
     }
 
@@ -673,22 +671,8 @@ function getPhysicalFilename(filename: string, child?: string): string {
  * Get the first configured rule option when it is an object.
  */
 function getRuleObjectOption(context: RuleContext): null | RuleObjectOption {
-    const option = getRuleOption(context);
-    return typeof option === "string" ? null : option;
-}
-
-/**
- * Get the first configured rule option.
- */
-function getRuleOption(context: RuleContext): null | RuleOption {
     const option = arrayFirst(context.options);
-    if (typeof option === "string") {
-        return option;
-    }
-    if (isRuleObjectOption(option)) {
-        return option;
-    }
-    return null;
+    return isRuleObjectOption(option) ? option : null;
 }
 
 /**

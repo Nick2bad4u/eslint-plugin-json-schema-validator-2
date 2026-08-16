@@ -378,7 +378,7 @@ function resolveCacheDirectory(
     cacheDirectory: string | undefined,
     context: RuleContext
 ): string {
-    if (!isDefined(cacheDirectory) || cacheDirectory === "") {
+    if (cacheDirectory === "" || !isDefined(cacheDirectory)) {
         return resolveDefaultCacheDirectory(context);
     }
     if (path.isAbsolute(cacheDirectory)) {
@@ -404,7 +404,7 @@ function resolvePath(
     modulePath: string | undefined,
     context: RuleContext
 ): string | undefined {
-    if (!isDefined(modulePath) || modulePath === "") {
+    if (modulePath === "" || !isDefined(modulePath)) {
         return undefined;
     }
     if (modulePath.startsWith(".")) {

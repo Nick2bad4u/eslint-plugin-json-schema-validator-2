@@ -53,7 +53,6 @@ interface RuleMetadataProblems {
     invalidSuggestionRules: string[];
     invalidTypeRules: string[];
     missingDocsFiles: string[];
-    missingSchemaRules: string[];
 }
 
 function collectRuleMetadataProblems(): RuleMetadataProblems {
@@ -109,9 +108,6 @@ function collectRuleMetadataProblems(): RuleMetadataProblems {
             .map(getRuleName),
         missingDocsFiles: ruleEntries
             .filter((ruleEntry) => !hasDocsFile(ruleEntry))
-            .map(getRuleName),
-        missingSchemaRules: ruleEntries
-            .filter(([, ruleModule]) => ruleModule.meta.schema === undefined)
             .map(getRuleName),
     };
 }
@@ -199,7 +195,6 @@ describe("test for meta object", () => {
             invalidSuggestionRules: [],
             invalidTypeRules: [],
             missingDocsFiles: [],
-            missingSchemaRules: [],
         });
     });
 

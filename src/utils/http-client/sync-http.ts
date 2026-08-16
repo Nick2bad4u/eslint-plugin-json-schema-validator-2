@@ -26,7 +26,7 @@ const resolveIfAvailable = (workerPath: string): null | string => {
 };
 
 const resolveWorkerPath = (): string => {
-    if ((ext === ".ts" || ext === ".mts") && sourceRuntimeWorkerPath !== "") {
+    if (sourceRuntimeWorkerPath !== "" && (ext === ".ts" || ext === ".mts")) {
         const builtWorkerPath = resolveIfAvailable(sourceRuntimeWorkerPath);
 
         if (builtWorkerPath !== null) {

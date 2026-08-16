@@ -1,0 +1,6 @@
+{
+    "MD025": {
+        "front_matter_title": ""
+    },
+    "extends": "markdownlint-config-nick2bad4u/recommended.json"
+}

@@ -1,0 +1,11 @@
+{
+    "dictionaries": ["project-words"],
+    "dictionaryDefinitions": [
+        {
+            "addWords": true,
+            "name": "project-words",
+            "path": "./.cspell/project-words.txt"
+        }
+    ],
+    "import": ["cspell-config-nick2bad4u/recommended.json"]
+}
