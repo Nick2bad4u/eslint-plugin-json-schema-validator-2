@@ -1,0 +1,14 @@
+#:schema https://www.schemastore.org/tombi.json
+
+toml-version = "v1.1.0"
+
+[files]
+    exclude = [ "test/fixtures/**" ]
+
+[format.rules]
+    array-bracket-space-width       = 1
+    indent-style                    = "space"
+    indent-table-key-value-pairs    = true
+    indent-width                    = 4
+    key-value-equals-sign-alignment = true
+    line-ending                     = "lf"
