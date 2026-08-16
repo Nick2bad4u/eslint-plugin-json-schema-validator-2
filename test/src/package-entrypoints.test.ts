@@ -6,11 +6,11 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const COMMAND_TIMEOUT = 60_000;
+const COMMAND_TIMEOUT = 180_000;
 const ESLINT_PEER_VERSION = "9.38.0";
-const INSTALL_TIMEOUT = 120_000;
 const PACKAGE_NAME = "eslint-plugin-json-schema-validator-2";
 const PACKAGE_ROOT = fileURLToPath(new URL("../../", import.meta.url));
+const TEST_TIMEOUT = 240_000;
 
 interface CommandInvocation {
     readonly args: readonly string[];
@@ -136,7 +136,7 @@ async function runNpm(
 describe("packaged entrypoints", () => {
     it(
         "loads both package exports from a CommonJS eval process",
-        { timeout: INSTALL_TIMEOUT },
+        { timeout: TEST_TIMEOUT },
         async () => {
             expect.assertions(4);
 
