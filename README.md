@@ -11,6 +11,8 @@ ESLint rules that validate JSON, JSONC, JSON5, YAML, TOML, Markdown frontmatter,
 This fork keeps the useful validation behavior from the upstream plugin while
 moving the repository onto the modern ESLint plugin tooling used across my plugin projects.
 
+> **Oxlint:** Not compatible as a complete plugin (verified with Oxlint 1.80.0). The JSON, JSONC, JSON5, YAML, TOML, Markdown-frontmatter, and Vue surfaces require custom parsers or the exported `frontmatter` processor, while [Oxlint JavaScript plugins do not support custom formats](https://oxc.rs/docs/guide/usage/linter/js-plugins.html#api-support). Use ESLint for the complete rule and six-config surface.
+
 > [!NOTE]
 > Shoutout to [ota-meshi](https://github.com/ota-meshi) and the plugin he made: [eslint-plugin-json-schema-validator](https://github.com/ota-meshi/eslint-plugin-json-schema-validator), which this fork builds on. The original plugin did the hard work of proving the JSON Schema validation model for JSON-like files in ESLint.
 
